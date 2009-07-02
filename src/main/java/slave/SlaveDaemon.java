@@ -5,6 +5,11 @@ package main.java.slave;
  * @author thomasm
  *
  */
-public interface SlaveDaemon {
+public class SlaveDaemon {
 
+	public static void main(String[] args) {
+		
+		
+	}
+	
 }
