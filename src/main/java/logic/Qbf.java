@@ -18,7 +18,7 @@ public interface Qbf {
 	// simplify (substitute?) (zb. a && 1 -> a; a )
 	// feed sub-qbf to qpro	
 	// END
-	// test
+	
 	/**
 	 * Parses an qpro-like argument-string into 
 	 * internal representation
