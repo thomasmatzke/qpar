@@ -1,14 +1,24 @@
 package main.java.slave;
 
-public interface Tool {
+public class Tool {
 
-	public void setPath(String path);
-	public String getPath();
+	public void setPath(String path) {
+	}
+	public String getPath() {
+		return null;
+	}
 	
-	public void setArguments(String[] args);
-	public String[] getArguments();
+	public void setArguments(String[] args) {
+	}
+	public String[] getArguments() {
+		return null;
+	}
 	
-	public String exec();
-	public int kill();
+	public String exec() {
+		return null;
+	}
+	public int kill() {
+		return 0;
+	}
 	
 }

@@ -1,5 +1,10 @@
 package main.java.messages;
 
-public interface AbortConfirmMessage {
-
+/**
+ * 
+ * @author thomasm
+ *
+ */
+public class AbortConfirmMessage {
+	
 }
