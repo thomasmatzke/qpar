@@ -4,7 +4,7 @@ import java.util.List;
 /**
  * Representation of a quantified boolean formula
  * @author thomasm
- *
+ * 
  */
 public interface Qbf {
 	// We have a QBF
