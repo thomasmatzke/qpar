@@ -1,5 +1,5 @@
 package main.java.messages;
 
-public interface InformationMessage {
+public class InformationMessage {
 
 }

@@ -1,5 +1,7 @@
 package main.java.messages;
 
-public interface FormulaMessage {
+public class FormulaMessage {
 
+	
+	
 }
