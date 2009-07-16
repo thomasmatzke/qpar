@@ -1,5 +1,5 @@
 package main.java.messages;
 
-public interface ShutdownMessage {
+public class ShutdownMessage {
 
 }
