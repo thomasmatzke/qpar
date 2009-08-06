@@ -4,13 +4,13 @@ import java.io.Serializable;
 
 public class AbortMessage implements Serializable {
 
-	private int jobId;
+	private String jobId;
 
-	public int getJobId() {
+	public String getJobId() {
 		return jobId;
 	}
 
-	public void setJobId(int jobId) {
+	public void setJobId(String jobId) {
 		this.jobId = jobId;
 	}
 

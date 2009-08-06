@@ -6,13 +6,13 @@ import main.java.logic.Qbf;
 
 public class FormulaMessage implements Serializable {
 
-	private int jobId;
+	private String jobId;
 	private Qbf formula;
 	
-	public int getJobId() {
+	public String getJobId() {
 		return jobId;
 	}
-	public void setJobId(int jobId) {
+	public void setJobId(String jobId) {
 		this.jobId = jobId;
 	}
 	public Qbf getFormula() {

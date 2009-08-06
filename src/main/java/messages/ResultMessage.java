@@ -3,13 +3,13 @@ package main.java.messages;
 import java.io.Serializable;
 
 public class ResultMessage implements Serializable {
-	private int jobId;
+	private String jobId;
 	private boolean result;
 	
-	public int getJobId() {
+	public String getJobId() {
 		return jobId;
 	}
-	public void setJobId(int jobId) {
+	public void setJobId(String jobId) {
 		this.jobId = jobId;
 	}
 	public boolean isResult() {

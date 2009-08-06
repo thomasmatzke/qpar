@@ -8,6 +8,8 @@ import javax.jms.JMSException;
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.util.IndentPrinter;
 
+import sun.misc.Signal;
+
 import main.java.ArgumentParser;
 
 /**
@@ -20,10 +22,21 @@ public class SlaveDaemon {
 	Hashtable<String, Tool> toolDirectory = new Hashtable<String, Tool>(); 
 	public static String master_str;
 	public static Master master;
-	
-	
-	
+	private static Hashtable<String, Tool> jobs = new Hashtable<String, Tool>();
+		
+	public static Hashtable<String, Tool> getJobs() {
+		return jobs;
+	}
+
+	public static void setJobs(Hashtable<String, Tool> jobs) {
+		SlaveDaemon.jobs = jobs;
+	}
+
 	public static void main(String[] args) {
+		SignalHandler handler = new SignalHandler();
+		Signal.handle(new Signal("INT"), handler);
+		Signal.handle(new Signal("TERM"), handler);
+		Signal.handle(new Signal("HUP"), handler);
 		ArgumentParser ap = new ArgumentParser(args);
 		master_str = ap.nextParam();
 
@@ -34,23 +47,22 @@ public class SlaveDaemon {
 		
 		try {
 			master.connect(master_str);
+			master.startConsuming();
+			shutdown();
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		try {
-			master.disconnect();
-		} catch (JMSException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		System.exit(0);
 		
+	}
+	
+	public static void shutdown() {
+		master.disconnect();
 	}
 	
 	public static void usage() {
