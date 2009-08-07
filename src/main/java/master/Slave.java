@@ -1,8 +1,6 @@
-package main.java.messages;
+package main.java.master;
 
-import java.io.Serializable;
-
-public class InformationMessage implements Serializable {
+public class Slave {
 	private int cores, speed, ram_free, ram_total;
 	private String toolId;
 	
@@ -36,4 +34,6 @@ public class InformationMessage implements Serializable {
 	public void setToolId(String toolId) {
 		this.toolId = toolId;
 	}
+	
+	
 }

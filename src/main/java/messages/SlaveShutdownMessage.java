@@ -2,7 +2,7 @@ package main.java.messages;
 
 import java.io.Serializable;
 
-public class KillMessage implements Serializable {
+public class SlaveShutdownMessage implements Serializable {
 	private String reason;
 
 	public String getReason() {
@@ -12,4 +12,5 @@ public class KillMessage implements Serializable {
 	public void setReason(String reason) {
 		this.reason = reason;
 	}
+	
 }

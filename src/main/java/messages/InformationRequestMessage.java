@@ -1,5 +1,7 @@
 package main.java.messages;
 
-public interface InformationRequestMessage {
+import java.io.Serializable;
+
+public class InformationRequestMessage implements Serializable {
 
 }

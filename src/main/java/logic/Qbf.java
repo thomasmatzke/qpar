@@ -45,4 +45,11 @@ public interface Qbf {
 	 */
 	public boolean solve();
 	
+	/**
+	 * Returns the Inputstring for a given Tool
+	 * @param toolId
+	 * @return 
+	 */
+	public String toToolInputString(String toolId);
+	
 }
