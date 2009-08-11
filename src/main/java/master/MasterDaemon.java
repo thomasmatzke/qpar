@@ -4,6 +4,9 @@ import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
+import main.java.ArgumentParser;
+import main.java.master.gui.ProgramWindow;
+
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerService;
@@ -23,7 +26,9 @@ public class MasterDaemon {
 	private static BrokerService broker;
 		
 	public NewSlaveListener newSlaveListener;
+	@SuppressWarnings("unused")
 	private ShutdownHook hook;
+	private static boolean startGui;
 	
 	public MasterDaemon() {
 		startMessageBroker();
@@ -31,10 +36,19 @@ public class MasterDaemon {
 		connectToBroker();
         newSlaveListener = new NewSlaveListener();
         newSlaveListener.start();
-        
+        if(MasterDaemon.startGui) {
+        	new ProgramWindow();
+        }
 	}
 		
 	public static void main(String[] args) {
+		ArgumentParser ap = new ArgumentParser(args);
+		String gui = ap.getOption("gui");
+		if(gui == "false") {
+			MasterDaemon.startGui = false;
+		} else {
+			MasterDaemon.startGui = true;
+		}
 		new MasterDaemon();
 	}
 	

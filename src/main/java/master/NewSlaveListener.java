@@ -45,7 +45,6 @@ public class NewSlaveListener implements MessageListener {
 		}
 	}
 	
-	@Override
 	public void onMessage(Message m) {
 		System.out.println("Rcvd msg...");
 		if(!(m instanceof ObjectMessage)) {

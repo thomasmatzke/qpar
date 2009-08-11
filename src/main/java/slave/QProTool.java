@@ -7,26 +7,22 @@ public class QProTool implements Tool {
 	private Boolean result = null;
 	private Process qpro_process;
 	
-	@Override
 	public void cleanup() {
 		// TODO Auto-generated method stub
 
 	}
-
-	@Override
+	
 	public void kill() {
 		// TODO Auto-generated method stub
 		// qpro_process.destroy();
 		cleanup();
 	}
 
-	@Override
 	public void prepare() {
 		// TODO Auto-generated method stub
 
 	}
-
-	@Override
+	
 	public boolean result() throws Exception {
 		if(this.result == null) {
 			throw new Exception("Computation not yet completed");
@@ -34,13 +30,12 @@ public class QProTool implements Tool {
 		return this.result.booleanValue();
 	}
 
-	@Override
+	
 	public void setQbf(Qbf formula) {
 		// TODO Auto-generated method stub
 
 	}
 
-	@Override
 	public void run() {
 		// TODO Auto-generated method stub
 		prepare();
