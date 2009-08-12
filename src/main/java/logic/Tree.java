@@ -1,3 +1,5 @@
+package main.java.logic;
+
 public class Tree {
 
 	// fucked up

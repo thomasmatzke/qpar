@@ -1,3 +1,5 @@
+package main.java.logic;
+
 public class Node {
   
     private Node leftchild, rightchild;
