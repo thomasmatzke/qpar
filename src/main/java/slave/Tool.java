@@ -1,24 +1,17 @@
 package main.java.slave;
 
-public class Tool {
+import main.java.logic.Qbf;
 
-	public void setPath(String path) {
-	}
-	public String getPath() {
-		return null;
-	}
+public interface Tool extends Runnable{
 	
-	public void setArguments(String[] args) {
-	}
-	public String[] getArguments() {
-		return null;
-	}
+	public void setQbf(Qbf formula);
 	
-	public String exec() {
-		return null;
-	}
-	public int kill() {
-		return 0;
-	}
+	public void prepare();
+	
+	public boolean result() throws Exception;
+	
+	public void cleanup();
+	
+	public void kill();
 	
 }

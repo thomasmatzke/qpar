@@ -1,14 +1,16 @@
 package main.java.messages;
 
-public class AbortMessage {
+import java.io.Serializable;
 
-	private int jobId;
+public class AbortMessage implements Serializable {
 
-	public int getJobId() {
+	private String jobId;
+
+	public String getJobId() {
 		return jobId;
 	}
 
-	public void setJobId(int jobId) {
+	public void setJobId(String jobId) {
 		this.jobId = jobId;
 	}
 
