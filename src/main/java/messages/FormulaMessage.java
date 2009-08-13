@@ -3,11 +3,12 @@ package main.java.messages;
 import java.io.Serializable;
 
 import main.java.logic.Qbf;
+import main.java.logic.TransmissionQbf;
 
 public class FormulaMessage implements Serializable {
 
 	private String jobId;
-	private Qbf formula;
+	private TransmissionQbf formula;
 	
 	public String getJobId() {
 		return jobId;
@@ -15,10 +16,10 @@ public class FormulaMessage implements Serializable {
 	public void setJobId(String jobId) {
 		this.jobId = jobId;
 	}
-	public Qbf getFormula() {
+	public TransmissionQbf getFormula() {
 		return formula;
 	}
-	public void setFormula(Qbf formula) {
+	public void setFormula(TransmissionQbf formula) {
 		this.formula = formula;
 	}
 	

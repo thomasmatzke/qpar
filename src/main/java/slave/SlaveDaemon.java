@@ -2,6 +2,8 @@ package main.java.slave;
 
 import java.net.UnknownHostException;
 import java.util.Hashtable;
+import java.util.Scanner;
+import java.util.Vector;
 
 import javax.jms.JMSException;
 
@@ -19,7 +21,7 @@ import main.java.ArgumentParser;
  */
 public class SlaveDaemon {
 
-	Hashtable<String, Tool> toolDirectory = new Hashtable<String, Tool>(); 
+	public static Vector<String> availableSolvers = new Vector<String>();
 	public static String master_str;
 	public static Master master;
 	private static Hashtable<String, Tool> jobs = new Hashtable<String, Tool>();
@@ -36,10 +38,17 @@ public class SlaveDaemon {
 		SignalHandler handler = new SignalHandler();
 		Signal.handle(new Signal("INT"), handler);
 		Signal.handle(new Signal("TERM"), handler);
-		Signal.handle(new Signal("HUP"), handler);
+		//Signal.handle(new Signal("HUP"), handler);
 		ArgumentParser ap = new ArgumentParser(args);
 		master_str = ap.nextParam();
-
+		String solversString = ap.getOption("solvers");
+		
+		Scanner s = new Scanner(solversString).useDelimiter(",");
+		while(s.hasNext()) {
+			String cur = s.next();
+			availableSolvers.add(cur);
+		}
+		
 		if (master_str == null) {
 			usage();
 		}

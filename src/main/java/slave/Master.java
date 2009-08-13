@@ -114,6 +114,7 @@ public class Master {
     public void sendInformationMessage(MessageProducer p) {
     	InformationMessage msg = new InformationMessage();
     	msg.setCores(Runtime.getRuntime().availableProcessors());
+    	msg.setToolIds(SlaveDaemon.availableSolvers);
     	sendObject(msg, p);
     }
     
@@ -174,7 +175,7 @@ public class Master {
 	
 	private void handleFormulaMessage(FormulaMessage m) {
 		QProTool tool = new QProTool();
-		tool.setQbf(m.getFormula());
+		tool.setTransmissionQbf(m.getFormula());
 		new Thread(tool).start();
 		SlaveDaemon.getJobs().put(m.getJobId(), tool);
 	}

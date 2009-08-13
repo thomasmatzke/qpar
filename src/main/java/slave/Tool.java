@@ -1,10 +1,13 @@
 package main.java.slave;
 
-import main.java.logic.Qbf;
+import java.util.Hashtable;
+import main.java.logic.TransmissionQbf;
 
 public interface Tool extends Runnable{
 	
-	public void setQbf(Qbf formula);
+	public static Hashtable<String, Class> idToToolMap = new Hashtable<String, Class>();
+	
+	public void setTransmissionQbf(TransmissionQbf formula);
 	
 	public void prepare();
 	
