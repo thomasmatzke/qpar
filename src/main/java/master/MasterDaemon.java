@@ -1,10 +1,13 @@
 package main.java.master;
 
+import java.util.Vector;
+
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Session;
 
 import main.java.ArgumentParser;
+import main.java.master.gui.JobsTableModel;
 import main.java.master.gui.ProgramWindow;
 
 import org.apache.activemq.ActiveMQConnection;
@@ -24,12 +27,16 @@ public class MasterDaemon {
     private static String password = ActiveMQConnection.DEFAULT_PASSWORD;
 	private static Connection connection;
 	private static BrokerService broker;
-		
+	private static ProgramWindow programWindow;
+	private static JobsTableModel jobsModel;
+	
+	private static Vector<Job> jobs;
+	
 	public NewSlaveListener newSlaveListener;
 	@SuppressWarnings("unused")
 	private ShutdownHook hook;
 	private static boolean startGui;
-	
+		
 	public MasterDaemon() {
 		startMessageBroker();
 		hook = new ShutdownHook();
@@ -37,7 +44,8 @@ public class MasterDaemon {
         newSlaveListener = new NewSlaveListener();
         newSlaveListener.start();
         if(MasterDaemon.startGui) {
-        	new ProgramWindow();
+        	programWindow = new ProgramWindow();
+        	programWindow.setVisible(true);
         }
 	}
 		
@@ -51,7 +59,21 @@ public class MasterDaemon {
 		}
 		new MasterDaemon();
 	}
+		
+	public static Vector<Job> getJobs() {
+		if(MasterDaemon.jobs == null) {
+			MasterDaemon.jobs = new Vector<Job>();
+		} 
+		return jobs;
+	}
 	
+	public static void addJob(Job job) {
+		MasterDaemon.jobs.add(job);
+		for(int i=0; i <= 3; i++) {
+			MasterDaemon.jobsModel.fireTableCellUpdated(MasterDaemon.jobs.size(), i);
+		}
+	}
+
 	public static synchronized Connection getConnection() {
 		if (connection != null) {
 			return connection;
@@ -81,7 +103,7 @@ public class MasterDaemon {
 		// Start Messagebroker for Slave-Communication
 		try {
 			broker = new BrokerService();
-	        broker.setUseJmx(true);
+	        broker.setUseJmx(false);
 			broker.addConnector("tcp://localhost:61616");
 	        broker.start();
         } catch (Exception e) {

@@ -1,10 +1,371 @@
 package main.java.master.gui;
 
+import java.awt.BorderLayout;
+import javax.swing.JPanel;
 import javax.swing.JFrame;
+import java.awt.Dimension;
+import javax.swing.JMenu;
+import javax.swing.JTabbedPane;
+import java.awt.GridBagLayout;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JScrollPane;
+import java.awt.GridBagConstraints;
+import javax.swing.JTable;
+import javax.swing.JButton;
+import java.awt.Insets;
 
 public class ProgramWindow extends JFrame {
+
+	private static final long serialVersionUID = 1L;
+	private JPanel jContentPane = null;
+	private JTabbedPane jTabbedPane = null;
+	private JPanel jobsPanel = null;
+	private JPanel slavesPanel = null;
+	private JMenuBar jMenuBar = null;
+	private JMenu jMenu = null;
+	private JMenuItem quitMenuItem = null;
+	private JScrollPane jobsScrollPane = null;
+	private JScrollPane slavesScrollPane = null;
+	private JTable slavesTable = null;
+	private JTable jobsTable = null;
+	private JPanel jobsActionPanel = null;
+	private JButton newJobButton = null;
+	private JButton editJobButtonButton = null;
+	private JButton deleteJobButton = null;
+	private JButton viewJobButton = null;
+	private JButton startJobButton = null;
+	private JButton abortJobButton = null;
+	private JPanel slavesActionPanel = null;
+	private JButton killSlaveButton = null;
+	private JButton showSlaveInfoButton = null;
+	/**
+	 * This is the default constructor
+	 */
 	public ProgramWindow() {
-		this.setSize(400, 300);
-		this.setVisible(true);
+		super();
+		initialize();
 	}
-}
+
+	/**
+	 * This method initializes this
+	 * 
+	 * @return void
+	 */
+	private void initialize() {
+		//this.setSize(658, 515);
+		this.setJMenuBar(getJMenuBar());
+		this.setContentPane(getJContentPane());
+		this.setTitle("JFrame");
+		this.pack();
+	}
+
+	/**
+	 * This method initializes jContentPane
+	 * 
+	 * @return javax.swing.JPanel
+	 */
+	private JPanel getJContentPane() {
+		if (jContentPane == null) {
+			jContentPane = new JPanel();
+			jContentPane.setLayout(new BorderLayout());
+			jContentPane.add(getJTabbedPane(), BorderLayout.NORTH);
+		}
+		return jContentPane;
+	}
+
+	/**
+	 * This method initializes jTabbedPane	
+	 * 	
+	 * @return javax.swing.JTabbedPane	
+	 */
+	private JTabbedPane getJTabbedPane() {
+		if (jTabbedPane == null) {
+			jTabbedPane = new JTabbedPane();
+			jTabbedPane.addTab("Jobs", null, getJobsPanel(), null);
+			jTabbedPane.addTab("Slaves", null, getSlavesPanel(), null);
+		}
+		return jTabbedPane;
+	}
+
+	/**
+	 * This method initializes jobsPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getJobsPanel() {
+		if (jobsPanel == null) {
+			jobsPanel = new JPanel();
+			jobsPanel.setLayout(new BorderLayout());
+			jobsPanel.add(getJobsScrollPane(), BorderLayout.CENTER);
+			jobsPanel.add(getJobsActionPanel(), BorderLayout.SOUTH);
+		}
+		return jobsPanel;
+	}
+
+	/**
+	 * This method initializes slavesPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getSlavesPanel() {
+		if (slavesPanel == null) {
+			slavesPanel = new JPanel();
+			slavesPanel.setLayout(new BorderLayout());
+			slavesPanel.add(getSlavesScrollPane(), BorderLayout.NORTH);
+			slavesPanel.add(getSlavesActionPanel(), BorderLayout.SOUTH);
+		}
+		return slavesPanel;
+	}
+
+	/**
+	 * This method initializes jMenuBar	
+	 * 	
+	 * @return javax.swing.JMenuBar	
+	 */
+	public JMenuBar getJMenuBar() {
+		if (jMenuBar == null) {
+			jMenuBar = new JMenuBar();
+			jMenuBar.add(getJMenu());
+		}
+		return jMenuBar;
+	}
+
+	/**
+	 * This method initializes jMenu	
+	 * 	
+	 * @return javax.swing.JMenu	
+	 */
+	private JMenu getJMenu() {
+		if (jMenu == null) {
+			jMenu = new JMenu();
+			jMenu.setText("File");
+			jMenu.add(getQuitMenuItem());
+		}
+		return jMenu;
+	}
+
+	/**
+	 * This method initializes quitMenuItem	
+	 * 	
+	 * @return javax.swing.JMenuItem	
+	 */
+	private JMenuItem getQuitMenuItem() {
+		if (quitMenuItem == null) {
+			quitMenuItem = new JMenuItem();
+			quitMenuItem.setText("Quit");
+		}
+		return quitMenuItem;
+	}
+
+	/**
+	 * This method initializes jobsScrollPane	
+	 * 	
+	 * @return javax.swing.JScrollPane	
+	 */
+	private JScrollPane getJobsScrollPane() {
+		if (jobsScrollPane == null) {
+			jobsScrollPane = new JScrollPane();
+			jobsScrollPane.setViewportView(getJobsTable());
+		}
+		return jobsScrollPane;
+	}
+
+	/**
+	 * This method initializes slavesScrollPane	
+	 * 	
+	 * @return javax.swing.JScrollPane	
+	 */
+	private JScrollPane getSlavesScrollPane() {
+		if (slavesScrollPane == null) {
+			slavesScrollPane = new JScrollPane();
+			slavesScrollPane.setViewportView(getSlavesTable());
+		}
+		return slavesScrollPane;
+	}
+
+	/**
+	 * This method initializes slavesTable	
+	 * 	
+	 * @return javax.swing.JTable	
+	 */
+	private JTable getSlavesTable() {
+		if (slavesTable == null) {
+			slavesTable = new JTable();
+			slavesTable.setFillsViewportHeight(true);
+		}
+		return slavesTable;
+	}
+
+	/**
+	 * This method initializes jobsTable	
+	 * 	
+	 * @return javax.swing.JTable	
+	 */
+	private JTable getJobsTable() {
+		if (jobsTable == null) {
+			jobsTable = new JTable();
+			jobsTable.setFillsViewportHeight(true);
+		}
+		return jobsTable;
+	}
+
+	/**
+	 * This method initializes jobsActionPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getJobsActionPanel() {
+		if (jobsActionPanel == null) {
+			GridBagConstraints gridBagConstraints6 = new GridBagConstraints();
+			gridBagConstraints6.insets = new Insets(0, 0, 0, 0);
+			gridBagConstraints6.gridwidth = 1;
+			gridBagConstraints6.ipadx = 0;
+			gridBagConstraints6.ipady = 0;
+			gridBagConstraints6.fill = GridBagConstraints.NONE;
+			GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
+			gridBagConstraints5.gridx = 3;
+			GridBagConstraints gridBagConstraints4 = new GridBagConstraints();
+			gridBagConstraints4.gridx = 2;
+			GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
+			gridBagConstraints3.gridx = 7;
+			gridBagConstraints3.gridy = 0;
+			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
+			gridBagConstraints2.gridx = 8;
+			gridBagConstraints2.gridy = 0;
+			GridBagConstraints gridBagConstraints = new GridBagConstraints();
+			gridBagConstraints.gridx = 1;
+			gridBagConstraints.gridy = 0;
+			jobsActionPanel = new JPanel();
+			jobsActionPanel.setLayout(new GridBagLayout());
+			jobsActionPanel.setSize(new Dimension(200, 100));
+			jobsActionPanel.add(getNewJobButton(), gridBagConstraints6);
+			jobsActionPanel.add(getEditJobButtonButton(), gridBagConstraints);
+			jobsActionPanel.add(getDeleteJobButton(), gridBagConstraints4);
+			jobsActionPanel.add(getViewJobButton(), gridBagConstraints5);
+			jobsActionPanel.add(getStartJobButton(), gridBagConstraints3);
+			jobsActionPanel.add(getAbortJobButton(), gridBagConstraints2);
+		}
+		return jobsActionPanel;
+	}
+
+	/**
+	 * This method initializes newJobButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getNewJobButton() {
+		if (newJobButton == null) {
+			newJobButton = new JButton();
+			newJobButton.setText("New Job");
+		}
+		return newJobButton;
+	}
+
+	/**
+	 * This method initializes editJobButtonButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getEditJobButtonButton() {
+		if (editJobButtonButton == null) {
+			editJobButtonButton = new JButton();
+			editJobButtonButton.setText("Edit Job");
+		}
+		return editJobButtonButton;
+	}
+
+	/**
+	 * This method initializes deleteJobButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getDeleteJobButton() {
+		if (deleteJobButton == null) {
+			deleteJobButton = new JButton();
+			deleteJobButton.setText("Delete Job");
+		}
+		return deleteJobButton;
+	}
+
+	/**
+	 * This method initializes viewJobButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getViewJobButton() {
+		if (viewJobButton == null) {
+			viewJobButton = new JButton();
+			viewJobButton.setText("View Job");
+		}
+		return viewJobButton;
+	}
+
+	/**
+	 * This method initializes startJobButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getStartJobButton() {
+		if (startJobButton == null) {
+			startJobButton = new JButton();
+			startJobButton.setText("Start Job");
+		}
+		return startJobButton;
+	}
+
+	/**
+	 * This method initializes abortJobButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getAbortJobButton() {
+		if (abortJobButton == null) {
+			abortJobButton = new JButton();
+			abortJobButton.setText("Abort Job");
+		}
+		return abortJobButton;
+	}
+
+	/**
+	 * This method initializes slavesActionPanel	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getSlavesActionPanel() {
+		if (slavesActionPanel == null) {
+			slavesActionPanel = new JPanel();
+			slavesActionPanel.setLayout(new GridBagLayout());
+			slavesActionPanel.add(getKillSlaveButton(), new GridBagConstraints());
+			slavesActionPanel.add(getShowSlaveInfoButton(), new GridBagConstraints());
+		}
+		return slavesActionPanel;
+	}
+
+	/**
+	 * This method initializes killSlaveButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getKillSlaveButton() {
+		if (killSlaveButton == null) {
+			killSlaveButton = new JButton();
+			killSlaveButton.setText("Kill Slave");
+		}
+		return killSlaveButton;
+	}
+
+	/**
+	 * This method initializes showSlaveInfoButton	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getShowSlaveInfoButton() {
+		if (showSlaveInfoButton == null) {
+			showSlaveInfoButton = new JButton();
+			showSlaveInfoButton.setText("Show Slave Info");
+		}
+		return showSlaveInfoButton;
+	}
+
+}  //  @jve:decl-index=0:visual-constraint="68,15"

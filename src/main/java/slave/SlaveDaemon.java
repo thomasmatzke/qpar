@@ -42,11 +42,14 @@ public class SlaveDaemon {
 		ArgumentParser ap = new ArgumentParser(args);
 		master_str = ap.nextParam();
 		String solversString = ap.getOption("solvers");
-		
+		if(solversString != null) {
 		Scanner s = new Scanner(solversString).useDelimiter(",");
-		while(s.hasNext()) {
-			String cur = s.next();
-			availableSolvers.add(cur);
+			while(s.hasNext()) {
+				String cur = s.next();
+				availableSolvers.add(cur);
+			}
+		} else {
+			availableSolvers.add("qpro");
 		}
 		
 		if (master_str == null) {
