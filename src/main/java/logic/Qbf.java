@@ -10,6 +10,7 @@ import java.io.*;
 */
 public class Qbf {
 
+	Heuristic h = null;
 	File file;
 	Tree solvingTree = new Tree();
 	private String filename;
@@ -149,4 +150,9 @@ public class Qbf {
 	public boolean checkQbfSyntax(String qbfString) {
 		return true;
 	}		
+
+	public void setHeuristic(Heuristic h) {
+		this.h = h;
+	}
+
 }
