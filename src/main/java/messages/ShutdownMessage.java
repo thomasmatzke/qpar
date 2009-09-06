@@ -5,9 +5,19 @@ import java.util.Vector;
 
 public class ShutdownMessage implements Serializable {
 
-	public Vector<String> openJobs;
-	public String reason;
+	private Vector<String> openJobs;
+	private String reason;
+	private String hostAddress;
 	
+	
+	public String getHostAddress() {
+		return hostAddress;
+	}
+
+	public void setHostAddress(String hostAddress) {
+		this.hostAddress = hostAddress;
+	}
+
 	public Vector<String> getOpenJobs() {
 		return openJobs;
 	}

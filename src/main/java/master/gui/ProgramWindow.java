@@ -13,7 +13,13 @@ import javax.swing.JScrollPane;
 import java.awt.GridBagConstraints;
 import javax.swing.JTable;
 import javax.swing.JButton;
+
+import main.java.logic.HeuristicFactory;
+import main.java.master.Slave;
+
 import java.awt.Insets;
+import java.util.Set;
+import java.util.Vector;
 
 public class ProgramWindow extends JFrame {
 
@@ -31,7 +37,6 @@ public class ProgramWindow extends JFrame {
 	private JTable jobsTable = null;
 	private JPanel jobsActionPanel = null;
 	private JButton newJobButton = null;
-	private JButton editJobButtonButton = null;
 	private JButton deleteJobButton = null;
 	private JButton viewJobButton = null;
 	private JButton startJobButton = null;
@@ -39,11 +44,17 @@ public class ProgramWindow extends JFrame {
 	private JPanel slavesActionPanel = null;
 	private JButton killSlaveButton = null;
 	private JButton showSlaveInfoButton = null;
+	private JFrame frame;
 	/**
 	 * This is the default constructor
 	 */
 	public ProgramWindow() {
 		super();
+		if(frame == null) {
+			frame = this;
+		} else {
+			// TODO throw exception
+		}
 		initialize();
 	}
 
@@ -56,7 +67,8 @@ public class ProgramWindow extends JFrame {
 		//this.setSize(658, 515);
 		this.setJMenuBar(getJMenuBar());
 		this.setContentPane(getJContentPane());
-		this.setTitle("JFrame");
+		this.setTitle("Qpar");
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.pack();
 	}
 
@@ -233,14 +245,10 @@ public class ProgramWindow extends JFrame {
 			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
 			gridBagConstraints2.gridx = 8;
 			gridBagConstraints2.gridy = 0;
-			GridBagConstraints gridBagConstraints = new GridBagConstraints();
-			gridBagConstraints.gridx = 1;
-			gridBagConstraints.gridy = 0;
 			jobsActionPanel = new JPanel();
 			jobsActionPanel.setLayout(new GridBagLayout());
 			jobsActionPanel.setSize(new Dimension(200, 100));
 			jobsActionPanel.add(getNewJobButton(), gridBagConstraints6);
-			jobsActionPanel.add(getEditJobButtonButton(), gridBagConstraints);
 			jobsActionPanel.add(getDeleteJobButton(), gridBagConstraints4);
 			jobsActionPanel.add(getViewJobButton(), gridBagConstraints5);
 			jobsActionPanel.add(getStartJobButton(), gridBagConstraints3);
@@ -258,21 +266,18 @@ public class ProgramWindow extends JFrame {
 		if (newJobButton == null) {
 			newJobButton = new JButton();
 			newJobButton.setText("New Job");
+			newJobButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					Set<String> solvers = Slave.getAllAvaliableSolverIds();
+					Vector<String> heuristics = HeuristicFactory.getAvailableHeuristics();
+					CreateJobDialog dialog = new CreateJobDialog(frame, 
+																 solvers.toArray(new String[solvers.size()]),
+																 heuristics.toArray(new String[heuristics.size()]));
+					dialog.setVisible(true);
+				}
+			});
 		}
 		return newJobButton;
-	}
-
-	/**
-	 * This method initializes editJobButtonButton	
-	 * 	
-	 * @return javax.swing.JButton	
-	 */
-	private JButton getEditJobButtonButton() {
-		if (editJobButtonButton == null) {
-			editJobButtonButton = new JButton();
-			editJobButtonButton.setText("Edit Job");
-		}
-		return editJobButtonButton;
 	}
 
 	/**

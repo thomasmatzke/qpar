@@ -2,7 +2,6 @@ package main.java.messages;
 
 import java.io.Serializable;
 
-import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 
 public class FormulaMessage implements Serializable {

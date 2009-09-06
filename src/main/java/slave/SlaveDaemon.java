@@ -7,12 +7,8 @@ import java.util.Vector;
 
 import javax.jms.JMSException;
 
-import org.apache.activemq.ActiveMQConnection;
-import org.apache.activemq.util.IndentPrinter;
-
-import sun.misc.Signal;
-
 import main.java.ArgumentParser;
+import sun.misc.Signal;
 
 /**
  * Handles communication with MasterDaemon

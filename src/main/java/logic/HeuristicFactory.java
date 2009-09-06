@@ -4,21 +4,17 @@ import java.util.Vector;
 
 public class HeuristicFactory {
 
-	Vector<String> heuristics = null;
+	private static Vector<String> heuristics;
 	
-	HeuristicFactory() {
-		heuristics = new Vector<String>();  
-		//TODO heuristic vektor füllen, vielleicht auch von jeder heuristik
-		// eine instanz erstellen und speichern, fürs erste einfach eine id
-		// "test"
-		heuristics.add("test");
-	}
-	
-	public Vector<String> getAvailableHeuristics() {
+	public static Vector<String> getAvailableHeuristics() {
+		if(heuristics == null) {
+			heuristics = new Vector<String>();
+			heuristics.add("test");
+		}
 		return heuristics;
 	}
 	
-	public Heuristic getHeuristic(String id) {
+	public static Heuristic getHeuristic(String id) {
 		if (id == "test")
 			return new SimpleHeuristic();
 		return null;

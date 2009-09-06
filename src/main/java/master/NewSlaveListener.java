@@ -66,7 +66,11 @@ public class NewSlaveListener implements MessageListener {
 	}
 	
 	public void handleInformationMessage(InformationMessage i) {
-		System.out.println(i.getCores());
+		Slave slave = new Slave();
+		slave.setCores(i.getCores());
+		slave.setToolIds(i.getToolIds());
+		slave.setHostAddress(i.getHostAddress());
+		Slave.addSlave(slave);
 	}
 
 }

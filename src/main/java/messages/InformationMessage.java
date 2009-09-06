@@ -6,7 +6,14 @@ import java.util.Vector;
 public class InformationMessage implements Serializable {
 	private int cores;
 	private Vector<String> toolIds;
+	private String hostAddress;
 	
+	public String getHostAddress() {
+		return hostAddress;
+	}
+	public void setHostAddress(String hostAddress) {
+		this.hostAddress = hostAddress;
+	}
 	public int getCores() {
 		return cores;
 	}

@@ -115,6 +115,12 @@ public class Master {
     	InformationMessage msg = new InformationMessage();
     	msg.setCores(Runtime.getRuntime().availableProcessors());
     	msg.setToolIds(SlaveDaemon.availableSolvers);
+    	try {
+			msg.setHostAddress(InetAddress.getLocalHost().getHostAddress());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	sendObject(msg, p);
     }
     

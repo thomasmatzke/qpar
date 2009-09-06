@@ -14,7 +14,6 @@ import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.util.IndentPrinter;
-import org.apache.commons.logging.impl.SimpleLog;
 
 /**
  * Handles communication with slaves
@@ -30,7 +29,7 @@ public class MasterDaemon {
 	private static ProgramWindow programWindow;
 	private static JobsTableModel jobsModel;
 	
-	private static Vector<Job> jobs;
+	
 	
 	public NewSlaveListener newSlaveListener;
 	@SuppressWarnings("unused")
@@ -48,7 +47,7 @@ public class MasterDaemon {
         	programWindow.setVisible(true);
         }
 	}
-		
+	
 	public static void main(String[] args) {
 		ArgumentParser ap = new ArgumentParser(args);
 		String gui = ap.getOption("gui");
@@ -59,28 +58,13 @@ public class MasterDaemon {
 		}
 		new MasterDaemon();
 	}
-		
-	public static Vector<Job> getJobs() {
-		if(MasterDaemon.jobs == null) {
-			MasterDaemon.jobs = new Vector<Job>();
-		} 
-		return jobs;
-	}
-	
-	public static void addJob(Job job) {
-		MasterDaemon.jobs.add(job);
-		for(int i=0; i <= 3; i++) {
-			MasterDaemon.jobsModel.fireTableCellUpdated(MasterDaemon.jobs.size(), i);
-		}
-	}
 
 	public static synchronized Connection getConnection() {
 		if (connection != null) {
 			return connection;
-		} else {
-			connectToBroker();
-			return connection;
 		}
+		connectToBroker();
+		return connection;
 	}
 
 	public static Session createSession() throws JMSException {		
@@ -121,6 +105,14 @@ public class MasterDaemon {
 		}
 	}
 	
+	public static void setJobsModel(JobsTableModel jobsModel) {
+		MasterDaemon.jobsModel = jobsModel;
+	}
+
+	public static JobsTableModel getJobsModel() {
+		return jobsModel;
+	}
+
 	private static class ShutdownHook extends Thread {
 		public void run() {
 			try {

@@ -20,12 +20,12 @@ public class JobsTableModel extends AbstractTableModel {
 
 	@Override
 	public int getRowCount() {
-		return MasterDaemon.getJobs().size();
+		return Job.getJobs().size();
 	}
 
 	@Override
 	public Object getValueAt(int row, int col) {
-		Job job = MasterDaemon.getJobs().get(row);
+		Job job = Job.getJobs().get(row);
 		switch(col) {
 			case 1: 	return job.getId();
 			case 2: 	return job.getStartedAt();
