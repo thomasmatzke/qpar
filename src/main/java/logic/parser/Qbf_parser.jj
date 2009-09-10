@@ -31,27 +31,68 @@ options {
 PARSER_BEGIN(Qbf_parser)
 package main.java.logic.parser;
 
+import java.util.Vector;
+import java.util.regex.Pattern;
+
 class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@egen*/ {/*@bgen(jjtree)*/
   protected static JJTQbf_parserState jjtree = new JJTQbf_parserState();
 
 /*@egen*/
+
+	private static Vector<Integer> eVars = new Vector<Integer>();
+	private static Vector<Integer> aVars = new Vector<Integer>();
+	private static Vector<Integer> vars = new Vector<Integer>();
+
+// +---
+// | just for testing
+// |
 	public static void main(String args[]) throws ParseException,TokenMgrError {
 		Qbf_parser parser = new Qbf_parser(System.in);
 		try {
 			ASTStart n = parser.Start();
 			Qbf_parserVisitor v = new Qbf_parserDumpVisitor();
-			n.jjtAccept(v, null);		
+			n.jjtAccept(v, null);					
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println(e.getMessage());
 			System.out.println("Something went wrong while parsing.");
 		}		
+			System.out.println("vars: "+vars);
+			System.out.println("eVars: "+eVars);
+			System.out.println("aVars: "+aVars);		
+	}
+// |
+// | end of testing
+// +---
+
+	/**
+	* getter method for variable numbers
+	* @return a Vector<Integer> containing all variable numbers
+	*/	
+	public Vector<Integer> getVars() {
+		return vars;
+	}
+
+	/**
+	* getter method for all variables bound by an exists-quantifier
+	* @return a Vector<Integer> containing variable numbers
+	*/	
+	public Vector<Integer> getEVars() {
+		return eVars;
+	}
+
+	/**
+	* getter method for all variables bound by an all-quantifier
+	* @return a Vector<Integer> containing variable numbers
+	*/	
+	public Vector<Integer> getAVars() {
+		return aVars;
 	}
 }
 PARSER_END(Qbf_parser)
 
 SKIP : {" "}
-SKIP : {"\n" | "\r" | "\r\n" } // Not really necessary, but why not
+SKIP : {"\n" | "\r" | "\r\n" }
 
 TOKEN : { < AND		: "&" > }
 TOKEN : { < OR		: "|" > }
@@ -67,7 +108,7 @@ TOKEN : { < FORALL	: "forall" > }
 
 TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
 
-ASTStart Start()       :
+ASTStart Start()        :
 {/*@bgen(jjtree) Start */
   ASTStart jjtn000 = new ASTStart(JJTSTART);
   boolean jjtc000 = true;
@@ -109,7 +150,7 @@ ASTStart Start()       :
 /*@egen*/
 }
 
-void Quant()       :
+String Quant()        :
 {/*@bgen(jjtree) Quant */
   ASTQuant jjtn000 = new ASTQuant(JJTQUANT);
   boolean jjtc000 = true;
@@ -119,70 +160,98 @@ void Quant()       :
 {/*@bgen(jjtree) Quant */
         try {
 /*@egen*/
-	(
-		<FORALL>
-		|
-		<EXISTS>
-	)/*@bgen(jjtree)*/
-        } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-        }
-/*@egen*/
-}
-
-
-void Op()    :
-{/*@bgen(jjtree) Op */
-  ASTOp jjtn000 = new ASTOp(JJTOP);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-/*@egen*/
-}
-{/*@bgen(jjtree) Op */
-        try {
-/*@egen*//*@bgen(jjtree) #Op(> 2) */
-        {
-          ASTOp jjtn001 = new ASTOp(JJTOP);
-          boolean jjtc001 = true;
-          jjtree.openNodeScope(jjtn001);
-        }
-        try {
-/*@egen*/
-	(
-		<AND>
-		|
-		<OR>
-	)/*@bgen(jjtree)*/
-        } finally {
-          if (jjtc001) {
-            jjtree.closeNodeScope(jjtn001, jjtree.nodeArity() > 2);
-          }
-        }
-/*@egen*/
-	       /*@bgen(jjtree)*/
-        } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-        }
-/*@egen*/
-}
-
-void Expression()            :
-{/*@bgen(jjtree) Expression */
-  ASTExpression jjtn000 = new ASTExpression(JJTEXPRESSION);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-/*@egen*/
-}
-{/*@bgen(jjtree) Expression */
-        try {
-/*@egen*/
-	<VAR>
+	<FORALL>/*@bgen(jjtree)*/
+                 {
+                   jjtree.closeNodeScope(jjtn000, true);
+                   jjtc000 = false;
+                 }
+/*@egen*/ {return "forall";}
 	|
-	<NOT>
+	<EXISTS>/*@bgen(jjtree)*/
+                 {
+                   jjtree.closeNodeScope(jjtn000, true);
+                   jjtc000 = false;
+                 }
+/*@egen*/ {return "exists";}/*@bgen(jjtree)*/
+        } finally {
+          if (jjtc000) {
+            jjtree.closeNodeScope(jjtn000, true);
+          }
+        }
+/*@egen*/
+}
+
+void Op() :
+{
+}
+{
+	And()
+	|
+	Or()
+}
+
+void And()         :
+{/*@bgen(jjtree) #And( 2) */
+  ASTAnd jjtn000 = new ASTAnd(JJTAND);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+/*@egen*/
+}
+{/*@bgen(jjtree) #And( 2) */
+        try {
+/*@egen*/
+	<AND>/*@bgen(jjtree)*/
+        } finally {
+          if (jjtc000) {
+            jjtree.closeNodeScope(jjtn000,  2);
+          }
+        }
+/*@egen*/
+}
+
+void Or()        :
+{/*@bgen(jjtree) #Or( 2) */
+  ASTOr jjtn000 = new ASTOr(JJTOR);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+/*@egen*/
+}
+{/*@bgen(jjtree) #Or( 2) */
+        try {
+/*@egen*/
+	<OR>/*@bgen(jjtree)*/
+        } finally {
+          if (jjtc000) {
+            jjtree.closeNodeScope(jjtn000,  2);
+          }
+        }
+/*@egen*/
+}
+
+void Not()      :
+{/*@bgen(jjtree) Not */
+  ASTNot jjtn000 = new ASTNot(JJTNOT);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+/*@egen*/
+}
+{/*@bgen(jjtree) Not */
+        try {
+/*@egen*/
+	<NOT>/*@bgen(jjtree)*/
+        } finally {
+          if (jjtc000) {
+            jjtree.closeNodeScope(jjtn000, true);
+          }
+        }
+/*@egen*/
+}
+
+void Expression() :
+{
+}
+{
+	Not()
 	Expression()
 	|
 	QSet()
@@ -194,55 +263,23 @@ void Expression()            :
 		Op()
 		Expression()
 	)?
-//	OpExpression()
-	<RP>/*@bgen(jjtree)*/
-        } catch (Throwable jjte000) {
-          if (jjtc000) {
-            jjtree.clearNodeScope(jjtn000);
-            jjtc000 = false;
-          } else {
-            jjtree.popNode();
-          }
-          if (jjte000 instanceof RuntimeException) {
-            throw (RuntimeException)jjte000;
-          }
-          if (jjte000 instanceof ParseException) {
-            throw (ParseException)jjte000;
-          }
-          throw (Error)jjte000;
-        } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-        }
-/*@egen*/
+	<RP>
+	|
+	Var("")
 }
 
-/* Maybe better if that stuff goes directly into the Expression() rule...(?)
-void OpExpression() :
-{
-}
-{
-	Expression()
-	(
-		Op()
-		Expression()
-	)?
-}
-*/
-
-void VarList() :
+void VarList(String s) :
 {
 	Token t;
 }
 {
-	Var()
+	Var(s)
 	(
-		VarList()
+		VarList(s)
 	)?
 }
 
-void Var()      :
+void Var(String s)      :
 {/*@bgen(jjtree) Var */
         ASTVar jjtn000 = new ASTVar(JJTVAR);
         boolean jjtc000 = true;
@@ -254,11 +291,24 @@ void Var()      :
         try {
 /*@egen*/
 	t = <VAR>/*@bgen(jjtree)*/
-                  {
-                    jjtree.closeNodeScope(jjtn000, true);
-                    jjtc000 = false;
-                  }
-/*@egen*/ {jjtn000.setId(t.image);}/*@bgen(jjtree)*/
+        {
+          jjtree.closeNodeScope(jjtn000, true);
+          jjtc000 = false;
+        }
+/*@egen*/
+	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
+		// adding it to a vector containing all variable numbers as well as to a
+		// vector with all exist- or allquantified variables (that's the reason
+		// for the funny String s fallthrough)
+		String varName = t.image.replaceAll("[a-z]*","");
+		int varNumber = Integer.valueOf(varName).intValue();
+		jjtn000.setId(varNumber);
+		vars.add(varNumber);
+		if (s == "exists")
+			eVars.add(varNumber);
+		if (s == "forall")
+			aVars.add(varNumber);
+	}/*@bgen(jjtree)*/
         } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);
@@ -267,14 +317,13 @@ void Var()      :
 /*@egen*/
 }
 
-
-
 void QSet() :
 {
+	String s;
 }
 {
-	Quant()
+	s = Quant()
 	<LSP>
-	VarList()
+	VarList(s)
 	<RSP>
 }

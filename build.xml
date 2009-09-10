@@ -64,4 +64,10 @@
             <classpath refid="QPar.classpath"/>
         </java>
     </target>
+    <target name="foo">
+        <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
+            <arg line="tcp://192.168.1.131/:61616 solvers=qpro"/>
+            <classpath refid="QPar.classpath"/>
+        </java>
+    </target>
 </project>

@@ -47,13 +47,13 @@ public class Qbf_parserDumpVisitor implements Qbf_parserVisitor
     return data;
   }
 
-//  public Object visit(ASTVarList node, Object data) {
-//    System.out.println(indentString() + node);
-//    ++indent;
-//    data = node.childrenAccept(this, data);
-//    --indent;
-//    return data;
-//  }
+  public Object visit(ASTNot node, Object data) {
+    System.out.println(indentString() + node);
+    ++indent;
+    data = node.childrenAccept(this, data);
+    --indent;
+    return data;
+  }
 
   public Object visit(ASTVar node, Object data) {
     System.out.println(indentString() + node);
@@ -63,7 +63,7 @@ public class Qbf_parserDumpVisitor implements Qbf_parserVisitor
     return data;
   }
 
-  public Object visit(ASTExpression node, Object data) {
+  public Object visit(ASTOpNode node, Object data) {
     System.out.println(indentString() + node);
     ++indent;
     data = node.childrenAccept(this, data);
@@ -71,29 +71,19 @@ public class Qbf_parserDumpVisitor implements Qbf_parserVisitor
     return data;
   }
 
-//  public Object visit(ASTMult node, Object data) {
-//    System.out.println(indentString() + node);
-//    ++indent;
-//    data = node.childrenAccept(this, data);
-//    --indent;
-//    return data;
-//  }
+  public Object visit(ASTAnd node, Object data) {
+    System.out.println(indentString() + node);
+    ++indent;
+    data = node.childrenAccept(this, data);
+    --indent;
+    return data;
+  }
 
-//  public Object visit(ASTMyOtherID node, Object data) {
-//    System.out.println(indentString() + node);
-//    ++indent;
-//    data = node.childrenAccept(this, data);
-//    --indent;
-//    return data;
-//  }
-
-//  public Object visit(ASTInteger node, Object data) {
-//    System.out.println(indentString() + node);
-//    ++indent;
-//    data = node.childrenAccept(this, data);
-//    --indent;
-//    return data;
-//  }
+  public Object visit(ASTOr node, Object data) {
+    System.out.println(indentString() + node);
+    ++indent;
+    data = node.childrenAccept(this, data);
+    --indent;
+    return data;
+  }
 }
-
-/*end*/

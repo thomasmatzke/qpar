@@ -3,7 +3,7 @@
 package main.java.logic.parser;
 
 public class ASTVar extends SimpleNode {
-	private String id="";
+	private int id;
 
 	public ASTVar(int id) {
 	super(id);
@@ -14,10 +14,10 @@ public class ASTVar extends SimpleNode {
 	}
 
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
 	}
-	public String getId() {
+	public int getId() {
 		return id;
 	}
 

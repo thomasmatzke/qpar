@@ -5,19 +5,21 @@ public interface Qbf_parserTreeConstants
 {
   public int JJTSTART = 0;
   public int JJTQUANT = 1;
-  public int JJTOP = 2;
-  public int JJTEXPRESSION = 3;
-  public int JJTVOID = 4;
-  public int JJTVAR = 5;
+  public int JJTVOID = 2;
+  public int JJTAND = 3;
+  public int JJTOR = 4;
+  public int JJTNOT = 5;
+  public int JJTVAR = 6;
 
 
   public String[] jjtNodeName = {
     "Start",
     "Quant",
-    "Op",
-    "Expression",
     "void",
+    "And",
+    "Or",
+    "Not",
     "Var",
   };
 }
-/* JavaCC - OriginalChecksum=020d82e6f4daf9d64587f1e3d8529133 (do not edit this line) */
+/* JavaCC - OriginalChecksum=251e1c6d53a5b15a352c7a25ccabdb07 (do not edit this line) */
