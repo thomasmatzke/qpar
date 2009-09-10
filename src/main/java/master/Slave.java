@@ -193,6 +193,7 @@ public class Slave {
 	}
 	
 	private void sendAbortMessage() {
+		AbortMessage msg = new AbortMessage();
 		
 	}
 	
