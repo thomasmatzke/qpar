@@ -1,0 +1,154 @@
+/* Qbf_parser.jj
+ * Parses a quantified boolean formula in QBF Format 1.0
+ * as specified at http://www.qbflib.org/boole.html
+ *
+ *	<input>		::= <exp> EOF
+ *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
+ *				| <LP> <exp> <RP> | <VAR>
+ *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
+ *	<quant> 	::= <EXISTS> | <FORALL>
+ *	<var_list> 	::= <VAR> <var_list> | <VAR>
+ *	<op>		::= <OR> | <AND>
+ *	<NOT>		::= "!"
+ *	<LP>		::= "("
+ *	<RP>		::= ")"
+ *	<LSP>		::= "["
+ *	<RSP>		::= "]"
+ *	<OR>		::= "|"
+ *	<AND>		::= "&"
+ *	<EXISTS> 	::= "exists"
+ *	<FORALL> 	::= "forall"
+ *	<VAR>		::= {A sequence of non-special ASCII characters} 
+ */
+
+options {
+	MULTI = true;
+	VISITOR = true;
+	NODE_DEFAULT_VOID=true;
+}
+
+PARSER_BEGIN(Qbf_parser)
+//package package main.java.logic.parser;
+
+class Qbf_parser {
+	public static void main(String args[]) throws ParseException,TokenMgrError {
+		Qbf_parser parser = new Qbf_parser(System.in);
+		try {
+			ASTStart n = parser.Start();
+			Qbf_parserVisitor v = new Qbf_parserDumpVisitor();
+			n.jjtAccept(v, null);		
+		} catch (Exception e) {
+			System.out.println("Something went wrong while parsing.");
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}		
+	}
+}
+PARSER_END(Qbf_parser)
+
+SKIP : {" "}
+SKIP : {"\n" | "\r" | "\r\n" } // Not really necessary, but why not
+
+TOKEN : { < AND		: "&" > }
+TOKEN : { < OR		: "|" > }
+TOKEN : { < NOT		: "!" > }
+
+TOKEN : { < LP		: "(" > }
+TOKEN : { < RP		: ")" > }
+TOKEN : { < LSP		: "[" > }
+TOKEN : { < RSP		: "]" > }
+
+TOKEN : { < EXISTS	: "exists" > }
+TOKEN : { < FORALL	: "forall" > }
+
+TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
+
+ASTStart Start() #Start:
+{
+}
+{
+/*DEBUG*/ {System.out.println("Starting parsing.");} /*DEBUG*/ 
+	Expression() 
+/*DEBUG*/ {System.out.println("Finished parsing. ");} /*DEBUG*/ 
+	<EOF>
+	{return jjtThis;}
+}
+
+void Quant() #Quant:
+{
+}
+{
+	(
+		<FORALL>
+		|
+		<EXISTS>
+	)
+}
+
+
+void Op() #Op:
+{
+}
+{
+	(
+		<AND>
+		|
+		<OR>
+	)
+	#Op(>2)
+}
+
+void Expression() #Expression:
+{
+}
+{
+	<VAR>
+	|
+	<NOT>
+	Expression()
+	|
+	QSet()
+	Expression()
+	|
+	<LP>
+	Expression()
+	(
+		Op()
+		Expression()
+	)?
+//	OpExpression()
+	<RP>
+}
+
+/* Maybe better if that stuff goes directly into the Expression() rule...(?)
+void OpExpression() :
+{
+}
+{
+	Expression()
+	(
+		Op()
+		Expression()
+	)?
+}
+*/
+
+void VarList() #VarList:
+{
+}
+{
+	<VAR> {}
+	(
+		VarList()
+	)?
+}
+
+void QSet() :
+{
+}
+{
+	Quant()
+	<LSP>
+	VarList()
+	<RSP>
+}
