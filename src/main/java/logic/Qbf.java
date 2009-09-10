@@ -12,7 +12,7 @@ public class Qbf {
 
 	Heuristic h = null;
 	File file;
-	Tree solvingTree = new Tree();
+//	Tree solvingTree = new Tree();
 	private String filename;
 	private String qbfString;
 	private boolean solved		= false;
@@ -82,34 +82,34 @@ public class Qbf {
 	public void mergeQbf(int id, boolean result) {
 
 		resultAvailable.set(id, true);
-		Node op1 = solvingTree.search(id);
-		Node operand = solvingTree.getParentNode(op1);
-		Node op2 = solvingTree.getSibling(op1);
+//		Node op1 = solvingTree.search(id);
+//		Node operand = solvingTree.getParentNode(op1);
+//		Node op2 = solvingTree.getSibling(op1);
 
-		// if a subresult can't be used at the time it arrives at the master,
-		// it will be held back for later use		
-		if ((op2.getKey() != "TRUE") || (op2.getKey() != "FALSE")) {
-			return;
-		} else {
-			resultProcessed.set(op1.getID(), true);
-			resultProcessed.set(op2.getID(), true);
+//		// if a subresult can't be used at the time it arrives at the master,
+//		// it will be held back for later use		
+//		if ((op2.getKey() != "TRUE") || (op2.getKey() != "FALSE")) {
+//			return;
+//		} else {
+//			resultProcessed.set(op1.getID(), true);
+//			resultProcessed.set(op2.getID(), true);
 
-			if (operand.getKey().equals("AND")) {
-				if (result && op2.toBool()) {
-					operand.setKey("TRUE");
-				} else {
-					operand.setKey("FALSE");					
-				}
-			} else if (operand.getKey().equals("OR")) {
-				if (result || op2.toBool()) {
-					operand.setKey("TRUE");
-				} else {
-					operand.setKey("FALSE");					
-				}
-			}
-			solvingTree.remove(op1);
-			solvingTree.remove(op2);
-		}
+//			if (operand.getKey().equals("AND")) {
+//				if (result && op2.toBool()) {
+//					operand.setKey("TRUE");
+//				} else {
+//					operand.setKey("FALSE");					
+//				}
+//			} else if (operand.getKey().equals("OR")) {
+//				if (result || op2.toBool()) {
+//					operand.setKey("TRUE");
+//				} else {
+//					operand.setKey("FALSE");					
+//				}
+//			}
+////			solvingTree.remove(op1);
+////			solvingTree.remove(op2);
+//		}
 		
 	
 		// if a result is merged, set resultProcessed(id) and resultAvailable(id)

@@ -1,6 +1,6 @@
 /* Not automatically created - DO NOT DELETE */
 
-//package package main.java.logic.parser;
+package main.java.logic.parser;
 
 public class Qbf_parserDumpVisitor implements Qbf_parserVisitor
 {
@@ -47,7 +47,15 @@ public class Qbf_parserDumpVisitor implements Qbf_parserVisitor
     return data;
   }
 
-  public Object visit(ASTVarList node, Object data) {
+//  public Object visit(ASTVarList node, Object data) {
+//    System.out.println(indentString() + node);
+//    ++indent;
+//    data = node.childrenAccept(this, data);
+//    --indent;
+//    return data;
+//  }
+
+  public Object visit(ASTVar node, Object data) {
     System.out.println(indentString() + node);
     ++indent;
     data = node.childrenAccept(this, data);

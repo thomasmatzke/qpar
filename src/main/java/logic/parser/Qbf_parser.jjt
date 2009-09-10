@@ -28,7 +28,7 @@ options {
 }
 
 PARSER_BEGIN(Qbf_parser)
-//package package main.java.logic.parser;
+package main.java.logic.parser;
 
 class Qbf_parser {
 	public static void main(String args[]) throws ParseException,TokenMgrError {
@@ -38,9 +38,9 @@ class Qbf_parser {
 			Qbf_parserVisitor v = new Qbf_parserDumpVisitor();
 			n.jjtAccept(v, null);		
 		} catch (Exception e) {
-			System.out.println("Something went wrong while parsing.");
-			System.out.println(e.getMessage());
 			e.printStackTrace();
+			System.out.println(e.getMessage());
+			System.out.println("Something went wrong while parsing.");
 		}		
 	}
 }
@@ -133,15 +133,26 @@ void OpExpression() :
 }
 */
 
-void VarList() #VarList:
+void VarList() :
 {
+	Token t;
 }
 {
-	<VAR> {}
+	Var()
 	(
 		VarList()
 	)?
 }
+
+void Var() #Var :
+{
+	Token t;
+}
+{
+	t = <VAR> {jjtThis.setId(t.image);}
+}
+
+
 
 void QSet() :
 {

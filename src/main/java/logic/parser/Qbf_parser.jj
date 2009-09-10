@@ -29,12 +29,12 @@ options {
 }
 
 PARSER_BEGIN(Qbf_parser)
+package main.java.logic.parser;
 
 class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@egen*/ {/*@bgen(jjtree)*/
   protected static JJTQbf_parserState jjtree = new JJTQbf_parserState();
 
 /*@egen*/
-
 	public static void main(String args[]) throws ParseException,TokenMgrError {
 		Qbf_parser parser = new Qbf_parser(System.in);
 		try {
@@ -42,9 +42,9 @@ class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@egen*/ {/*
 			Qbf_parserVisitor v = new Qbf_parserDumpVisitor();
 			n.jjtAccept(v, null);		
 		} catch (Exception e) {
-			System.out.println("Something went wrong while parsing.");
-			System.out.println(e.getMessage());
 			e.printStackTrace();
+			System.out.println(e.getMessage());
+			System.out.println("Something went wrong while parsing.");
 		}		
 	}
 }
@@ -231,34 +231,34 @@ void OpExpression() :
 }
 */
 
-void VarList()         :
-{/*@bgen(jjtree) VarList */
-  ASTVarList jjtn000 = new ASTVarList(JJTVARLIST);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-/*@egen*/
+void VarList() :
+{
+	Token t;
 }
-{/*@bgen(jjtree) VarList */
-        try {
-/*@egen*/
-	<VAR> {}
+{
+	Var()
 	(
 		VarList()
-	)?/*@bgen(jjtree)*/
-        } catch (Throwable jjte000) {
-          if (jjtc000) {
-            jjtree.clearNodeScope(jjtn000);
-            jjtc000 = false;
-          } else {
-            jjtree.popNode();
-          }
-          if (jjte000 instanceof RuntimeException) {
-            throw (RuntimeException)jjte000;
-          }
-          if (jjte000 instanceof ParseException) {
-            throw (ParseException)jjte000;
-          }
-          throw (Error)jjte000;
+	)?
+}
+
+void Var()      :
+{/*@bgen(jjtree) Var */
+        ASTVar jjtn000 = new ASTVar(JJTVAR);
+        boolean jjtc000 = true;
+        jjtree.openNodeScope(jjtn000);
+/*@egen*/
+	Token t;
+}
+{/*@bgen(jjtree) Var */
+        try {
+/*@egen*/
+	t = <VAR>/*@bgen(jjtree)*/
+                  {
+                    jjtree.closeNodeScope(jjtn000, true);
+                    jjtc000 = false;
+                  }
+/*@egen*/ {jjtn000.setId(t.image);}/*@bgen(jjtree)*/
         } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);
@@ -266,6 +266,8 @@ void VarList()         :
         }
 /*@egen*/
 }
+
+
 
 void QSet() :
 {
