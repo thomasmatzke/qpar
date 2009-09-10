@@ -1,9 +1,9 @@
-package main.java.slave;
+package main.java.slave.solver;
 
 import java.util.Hashtable;
 import main.java.logic.TransmissionQbf;
 
-public interface Tool extends Runnable{
+public interface Solver extends Runnable{
 	
 	public static Hashtable<String, Class> idToToolMap = new Hashtable<String, Class>();
 	

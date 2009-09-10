@@ -7,7 +7,7 @@ import main.java.master.Slave;
 
 public class SlavesTableModel extends AbstractTableModel {
 
-	private String[] columnNames = {" ", "Hostname", "Cores", "Current Job Id"};
+	private String[] columnNames = {" ", "Hostname", "Cores", "Current Jobs"};
 	
 	public String getColumnName(int col) {
         return columnNames[col];

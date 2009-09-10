@@ -204,6 +204,7 @@ public class ProgramWindow extends JFrame {
 	private JTable getSlavesTable() {
 		if (slavesTable == null) {
 			slavesTable = new JTable();
+			slavesTable.setModel(new SlavesTableModel());
 			slavesTable.setFillsViewportHeight(true);
 		}
 		return slavesTable;

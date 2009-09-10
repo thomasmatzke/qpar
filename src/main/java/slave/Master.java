@@ -25,6 +25,8 @@ import main.java.messages.KillMessage;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
 import main.java.messages.SlaveShutdownMessage;
+import main.java.slave.solver.QProSolver;
+import main.java.slave.solver.Solver;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
@@ -173,17 +175,17 @@ public class Master {
 	}
 	
 	private void handleAbortMessage(AbortMessage m) {
-		Tool thread = SlaveDaemon.getJobs().get(m.getJobId());
+		Solver thread = SlaveDaemon.getThreads().get(m.getQbfId());
 		thread.kill();
-		SlaveDaemon.getJobs().remove(m.getJobId());
-		this.sendAbortConfirmMessage(m.getJobId());
+		SlaveDaemon.getThreads().remove(m.getQbfId());
+		this.sendAbortConfirmMessage(m.getQbfId());
 	}
 	
 	private void handleFormulaMessage(FormulaMessage m) {
-		QProTool tool = new QProTool();
-		tool.setTransmissionQbf(m.getFormula());
-		new Thread(tool).start();
-		SlaveDaemon.getJobs().put(m.getJobId(), tool);
+		QProSolver solver = new QProSolver();
+		solver.setTransmissionQbf(m.getFormula());
+		new Thread(solver).start();
+		SlaveDaemon.addThread(m.getFormula().getId(), solver);
 	}
 	
 	private void handleInformationRequestMessage(InformationRequestMessage m) {
@@ -191,16 +193,17 @@ public class Master {
 	}
 	
 	private void handleKillMessage(KillMessage m) {
-		Hashtable<String, Tool> threads = SlaveDaemon.getJobs();
-		for(Tool t : threads.values()) {
+		Hashtable<String, Solver> threads = SlaveDaemon.getThreads();
+		for(Solver t : threads.values()) {
 			t.kill();
 		}
-		Vector<String> job_ids = new Vector<String>();
-		for(String t : SlaveDaemon.getJobs().keySet()) {
-			job_ids.add(t);
+		Vector<String> qbf_ids = new Vector<String>();
+		for(String t : SlaveDaemon.getThreads().keySet()) {
+			qbf_ids.add(t);
 		}
-		this.sendShutdownMessage("Kill requested by Masterserver", job_ids);
+		this.sendShutdownMessage("Kill requested by Masterserver", qbf_ids);
 		this.disconnect();
+		SlaveDaemon.shutdown();
 	}
 	
 }

@@ -16,6 +16,7 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
+import javax.swing.table.AbstractTableModel;
 
 import main.java.logic.TransmissionQbf;
 import main.java.messages.AbortConfirmMessage;
@@ -27,9 +28,9 @@ import main.java.messages.KillMessage;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
 import main.java.messages.SlaveShutdownMessage;
-import main.java.slave.QProTool;
 import main.java.slave.SlaveDaemon;
-import main.java.slave.Tool;
+import main.java.slave.solver.QProSolver;
+import main.java.slave.solver.Solver;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
@@ -48,10 +49,18 @@ public class Slave {
     private MessageProducer producer_snd;
     private MessageConsumer consumer_rcv;
     private boolean running;
-	
     private static Vector<Slave> slaves = new Vector<Slave>();
-    
-    public static Set<String> getAllAvaliableSolverIds() {
+	private static AbstractTableModel tableModel;
+	
+    public AbstractTableModel getTableModel() {
+		return tableModel;
+	}
+
+	public void setTableModel(AbstractTableModel tableModel) {
+		this.tableModel = tableModel;
+	}
+
+	public static Set<String> getAllAvaliableSolverIds() {
     	Set<String> allSolvers = new HashSet<String>();
     	for(Slave slave : slaves) {
     		for(String id : slave.getToolIds()) {
@@ -61,8 +70,18 @@ public class Slave {
     	return allSolvers;
     }
     
+	public static void removeSlave(Slave slave) {
+		if(tableModel != null) {
+			tableModel.fireTableDataChanged();
+		}
+    	slaves.remove(slave);
+	}
+	
     public static void addSlave(Slave slave) {
-		slaves.add(slave);
+		if(tableModel != null) {
+			tableModel.fireTableDataChanged();
+		}
+    	slaves.add(slave);
 	}
 	
 	public static Vector<Slave> getSlaves() {
@@ -194,12 +213,10 @@ public class Slave {
 	
 	private void sendAbortMessage() {
 		AbortMessage msg = new AbortMessage();
-		
 	}
 	
 	private void sendFormulaMessage(String jobId, TransmissionQbf tqbf) {
 		FormulaMessage msg = new FormulaMessage();
-		msg.setJobId(jobId);
 		msg.setFormula(tqbf);
 	}
 	

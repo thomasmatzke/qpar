@@ -8,6 +8,7 @@ import java.util.Vector;
 import javax.jms.JMSException;
 
 import main.java.ArgumentParser;
+import main.java.slave.solver.Solver;
 import sun.misc.Signal;
 
 /**
@@ -20,16 +21,8 @@ public class SlaveDaemon {
 	public static Vector<String> availableSolvers = new Vector<String>();
 	public static String master_str;
 	public static Master master;
-	private static Hashtable<String, Tool> jobs = new Hashtable<String, Tool>();
+	private static Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 		
-	public static Hashtable<String, Tool> getJobs() {
-		return jobs;
-	}
-
-	public static void setJobs(Hashtable<String, Tool> jobs) {
-		SlaveDaemon.jobs = jobs;
-	}
-
 	public static void main(String[] args) {
 		SignalHandler handler = new SignalHandler();
 		Signal.handle(new Signal("INT"), handler);
@@ -76,6 +69,14 @@ public class SlaveDaemon {
 	public static void usage() {
 		System.err.println("Usage: java main.java.Slave MASTER (ex. tcp://localhost:61616)");
 		System.exit(-1);
+	}
+
+	public static Hashtable<String, Solver> getThreads() {
+		return threads;
+	}
+	
+	public static void addThread(String qbfId, Solver solver) {
+		threads.put(qbfId, solver);
 	}
 	
 }

@@ -3,6 +3,8 @@ package main.java.master;
 import java.util.Date;
 import java.util.Vector;
 
+import javax.swing.table.AbstractTableModel;
+
 import main.java.logic.Qbf;
 
 public class Job {
@@ -17,6 +19,15 @@ public class Job {
 	private String id;
 	private static int idCounter = 0;
 	private static Vector<Job> jobs;
+	private AbstractTableModel tableModel;
+	
+	public AbstractTableModel getTableModel() {
+		return tableModel;
+	}
+
+	public void setTableModel(AbstractTableModel tableModel) {
+		this.tableModel = tableModel;
+	}
 
 	public static String allocateJobId() {
 		idCounter++;

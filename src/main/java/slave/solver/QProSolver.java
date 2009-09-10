@@ -1,4 +1,4 @@
-package main.java.slave;
+package main.java.slave.solver;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 
 import main.java.logic.TransmissionQbf;
 
-public class QProTool implements Tool {
+public class QProSolver implements Solver {
 
 	public static final String toolId = "qpro";
 	private Boolean result = null;
