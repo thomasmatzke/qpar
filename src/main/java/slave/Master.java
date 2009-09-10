@@ -50,8 +50,8 @@ public class Master {
         connection = connectionFactory.createConnection();
         connection.start();
         session = connection.createSession(false, 1);
-        destination_rcv = session.createQueue("TO." + InetAddress.getLocalHost().getHostAddress());
-        destination_snd = session.createQueue("FROM." + InetAddress.getLocalHost().getHostAddress());
+        destination_rcv = session.createQueue("TO." + InetAddress.getLocalHost().getHostName());
+        destination_snd = session.createQueue("FROM." + InetAddress.getLocalHost().getHostName());
         destination_reg = session.createQueue("SLAVES.REGISTER.HERE");
         producer_snd = session.createProducer(destination_snd);
         producer_reg = session.createProducer(destination_reg);
@@ -118,7 +118,7 @@ public class Master {
     	msg.setCores(Runtime.getRuntime().availableProcessors());
     	msg.setToolIds(SlaveDaemon.availableSolvers);
     	try {
-			msg.setHostAddress(InetAddress.getLocalHost().getHostAddress());
+			msg.setHostAddress(InetAddress.getLocalHost().getHostName());
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

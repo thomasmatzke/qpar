@@ -52,12 +52,12 @@ public class Slave {
     private static Vector<Slave> slaves = new Vector<Slave>();
 	private static AbstractTableModel tableModel;
 	
-    public AbstractTableModel getTableModel() {
+    public static AbstractTableModel getTableModel() {
 		return tableModel;
 	}
 
-	public void setTableModel(AbstractTableModel tableModel) {
-		this.tableModel = tableModel;
+	public static void setTableModel(AbstractTableModel tableModel) {
+		Slave.tableModel = tableModel;
 	}
 
 	public static Set<String> getAllAvaliableSolverIds() {
