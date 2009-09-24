@@ -78,8 +78,9 @@ public class Qbf {
 	* the variables.
 	* @param id Identifier of a certain subformula (= index in the subQbfs List)
 	* @param result The result of the evaluated subformula
+	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
-	public void mergeQbf(int id, boolean result) {
+	public boolean mergeQbf(int id, boolean result) {
 
 		resultAvailable.set(id, true);
 //		Node op1 = solvingTree.search(id);
@@ -116,6 +117,7 @@ public class Qbf {
 		// to TRUE and qbfResult(id) to result
 	
 		// if the formula is solved, set solved to TRUE
+		return false;
 	}
 
 	/**
