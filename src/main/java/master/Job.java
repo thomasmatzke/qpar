@@ -1,11 +1,13 @@
 package main.java.master;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
 import main.java.logic.Qbf;
+import main.java.logic.TransmissionQbf;
 
 public class Job {
 
@@ -21,7 +23,9 @@ public class Job {
 	private static Vector<Job> jobs = new Vector<Job>();
 	private static AbstractTableModel tableModel;
 	private String status;
-		
+	private List<TransmissionQbf> subformulas;
+	
+	
 	private void setStatus(String status) {
 		this.status = status;
 	}
@@ -136,8 +140,14 @@ public class Job {
 	}
 
 	public void start() {
+		this.startedAt = new Date();
 		this.formula = new Qbf(inputFileString);
+		int availableCores = Slave.getCoresForSolver(this.solver);
+		this.subformulas = formula.splitQbf(availableCores);
 		
+		
+		
+		tableModel.fireTableDataChanged();
 	}
 
 	public void abort() {

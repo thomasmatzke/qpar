@@ -63,7 +63,7 @@ public class Qbf {
 	* @param n Number of subformulas to return
 	* @return A list of n strings, each a subformula of the whole QBF
 	*/
-	List<String> splitQbf(int n) {
+	public List<TransmissionQbf> splitQbf(int n) {
 		for (int i = 0; i < n; i++) {
 			qbfResults.add(i, false);
 			resultAvailable.add(i, false);
@@ -73,7 +73,8 @@ public class Qbf {
 			
 		}
 		// do stuff
-		return subQbfs;
+		// TODO: return testdata until this works
+		return null;
 	}
 
 	/**

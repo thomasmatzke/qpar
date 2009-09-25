@@ -52,6 +52,28 @@ public class Slave implements MessageListener {
 		
 	}
 
+	public static Vector<Slave> getSlavesForSolver(String solverId) {
+		Vector<Slave> slavesWithSolver = new Vector<Slave>();
+		
+		for (Slave slave : slaves) {
+			if(slave.getToolIds().contains(solverId)) {
+				slavesWithSolver.add(slave);
+			}
+		}
+		
+		return slavesWithSolver;
+	}
+	
+	public static int getCoresForSolver(String solverId) {
+		int cores = 0;
+		for (Slave slave : slaves) {
+			if(slave.getToolIds().contains(solverId)) {
+				cores += slave.getCores();
+			}
+		}
+		return cores;
+	}
+	
 	public static Slave create(String hostName) throws JMSException {
 		Slave instance = new Slave();
 		instance.start();
