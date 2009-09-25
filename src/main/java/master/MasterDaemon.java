@@ -102,7 +102,7 @@ public class MasterDaemon {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static class ShutdownHook extends Thread {
 		@Override
 		public void run() {

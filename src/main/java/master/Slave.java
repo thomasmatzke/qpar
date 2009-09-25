@@ -49,31 +49,31 @@ public class Slave implements MessageListener {
 	private Map<String, TransmissionQbf> runningComputations = new HashMap<String, TransmissionQbf>();
 
 	protected Slave() throws JMSException {
-		
+
 	}
 
 	public static Vector<Slave> getSlavesForSolver(String solverId) {
 		Vector<Slave> slavesWithSolver = new Vector<Slave>();
-		
+
 		for (Slave slave : slaves) {
-			if(slave.getToolIds().contains(solverId)) {
+			if (slave.getToolIds().contains(solverId)) {
 				slavesWithSolver.add(slave);
 			}
 		}
-		
+
 		return slavesWithSolver;
 	}
-	
+
 	public static int getCoresForSolver(String solverId) {
 		int cores = 0;
 		for (Slave slave : slaves) {
-			if(slave.getToolIds().contains(solverId)) {
+			if (slave.getToolIds().contains(solverId)) {
 				cores += slave.getCores();
 			}
 		}
 		return cores;
 	}
-	
+
 	public static Slave create(String hostName) throws JMSException {
 		Slave instance = new Slave();
 		instance.start();
@@ -138,8 +138,8 @@ public class Slave implements MessageListener {
 		Slave.removeSlave(this);
 	}
 
-	public void computeFormula(TransmissionQbf tqbf) {
-		this.sendFormulaMessage(tqbf);
+	public void computeFormula(TransmissionQbf tqbf, String jobId) {
+		this.sendFormulaMessage(tqbf, jobId);
 		this.runningComputations.put(tqbf.getId(), tqbf);
 	}
 
@@ -178,7 +178,7 @@ public class Slave implements MessageListener {
 		producer_snd = session.createProducer(destination_snd);
 		producer_snd.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 		consumer_rcv = session.createConsumer(destination_rcv);
-		
+
 		this.running = true;
 		Message msg = null;
 		while (running) {
@@ -256,7 +256,7 @@ public class Slave implements MessageListener {
 		this.setHostName(m.getHostName());
 		this.setCores(m.getCores());
 		this.setToolIds(m.getToolIds());
-		if(tableModel != null) {
+		if (tableModel != null) {
 			tableModel.fireTableDataChanged();
 		}
 	}
@@ -264,23 +264,25 @@ public class Slave implements MessageListener {
 	private void handleAbortConfirmMessage(AbortConfirmMessage m) {
 	}
 
-	private void sendAbortMessage(String tqbfId) {
+	public void sendAbortMessage(String tqbfId) {
 		AbortMessage msg = new AbortMessage();
 		msg.setQbfId(tqbfId);
 		sendObject(msg);
 	}
 
-	private void sendFormulaMessage(TransmissionQbf tqbf) {
+	public void sendFormulaMessage(TransmissionQbf tqbf, String jobId) {
 		FormulaMessage msg = new FormulaMessage();
 		msg.setFormula(tqbf);
+		msg.setJobId(jobId);
+		sendObject(msg);
 	}
 
-	private void sendInformationRequestMessage() {
+	public void sendInformationRequestMessage() {
 		InformationRequestMessage msg = new InformationRequestMessage();
 		sendObject(msg);
 	}
 
-	private void sendKillMessage(String reason) {
+	public void sendKillMessage(String reason) {
 		KillMessage msg = new KillMessage();
 		msg.setReason(reason);
 		sendObject(msg);

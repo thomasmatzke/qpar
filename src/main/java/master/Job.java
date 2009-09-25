@@ -24,16 +24,15 @@ public class Job {
 	private static AbstractTableModel tableModel;
 	private String status;
 	private List<TransmissionQbf> subformulas;
-	
-	
-	private void setStatus(String status) {
+
+	public void setStatus(String status) {
 		this.status = status;
 	}
 
 	public String getStatus() {
 		return status;
 	}
-		
+
 	public static AbstractTableModel getTableModel() {
 		return tableModel;
 	}
@@ -58,8 +57,6 @@ public class Job {
 		job.setStatus("Not started");
 		addJob(job);
 	}
-
-	
 
 	public static Vector<Job> getJobs() {
 		if (jobs == null) {
@@ -144,14 +141,25 @@ public class Job {
 		this.formula = new Qbf(inputFileString);
 		int availableCores = Slave.getCoresForSolver(this.solver);
 		this.subformulas = formula.splitQbf(availableCores);
+		List<Slave> slaves = Slave.getSlavesForSolver(this.solver);
 		
-		
+		for(int i = 0; i < subformulas.size(); i++) {
+			Slave designatedSlave = slaves.get(i % slaves.size());
+			subformulas.get(i).setStatus("computing");
+			designatedSlave.computeFormula(subformulas.get(i), this.getId());
+		}
 		
 		tableModel.fireTableDataChanged();
 	}
 
 	public void abort() {
+		for(TransmissionQbf tqbf : subformulas) {
+			if(tqbf.getStatus().equals("computing")) {
+				//TODO
+			}
+		}
 		
+		tableModel.fireTableDataChanged();
 	}
-	
+
 }
