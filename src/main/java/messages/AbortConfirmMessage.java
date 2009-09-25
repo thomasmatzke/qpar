@@ -5,17 +5,17 @@ import java.io.Serializable;
 /**
  * 
  * @author thomasm
- *
+ * 
  */
 public class AbortConfirmMessage implements Serializable {
-	private String jobId;
+	private String tQbfId;
 
-	public String getJobId() {
-		return jobId;
+	public String getTqbfId() {
+		return tQbfId;
 	}
 
-	public void setJobId(String jobId) {
-		this.jobId = jobId;
+	public void setTqbfId(String tqbfId) {
+		this.tQbfId = tqbfId;
 	}
 
 }

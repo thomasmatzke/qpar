@@ -59,6 +59,7 @@ public class QProSolver implements Solver {
 		
 	}
 	
+	@Override
 	protected void finalize() throws Throwable {
 		cleanup();
 	}

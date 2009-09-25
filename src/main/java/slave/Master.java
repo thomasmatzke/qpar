@@ -105,7 +105,7 @@ public class Master {
     
     public void sendAbortConfirmMessage(String jobId) {
     	AbortConfirmMessage msg  = new AbortConfirmMessage();
-    	msg.setJobId(jobId);
+    	msg.setTqbfId(jobId);
     	sendObject(msg, producer_snd);
     }
     
@@ -118,7 +118,7 @@ public class Master {
     	msg.setCores(Runtime.getRuntime().availableProcessors());
     	msg.setToolIds(SlaveDaemon.availableSolvers);
     	try {
-			msg.setHostAddress(InetAddress.getLocalHost().getHostName());
+			msg.getHostName(InetAddress.getLocalHost().getHostName());
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

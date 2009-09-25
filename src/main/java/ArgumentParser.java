@@ -1,6 +1,7 @@
 package main.java;
 
-import java.util.*;
+import java.util.Hashtable;
+import java.util.Vector;
 public class ArgumentParser {
 	
 	private Vector<String> params = new Vector<String>();
@@ -28,12 +29,12 @@ args[i].substring(1);
     }
 
     public String getOption(String opt) {
-        return (String) options.get(opt.toLowerCase());
+        return options.get(opt.toLowerCase());
     }
 
     public String nextParam() {
         if (paramIndex < params.size()) {
-            return (String) params.elementAt(paramIndex++);
+            return params.elementAt(paramIndex++);
         }
         return null;
     }

@@ -1,25 +1,27 @@
 package main.java.master.gui;
 
 import java.awt.BorderLayout;
-import javax.swing.JPanel;
-import javax.swing.JFrame;
 import java.awt.Dimension;
-import javax.swing.JMenu;
-import javax.swing.JTabbedPane;
-import java.awt.GridBagLayout;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JScrollPane;
 import java.awt.GridBagConstraints;
-import javax.swing.JTable;
-import javax.swing.JButton;
-
-import main.java.logic.HeuristicFactory;
-import main.java.master.Slave;
-
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.Set;
 import java.util.Vector;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+
+import main.java.logic.HeuristicFactory;
+import main.java.master.Job;
+import main.java.master.Slave;
 
 public class ProgramWindow extends JFrame {
 
@@ -45,12 +47,13 @@ public class ProgramWindow extends JFrame {
 	private JButton killSlaveButton = null;
 	private JButton showSlaveInfoButton = null;
 	private JFrame frame;
+
 	/**
 	 * This is the default constructor
 	 */
 	public ProgramWindow() {
 		super();
-		if(frame == null) {
+		if (frame == null) {
 			frame = this;
 		} else {
 			// TODO throw exception
@@ -64,7 +67,7 @@ public class ProgramWindow extends JFrame {
 	 * @return void
 	 */
 	private void initialize() {
-		//this.setSize(658, 515);
+		// this.setSize(658, 515);
 		this.setJMenuBar(getJMenuBar());
 		this.setContentPane(getJContentPane());
 		this.setTitle("Qpar");
@@ -87,9 +90,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes jTabbedPane	
-	 * 	
-	 * @return javax.swing.JTabbedPane	
+	 * This method initializes jTabbedPane
+	 * 
+	 * @return javax.swing.JTabbedPane
 	 */
 	private JTabbedPane getJTabbedPane() {
 		if (jTabbedPane == null) {
@@ -101,9 +104,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes jobsPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes jobsPanel
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getJobsPanel() {
 		if (jobsPanel == null) {
@@ -116,9 +119,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes slavesPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes slavesPanel
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getSlavesPanel() {
 		if (slavesPanel == null) {
@@ -131,10 +134,11 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes jMenuBar	
-	 * 	
-	 * @return javax.swing.JMenuBar	
+	 * This method initializes jMenuBar
+	 * 
+	 * @return javax.swing.JMenuBar
 	 */
+	@Override
 	public JMenuBar getJMenuBar() {
 		if (jMenuBar == null) {
 			jMenuBar = new JMenuBar();
@@ -144,9 +148,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes jMenu	
-	 * 	
-	 * @return javax.swing.JMenu	
+	 * This method initializes jMenu
+	 * 
+	 * @return javax.swing.JMenu
 	 */
 	private JMenu getJMenu() {
 		if (jMenu == null) {
@@ -158,9 +162,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes quitMenuItem	
-	 * 	
-	 * @return javax.swing.JMenuItem	
+	 * This method initializes quitMenuItem
+	 * 
+	 * @return javax.swing.JMenuItem
 	 */
 	private JMenuItem getQuitMenuItem() {
 		if (quitMenuItem == null) {
@@ -171,9 +175,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes jobsScrollPane	
-	 * 	
-	 * @return javax.swing.JScrollPane	
+	 * This method initializes jobsScrollPane
+	 * 
+	 * @return javax.swing.JScrollPane
 	 */
 	private JScrollPane getJobsScrollPane() {
 		if (jobsScrollPane == null) {
@@ -184,9 +188,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes slavesScrollPane	
-	 * 	
-	 * @return javax.swing.JScrollPane	
+	 * This method initializes slavesScrollPane
+	 * 
+	 * @return javax.swing.JScrollPane
 	 */
 	private JScrollPane getSlavesScrollPane() {
 		if (slavesScrollPane == null) {
@@ -197,9 +201,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes slavesTable	
-	 * 	
-	 * @return javax.swing.JTable	
+	 * This method initializes slavesTable
+	 * 
+	 * @return javax.swing.JTable
 	 */
 	private JTable getSlavesTable() {
 		if (slavesTable == null) {
@@ -207,28 +211,33 @@ public class ProgramWindow extends JFrame {
 			SlavesTableModel model = new SlavesTableModel();
 			slavesTable.setModel(model);
 			slavesTable.setFillsViewportHeight(true);
+			slavesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			Slave.setTableModel(model);
 		}
 		return slavesTable;
 	}
 
 	/**
-	 * This method initializes jobsTable	
-	 * 	
-	 * @return javax.swing.JTable	
+	 * This method initializes jobsTable
+	 * 
+	 * @return javax.swing.JTable
 	 */
 	private JTable getJobsTable() {
 		if (jobsTable == null) {
 			jobsTable = new JTable();
 			jobsTable.setFillsViewportHeight(true);
+			JobsTableModel model = new JobsTableModel();
+			jobsTable.setModel(model);
+			jobsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			Job.setTableModel(model);
 		}
 		return jobsTable;
 	}
 
 	/**
-	 * This method initializes jobsActionPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes jobsActionPanel
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getJobsActionPanel() {
 		if (jobsActionPanel == null) {
@@ -261,9 +270,9 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes newJobButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes newJobButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getNewJobButton() {
 		if (newJobButton == null) {
@@ -272,10 +281,11 @@ public class ProgramWindow extends JFrame {
 			newJobButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					Set<String> solvers = Slave.getAllAvaliableSolverIds();
-					Vector<String> heuristics = HeuristicFactory.getAvailableHeuristics();
-					CreateJobDialog dialog = new CreateJobDialog(frame, 
-																 solvers.toArray(new String[solvers.size()]),
-																 heuristics.toArray(new String[heuristics.size()]));
+					Vector<String> heuristics = HeuristicFactory
+							.getAvailableHeuristics();
+					CreateJobDialog dialog = new CreateJobDialog(frame, solvers
+							.toArray(new String[solvers.size()]), heuristics
+							.toArray(new String[heuristics.size()]));
 					dialog.setVisible(true);
 				}
 			});
@@ -284,89 +294,129 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes deleteJobButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes deleteJobButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getDeleteJobButton() {
 		if (deleteJobButton == null) {
 			deleteJobButton = new JButton();
 			deleteJobButton.setText("Delete Job");
+			deleteJobButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					System.out.println("actionPerformed()"); // TODO Auto-generated Event stub actionPerformed()
+				}
+			});
 		}
 		return deleteJobButton;
 	}
 
 	/**
-	 * This method initializes viewJobButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes viewJobButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getViewJobButton() {
 		if (viewJobButton == null) {
 			viewJobButton = new JButton();
 			viewJobButton.setText("View Job");
+			viewJobButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					System.out.println("actionPerformed()"); // TODO Auto-generated Event stub actionPerformed()
+				}
+			});
 		}
 		return viewJobButton;
 	}
 
 	/**
-	 * This method initializes startJobButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes startJobButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getStartJobButton() {
 		if (startJobButton == null) {
 			startJobButton = new JButton();
 			startJobButton.setText("Start Job");
+			startJobButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					System.out.println("actionPerformed()"); // TODO Auto-generated Event stub actionPerformed()
+				}
+			});
 		}
 		return startJobButton;
 	}
+	
+	private void startSelectedJob() {
+		int row = getJobsTable().getSelectedRow();
+		Job job = Job.getJobs().get(row);
+		job.start();
+	}
 
 	/**
-	 * This method initializes abortJobButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes abortJobButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getAbortJobButton() {
 		if (abortJobButton == null) {
 			abortJobButton = new JButton();
 			abortJobButton.setText("Abort Job");
+			abortJobButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					System.out.println("actionPerformed()"); // TODO Auto-generated Event stub actionPerformed()
+				}
+			});
 		}
 		return abortJobButton;
 	}
 
 	/**
-	 * This method initializes slavesActionPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes slavesActionPanel
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getSlavesActionPanel() {
 		if (slavesActionPanel == null) {
 			slavesActionPanel = new JPanel();
 			slavesActionPanel.setLayout(new GridBagLayout());
-			slavesActionPanel.add(getKillSlaveButton(), new GridBagConstraints());
-			slavesActionPanel.add(getShowSlaveInfoButton(), new GridBagConstraints());
+			slavesActionPanel.add(getKillSlaveButton(),
+					new GridBagConstraints());
+			slavesActionPanel.add(getShowSlaveInfoButton(),
+					new GridBagConstraints());
 		}
 		return slavesActionPanel;
 	}
 
 	/**
-	 * This method initializes killSlaveButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes killSlaveButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getKillSlaveButton() {
 		if (killSlaveButton == null) {
 			killSlaveButton = new JButton();
 			killSlaveButton.setText("Kill Slave");
+			killSlaveButton
+					.addActionListener(new java.awt.event.ActionListener() {
+						public void actionPerformed(java.awt.event.ActionEvent e) {
+							killSelectedSlave();
+						}
+					});
 		}
 		return killSlaveButton;
 	}
 
+	private void killSelectedSlave() {
+		int row = getSlavesTable().getSelectedRow();
+		Slave slave = Slave.getSlaves().get(row);
+		slave.kill("User command");
+	}
+
 	/**
-	 * This method initializes showSlaveInfoButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes showSlaveInfoButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getShowSlaveInfoButton() {
 		if (showSlaveInfoButton == null) {
@@ -376,4 +426,4 @@ public class ProgramWindow extends JFrame {
 		return showSlaveInfoButton;
 	}
 
-}  //  @jve:decl-index=0:visual-constraint="68,15"
+}

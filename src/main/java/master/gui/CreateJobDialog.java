@@ -4,16 +4,18 @@ import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.File;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import main.java.master.Job;
-import main.java.master.MasterDaemon;
 
 public class CreateJobDialog extends JDialog {
 
@@ -34,6 +36,7 @@ public class CreateJobDialog extends JDialog {
 	private JButton cancelButton = null;
 	private String[] solvers;
 	private String[] heuristics;
+
 	/**
 	 * @param owner
 	 */
@@ -58,9 +61,9 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes dialogContentPane	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes dialogContentPane
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getDialogContentPane() {
 		if (dialogContentPane == null) {
@@ -136,7 +139,8 @@ public class CreateJobDialog extends JDialog {
 			dialogContentPane.add(heuristicLabel, gridBagConstraints3);
 			dialogContentPane.add(getFormulaTextField(), gridBagConstraints4);
 			dialogContentPane.add(getInputFileButton(), gridBagConstraints21);
-			dialogContentPane.add(getOutputFileTextField(), gridBagConstraints11);
+			dialogContentPane.add(getOutputFileTextField(),
+					gridBagConstraints11);
 			dialogContentPane.add(getOutputFileButton(), gridBagConstraints22);
 			dialogContentPane.add(getSolverComboBox(), gridBagConstraints31);
 			dialogContentPane.add(getHeuristicComboBox(), gridBagConstraints41);
@@ -146,9 +150,9 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes formulaTextField	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes formulaTextField
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getFormulaTextField() {
 		if (formulaTextField == null) {
@@ -159,22 +163,32 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes inputFileButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes inputFileButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getInputFileButton() {
 		if (inputFileButton == null) {
-			inputFileButton = new JButton();
-			inputFileButton.setText("Open");
+			inputFileButton = new JButton(getIcon("open.gif"));
+			//inputFileButton.setText("Open");
+			inputFileButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					JFileChooser fc = new JFileChooser();
+					int returnVal = fc.showOpenDialog(getDialogContentPane());
+					if(returnVal == JFileChooser.APPROVE_OPTION) {
+						File file = fc.getSelectedFile();
+						getFormulaTextField().setText(file.getAbsolutePath());
+					}					
+				}
+			});
 		}
 		return inputFileButton;
 	}
 
 	/**
-	 * This method initializes jTextField	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getOutputFileTextField() {
 		if (outputFileTextField == null) {
@@ -184,22 +198,32 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes outputFileButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes outputFileButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getOutputFileButton() {
 		if (outputFileButton == null) {
-			outputFileButton = new JButton();
-			outputFileButton.setText("Open");
+			outputFileButton = new JButton(getIcon("open.gif"));
+			//outputFileButton.setText("Open");
+			outputFileButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					JFileChooser fc = new JFileChooser();
+					int returnVal = fc.showSaveDialog(getDialogContentPane());
+					if(returnVal == JFileChooser.APPROVE_OPTION) {
+						File file = fc.getSelectedFile();
+						getOutputFileTextField().setText(file.getAbsolutePath());
+					}					
+				}
+			});
 		}
 		return outputFileButton;
 	}
 
 	/**
-	 * This method initializes solverComboBox	
-	 * 	
-	 * @return javax.swing.JComboBox	
+	 * This method initializes solverComboBox
+	 * 
+	 * @return javax.swing.JComboBox
 	 */
 	private JComboBox getSolverComboBox() {
 		if (solverComboBox == null) {
@@ -209,9 +233,9 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes heuristicComboBox	
-	 * 	
-	 * @return javax.swing.JComboBox	
+	 * This method initializes heuristicComboBox
+	 * 
+	 * @return javax.swing.JComboBox
 	 */
 	private JComboBox getHeuristicComboBox() {
 		if (heuristicComboBox == null) {
@@ -221,9 +245,9 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes saveButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes saveButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getSaveButton() {
 		if (saveButton == null) {
@@ -231,10 +255,15 @@ public class CreateJobDialog extends JDialog {
 			saveButton.setText("Save");
 			saveButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					Job.createJob( 	getFormulaTextField().getText(),
-									getOutputFileTextField().getText(),
-									(String)getSolverComboBox().getSelectedItem(),
-									(String)getHeuristicComboBox().getSelectedItem());
+					if(formulaTextField.getText().equals("") || 
+					   outputFileTextField.getText().equals("")) {
+						return;
+					}
+					Job.createJob(getFormulaTextField().getText(),
+							getOutputFileTextField().getText(),
+							(String) getSolverComboBox().getSelectedItem(),
+							(String) getHeuristicComboBox().getSelectedItem());
+					dispose();
 				}
 			});
 		}
@@ -242,9 +271,9 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes actionPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes actionPanel
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getActionPanel() {
 		if (actionPanel == null) {
@@ -260,9 +289,9 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes cancelButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes cancelButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getCancelButton() {
 		if (cancelButton == null) {
@@ -270,11 +299,22 @@ public class CreateJobDialog extends JDialog {
 			cancelButton.setText("Cancel");
 			cancelButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					System.out.println("actionPerformed()"); // TODO Auto-generated Event stub actionPerformed()
+					dispose();
 				}
 			});
 		}
 		return cancelButton;
 	}
 
-}  //  @jve:decl-index=0:visual-constraint="157,2"
+	
+	/** Returns an ImageIcon, or null if the path was invalid. */
+    protected static ImageIcon getIcon(String path) {
+    	String img_path = Thread.currentThread().getContextClassLoader().getResource(path).getFile();
+        if (img_path != null) {
+            return new ImageIcon(img_path);
+        }
+		System.err.println("Couldn't find file: " + path);
+		return null;
+    }
+
+} // @jve:decl-index=0:visual-constraint="157,2"

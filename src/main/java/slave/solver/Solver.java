@@ -1,6 +1,7 @@
 package main.java.slave.solver;
 
 import java.util.Hashtable;
+
 import main.java.logic.TransmissionQbf;
 
 public interface Solver extends Runnable{

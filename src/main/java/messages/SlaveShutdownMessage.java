@@ -12,5 +12,5 @@ public class SlaveShutdownMessage implements Serializable {
 	public void setReason(String reason) {
 		this.reason = reason;
 	}
-	
+
 }

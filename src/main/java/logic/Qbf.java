@@ -1,7 +1,10 @@
 package main.java.logic;
 
-import java.util.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
 * A QBF object contains one QBF as well as methods to split it up into subQBFs
@@ -26,7 +29,7 @@ public class Qbf {
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
 	*/
-	Qbf(String filename) {
+	public Qbf(String filename) {
 		this.filename = filename;
 		file = new File(filename);
 		

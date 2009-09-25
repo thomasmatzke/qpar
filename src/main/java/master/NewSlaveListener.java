@@ -16,8 +16,7 @@ public class NewSlaveListener implements MessageListener {
 	private Destination destination_reg;
 	private boolean running;
 	private MessageConsumer consumer;
-		
-	
+
 	public boolean isRunning() {
 		return running;
 	}
@@ -44,33 +43,36 @@ public class NewSlaveListener implements MessageListener {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void onMessage(Message m) {
 		System.out.println("Rcvd msg...");
-		if(!(m instanceof ObjectMessage)) {
+		if (!(m instanceof ObjectMessage)) {
 			System.err.println("Received Non-ObjectMessage");
 			return;
 		}
 		Object t = null;
 		try {
-			t = ((ObjectMessage)m).getObject();
+			t = ((ObjectMessage) m).getObject();
 		} catch (JMSException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		if(t instanceof InformationMessage) {
-			handleInformationMessage((InformationMessage)t);
+		if (t instanceof InformationMessage) {
+			handleInformationMessage((InformationMessage) t);
 		} else {
 			System.err.println("Message object of unknown type.");
 		}
 	}
-	
+
 	public void handleInformationMessage(InformationMessage i) {
-		Slave slave = new Slave();
-		slave.setCores(i.getCores());
-		slave.setToolIds(i.getToolIds());
-		slave.setHostAddress(i.getHostAddress());
-		Slave.addSlave(slave);
+		try {
+			Slave slave = Slave.create(i.getHostName());
+			slave.setCores(i.getCores());
+			slave.setToolIds(i.getToolIds());
+		} catch (JMSException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }

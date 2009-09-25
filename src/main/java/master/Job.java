@@ -18,15 +18,24 @@ public class Job {
 	private Date stoppedAt;
 	private String id;
 	private static int idCounter = 0;
-	private static Vector<Job> jobs;
-	private AbstractTableModel tableModel;
-	
-	public AbstractTableModel getTableModel() {
+	private static Vector<Job> jobs = new Vector<Job>();
+	private static AbstractTableModel tableModel;
+	private String status;
+		
+	private void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+		
+	public static AbstractTableModel getTableModel() {
 		return tableModel;
 	}
 
-	public void setTableModel(AbstractTableModel tableModel) {
-		this.tableModel = tableModel;
+	public static void setTableModel(AbstractTableModel tableModel) {
+		Job.tableModel = tableModel;
 	}
 
 	public static String allocateJobId() {
@@ -37,12 +46,16 @@ public class Job {
 	public static void createJob(String inputFile, String outputFile,
 			String solverId, String heuristicId) {
 		Job job = new Job();
+		job.setId(allocateJobId());
 		job.setInputFileString(inputFile);
 		job.setOutputFileString(outputFile);
 		job.setSolver(solverId);
 		job.setHeuristic(heuristicId);
+		job.setStatus("Not started");
 		addJob(job);
 	}
+
+	
 
 	public static Vector<Job> getJobs() {
 		if (jobs == null) {
@@ -53,8 +66,8 @@ public class Job {
 
 	public static void addJob(Job job) {
 		jobs.add(job);
-		for (int i = 0; i <= 3; i++) {
-			MasterDaemon.getJobsModel().fireTableCellUpdated(jobs.size(), i);
+		if (tableModel != null) {
+			tableModel.fireTableDataChanged();
 		}
 	}
 
@@ -122,4 +135,13 @@ public class Job {
 		this.inputFileString = inputFileString;
 	}
 
+	public void start() {
+		this.formula = new Qbf(inputFileString);
+		
+	}
+
+	public void abort() {
+		
+	}
+	
 }
