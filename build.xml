@@ -12,6 +12,7 @@
     <path id="QPar.classpath">
         <pathelement location="bin"/>
         <pathelement location="lib/activemq-all-5.2.0.jar"/>
+        <pathelement location="img"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
@@ -61,12 +62,6 @@
     <target name="SlaveDaemon">
         <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
             <arg line="tcp://localhost:61616 solvers=qpro"/>
-            <classpath refid="QPar.classpath"/>
-        </java>
-    </target>
-    <target name="foo">
-        <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
-            <arg line="tcp://192.168.1.131/:61616 solvers=qpro"/>
             <classpath refid="QPar.classpath"/>
         </java>
     </target>
