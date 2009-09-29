@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class TransmissionQbf implements Serializable {
 
 	private static int idCounter = 0;
-	private String id;
+	private int id;
 	private String status;		
 
 	public String getStatus() {
@@ -21,11 +21,11 @@ public class TransmissionQbf implements Serializable {
 		return new Integer(idCounter).toString();
 	}
 
-	public String getId() {
+	public int getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(int id) {
 		this.id = id;
 	}
 	

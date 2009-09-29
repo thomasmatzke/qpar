@@ -78,7 +78,7 @@ public class Qbf {
 			resultProcessed.add(i, false);
 			
 			tmp = new TransmissionQbf();
-			tmp.setId((new Integer(id * 1000 + i)).toString());
+			tmp.setId(id * 1000 + i);
 			subQbfs.add(tmp);
 			
 		}

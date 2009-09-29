@@ -33,10 +33,18 @@ public class SlavesTableModel extends AbstractTableModel {
 		case 1:
 			return slave.getCores();
 		case 2:
-			return QPar.join(slave.getAssignedJobIds(), ",");
+			return join(slave.getAssignedJobIds(), ",");
 		default:
 			return null;
 		}
+	}
+	public static String join(String[] strings, String separator) {
+	    StringBuffer sb = new StringBuffer();
+	    for (int i=0; i < strings.length; i++) {
+	        if (i != 0) sb.append(separator);
+	  	    sb.append(strings[i]);
+	  	}
+	  	return sb.toString();
 	}
 
 	@Override
