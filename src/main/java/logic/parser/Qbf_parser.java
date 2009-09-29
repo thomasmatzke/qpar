@@ -19,14 +19,112 @@ class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_parserC
                         ASTStart n = parser.Start();
                         Qbf_parserVisitor v = new Qbf_parserDumpVisitor();
                         n.jjtAccept(v, null);
+                        System.out.println("vars: "+vars);
+                        System.out.println("eVars: "+eVars);
+                        System.out.println("aVars: "+aVars);
+
+                        System.out.println(printAsQpro(n));
                 } catch (Exception e) {
                         e.printStackTrace();
                         System.out.println(e.getMessage());
                         System.out.println("Something went wrong while parsing.");
                 }
-                        System.out.println("vars: "+vars);
-                        System.out.println("eVars: "+eVars);
-                        System.out.println("aVars: "+aVars);
+        }
+
+        public static String printAsQpro(ASTStart s) {
+                String returnString = "";
+                Node n = (Node) s;
+                Node current = n;
+                int numNodes = n.jjtGetNumChildren();
+                int numVars = vars.size();
+                int processedNodes = 0;
+                int child = 0;
+                int i = 0;
+                String tmp = "";
+
+                // Header
+                returnString += "QBF\n";
+                returnString += numVars;
+                returnString += "\n";
+
+                // traverse
+                if (n.toString().equals("Start")) {
+                        current = n.jjtGetChild(child);
+                        processedNodes++;
+                }
+
+
+                while (processedNodes < numNodes) {
+
+                        if(current.toString().equals("Quant")) {
+                                returnString += "q";
+
+                                while (current.toString().equals("Var") || current.toString().equals("Quant")) {
+
+                                        if (current.toString().equals("Quant") && current.getId() == 0) {
+                                                returnString += "\na ";
+                                                processedNodes++;
+                                        }
+                                        if (current.toString().equals("Quant") && current.getId() == 1) {
+                                                returnString += "\ne ";
+                                                processedNodes++;
+                                        }
+
+                                        child++;
+                                        current = n.jjtGetChild(child);
+
+                                        while (current.toString().equals("Var")) {
+                                                returnString += current.getId() + " ";
+                                                processedNodes++;
+                                                child++;
+                                                current = n.jjtGetChild(child);
+                                        }
+                                }
+
+                                returnString += "\n/q\n";
+
+                        }
+
+                        if(current.toString().equals("Var")) {
+                                returnString += current.getId();
+                                returnString += " ";
+                                processedNodes++;
+                        }
+
+                        if(current.toString().equals("And")) {
+                                returnString += "c ";
+                                processedNodes++;
+                        }
+
+                        if(current.toString().equals("Or")) {
+                                returnString += "d ";
+
+                                        current = current.jjtGetChild(0);
+
+                                        while (current.toString().equals("Var")) {
+                                                returnString += current.getId() + " ";
+                                                processedNodes++;
+                                                child++;
+                                                current = n.jjtGetChild(child);
+                                        }
+
+                                processedNodes++;
+                        }
+
+                        if(current.toString().equals("Not")) {
+                                processedNodes++;
+                        }
+
+
+                        child++;
+                        if (child < numNodes)
+                                current = n.jjtGetChild(child);
+                }
+
+
+
+                // return the QBF in QPro format
+                return returnString;
         }
 // |
 // | end of testing
@@ -102,13 +200,13 @@ class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_parserC
         jj_consume_token(FORALL);
                    jjtree.closeNodeScope(jjtn000, true);
                    jjtc000 = false;
-                  {if (true) return "forall";}
+                  jjtn000.setId(0); {if (true) return "forall";}
         break;
       case EXISTS:
         jj_consume_token(EXISTS);
                    jjtree.closeNodeScope(jjtn000, true);
                    jjtc000 = false;
-                  {if (true) return "exists";}
+                  jjtn000.setId(1); {if (true) return "exists";}
         break;
       default:
         jj_la1[0] = jj_gen;
@@ -245,11 +343,12 @@ class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_parserC
                 String varName = t.image.replaceAll("[a-z]*","");
                 int varNumber = Integer.valueOf(varName).intValue();
                 jjtn000.setId(varNumber);
-                vars.add(varNumber);
                 if (s == "exists")
                         eVars.add(varNumber);
                 if (s == "forall")
                         aVars.add(varNumber);
+                if (s == "")
+                        vars.add(varNumber);
     } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);

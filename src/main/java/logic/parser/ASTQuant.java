@@ -3,6 +3,8 @@
 package main.java.logic.parser;
 
 public class ASTQuant extends SimpleNode {
+	private int id;
+
   public ASTQuant(int id) {
     super(id);
   }
@@ -12,6 +14,13 @@ public class ASTQuant extends SimpleNode {
   }
 
 
+	public void setId(int id) {
+		this.id = id;
+	}
+	public int getId() {
+		return id;
+	}
+	
   /** Accept the visitor. **/
   public Object jjtAccept(Qbf_parserVisitor visitor, Object data) {
     return visitor.visit(this, data);

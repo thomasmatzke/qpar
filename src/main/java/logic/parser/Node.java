@@ -8,6 +8,9 @@ package main.java.logic.parser;
 
 public interface Node {
 
+	public void setId(int id);
+	public int getId();
+
   /** This method is called after the node has been made the current
     node.  It indicates that child nodes can now be added to it. */
   public void jjtOpen();
