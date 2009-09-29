@@ -6,7 +6,7 @@ import main.java.logic.TransmissionQbf;
 
 public interface Solver extends Runnable{
 	
-	public static Hashtable<String, Class> idToToolMap = new Hashtable<String, Class>();
+	public static Hashtable<String, Solver> idToToolMap = new Hashtable<String, Solver>();
 	
 	public void setTransmissionQbf(TransmissionQbf formula);
 	

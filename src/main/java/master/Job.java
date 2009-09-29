@@ -1,7 +1,9 @@
 package main.java.master;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
@@ -24,7 +26,10 @@ public class Job {
 	private static AbstractTableModel tableModel;
 	private String status;
 	private List<TransmissionQbf> subformulas;
-
+	
+	// Maps tqbfids with to the computing slaves
+	private Map<String, Slave> formulaDesignations = new HashMap<String, Slave>();
+	
 	public void setStatus(String status) {
 		this.status = status;
 	}
@@ -137,26 +142,27 @@ public class Job {
 	}
 
 	public void start() {
-		this.startedAt = new Date();
-		this.formula = new Qbf(inputFileString);
-		int availableCores = Slave.getCoresForSolver(this.solver);
-		this.subformulas = formula.splitQbf(availableCores);
-		List<Slave> slaves = Slave.getSlavesForSolver(this.solver);
+		this.startedAt 		= new Date();
+		this.formula 		= new Qbf(inputFileString);
+		int availableCores 	= Slave.getCoresForSolver(this.solver);
+		this.subformulas 	= formula.splitQbf(availableCores);
+		List<Slave> slaves 	= Slave.getSlavesForSolver(this.solver);
 		
 		for(int i = 0; i < subformulas.size(); i++) {
 			Slave designatedSlave = slaves.get(i % slaves.size());
 			subformulas.get(i).setStatus("computing");
 			designatedSlave.computeFormula(subformulas.get(i), this.getId());
+			formulaDesignations.put(subformulas.get(i).getId(), designatedSlave);
 		}
 		
 		tableModel.fireTableDataChanged();
 	}
 
 	public void abort() {
-		for(TransmissionQbf tqbf : subformulas) {
-			if(tqbf.getStatus().equals("computing")) {
-				//TODO
-			}
+		for(Map.Entry<String, Slave> entry : this.formulaDesignations.entrySet()) {
+			Slave s 		= entry.getValue();
+			String tqbfId 	= entry.getKey();
+			s.abortFormulaComputation(tqbfId);
 		}
 		
 		tableModel.fireTableDataChanged();

@@ -346,12 +346,12 @@ public class ProgramWindow extends JFrame {
 		}
 		return startJobButton;
 	}
-	
-	private void startSelectedJob() {
+	// not used?
+	/*private void startSelectedJob() {
 		int row = getJobsTable().getSelectedRow();
 		Job job = Job.getJobs().get(row);
 		job.start();
-	}
+	}*/
 
 	/**
 	 * This method initializes abortJobButton

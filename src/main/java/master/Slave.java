@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -29,15 +28,13 @@ import main.java.messages.KillMessage;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
 
-import org.apache.activemq.ActiveMQConnection;
-
 public class Slave implements MessageListener {
 	private int cores;
 	private Vector<String> toolIds;
 	private String hostName;
 
-	private String user = ActiveMQConnection.DEFAULT_USER;
-	private String password = ActiveMQConnection.DEFAULT_PASSWORD;
+	//private String user = ActiveMQConnection.DEFAULT_USER;
+	//private String password = ActiveMQConnection.DEFAULT_PASSWORD;
 	private Session session;
 	private Destination destination_rcv;
 	private Destination destination_snd;
@@ -48,8 +45,8 @@ public class Slave implements MessageListener {
 	private static AbstractTableModel tableModel;
 	private Map<String, TransmissionQbf> runningComputations = new HashMap<String, TransmissionQbf>();
 
-	protected Slave() throws JMSException {
-
+	public Map<String, TransmissionQbf> getRunningComputations() {
+		return runningComputations;
 	}
 
 	public static Vector<Slave> getSlavesForSolver(String solverId) {
@@ -110,9 +107,9 @@ public class Slave implements MessageListener {
 		}
 	}
 
-	private static void removeSlave(int slave) {
+	/*private static void removeSlave(int slave) {
 		removeSlave(slaves.get(slave));
-	}
+	}*/
 
 	private static void addSlave(Slave slave) {
 		slaves.add(slave);

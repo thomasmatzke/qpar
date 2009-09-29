@@ -3,10 +3,8 @@ package main.java.master;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Session;
-import javax.swing.ImageIcon;
 
 import main.java.ArgumentParser;
-import main.java.master.gui.JobsTableModel;
 import main.java.master.gui.ProgramWindow;
 
 import org.apache.activemq.ActiveMQConnection;
