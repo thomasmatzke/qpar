@@ -9,6 +9,13 @@ public class SimpleNode implements Node {
   protected Object value;
   protected Qbf_parser parser;
 
+	public void setId(int id) {
+		this.id = id;
+	}
+	public int getId() {
+		return id;
+	}
+
   public SimpleNode(int i) {
     id = i;
   }

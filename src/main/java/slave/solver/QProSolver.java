@@ -66,7 +66,7 @@ public class QProSolver implements Solver {
 	
 	public static String toInputString(TransmissionQbf t) {
 		// TODO
-		return null;
+		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";
 	}
 	
 }

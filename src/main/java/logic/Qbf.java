@@ -15,21 +15,24 @@ public class Qbf {
 
 	Heuristic h = null;
 	File file;
-//	Tree solvingTree = new Tree();
-	private String filename;
+//	Tree solvingTree = new Tree(); // obsolete?
 	private String qbfString;
-	private boolean solved		= false;
+	private String filename;
+	private static int id = 0;
+	private int receivedResults = 0;
 	private boolean satisfiable	= false;
-	private ArrayList<String> subQbfs			= new ArrayList<String>();
+	private boolean solved		= false;
+	private List<TransmissionQbf> subQbfs		= new ArrayList<TransmissionQbf>();
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
-
+	
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
 	*/
 	public Qbf(String filename) {
+		id++;
 		this.filename = filename;
 		file = new File(filename);
 		
@@ -47,34 +50,41 @@ public class Qbf {
 			System.out.println("Something went wrong reading from " + filename);
 			System.exit(1);
 		}
-		
-		// maybe there will be a syntaxcheck somewhere in the future
-		if (!checkQbfSyntax(qbfString)) {
-			System.out.println(filename + " seems to have syntax errors. Aborting.");
-			System.exit(1);
-		}
 
-		System.out.println("Finished reading a QBF from " + filename + " (" + qbfString + ")");
+// syntax checking should now be done in the parser		
+//		// maybe there will be a syntaxcheck somewhesre in the future
+//		if (!checkQbfSyntax(qbfString)) {
+//			System.out.println(filename + " seems to have syntax errors. Aborting.");
+//			System.exit(1);
+//		}
+
+		System.out.println("Finished reading a QBF from " + filename);
+		
 	}
 
 	/**
 	* split a QBF to two or more subQBFs by assigning truth values to some of
 	* the variables.
 	* @param n Number of subformulas to return
-	* @return A list of n strings, each a subformula of the whole QBF
+	* @return A list of n TransmissionQbfs, each a subformula of the whole QBF
 	*/
 	public List<TransmissionQbf> splitQbf(int n) {
+
+		TransmissionQbf tmp;
+		
 		for (int i = 0; i < n; i++) {
 			qbfResults.add(i, false);
 			resultAvailable.add(i, false);
 			resultProcessed.add(i, false);
 			
-			subQbfs.add(i, qbfString);
+			tmp = new TransmissionQbf();
+			tmp.setId((new Integer(id * 1000 + i)).toString());
+			subQbfs.add(tmp);
 			
 		}
 		// do stuff
-		// TODO: return testdata until this works
-		return null;
+		// TODO (returns empty TransmissionQbfs until this works)
+		return subQbfs;
 	}
 
 	/**
@@ -116,12 +126,16 @@ public class Qbf {
 ////			solvingTree.remove(op2);
 //		}
 		
-	
 		// if a result is merged, set resultProcessed(id) and resultAvailable(id)
 		// to TRUE and qbfResult(id) to result
 	
-		// if the formula is solved, set solved to TRUE
-		return false;
+		// for testing
+		receivedResults++;
+		if (receivedResults < subQbfs.size())
+			return false;	
+		solved = true;
+		satisfiable = result;
+		return true;
 	}
 
 	/**
@@ -129,15 +143,15 @@ public class Qbf {
 	* @return TRUE if there's a result, FALSE otherwise
 	*/
 	public boolean isSolved() {
-		// go through the list of unused results and, if there are any, merge
-		// them.
-		
-		for (int i = 0; i < subQbfs.size(); i++) {
-			if (!resultProcessed.get(i)) {
-				// mergeQbf(i, qbfResults.get(i));
+		// if solved = FALSE, go through the list of unused results and, if
+		// there are any, merge them. Then check again for solved and return it.
+		if (solved == false) {
+			for (int i = 0; i < subQbfs.size(); i++) {
+				if (!resultProcessed.get(i)) {
+					// mergeQbf(i, qbfResults.get(i));
+				}
 			}
 		}
-
 		return solved;
 	}
 	
@@ -149,16 +163,16 @@ public class Qbf {
 		return satisfiable;
 	}
 
-	/**
-	* Syntax check for a QBF string. Always true for now.
-	* @param filename Filename of the boole file
-	*/
-	public boolean checkQbfSyntax(String qbfString) {
-		return true;
-	}		
+// should be in the parser now
+//	/**
+//	* Syntax check for a QBF string. Always true for now.
+//	* @param filename Filename of the boole file
+//	*/
+//	public boolean checkQbfSyntax(String qbfString) {
+//		return true;
+//	}		
 
 	public void setHeuristic(Heuristic h) {
 		this.h = h;
 	}
-
 }

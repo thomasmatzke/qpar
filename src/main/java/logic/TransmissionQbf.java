@@ -6,8 +6,8 @@ public class TransmissionQbf implements Serializable {
 
 	private static int idCounter = 0;
 	private String id;
-	private String status;
-		
+	private String status;		
+
 	public String getStatus() {
 		return status;
 	}
