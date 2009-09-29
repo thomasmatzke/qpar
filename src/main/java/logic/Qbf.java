@@ -94,9 +94,9 @@ public class Qbf {
 	* @param result The result of the evaluated subformula
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
-	public boolean mergeQbf(int id, boolean result) {
+	public boolean mergeQbf(String id, boolean result) {
 
-		resultAvailable.set(id, true);
+//		resultAvailable.set(id, true);
 //		Node op1 = solvingTree.search(id);
 //		Node operand = solvingTree.getParentNode(op1);
 //		Node op2 = solvingTree.getSibling(op1);
