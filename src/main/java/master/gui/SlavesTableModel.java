@@ -3,6 +3,7 @@ package main.java.master.gui;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
+import main.java.Util;
 import main.java.master.Slave;
 
 public class SlavesTableModel extends AbstractTableModel {
@@ -33,7 +34,7 @@ public class SlavesTableModel extends AbstractTableModel {
 		case 1:
 			return slave.getCores();
 		case 2:
-			return join(slave.getAssignedJobIds(), ",");
+			return Util.join(slave.getAssignedJobIds(), ",");
 		default:
 			return null;
 		}
