@@ -11,6 +11,8 @@ import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.util.IndentPrinter;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 
 /**
  * Handles communication with slaves
@@ -20,38 +22,47 @@ import org.apache.activemq.util.IndentPrinter;
  */
 public class MasterDaemon {
 
-	private static String user = ActiveMQConnection.DEFAULT_USER;
-	private static String password = ActiveMQConnection.DEFAULT_PASSWORD;
-	private static Connection connection;
-	private static BrokerService broker;
-	private static ProgramWindow programWindow;
-
-	public NewSlaveListener newSlaveListener;
-	@SuppressWarnings("unused")
-	private ShutdownHook hook;
-	private static boolean startGui;
-
-	public MasterDaemon() {
-		startMessageBroker();
-		hook = new ShutdownHook();
-		connectToBroker();
-		newSlaveListener = new NewSlaveListener();
-		newSlaveListener.start();
-		if (MasterDaemon.startGui) {
-			programWindow = new ProgramWindow();
-			programWindow.setVisible(true);
+	private static class ShutdownHook extends Thread {
+		@Override
+		public void run() {
+			try {
+				ActiveMQConnection c = (ActiveMQConnection) connection;
+				c.getConnectionStats().dump(new IndentPrinter());
+				connection.close();
+			} catch (JMSException e) {
+				logger.error("Error while closing connection: \n"
+						+ e.getStackTrace());
+			}
+			stopMessageBroker();
 		}
 	}
 
-	public static void main(String[] args) {
-		ArgumentParser ap = new ArgumentParser(args);
-		String gui = ap.getOption("gui");
-		if (gui == "false") {
-			MasterDaemon.startGui = false;
-		} else {
-			MasterDaemon.startGui = true;
+	private static BrokerService broker;
+
+	private static Connection connection;
+	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	private static String password = ActiveMQConnection.DEFAULT_PASSWORD;
+	private static ProgramWindow programWindow;
+
+	private static boolean startGui;
+	private static String user = ActiveMQConnection.DEFAULT_USER;
+
+	public static void connectToBroker() {
+		logger.info("Connecting to MessageBroker...");
+		// Create the connection.
+		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(
+				user, password, broker.getVmConnectorURI());
+		try {
+			connection = connectionFactory.createConnection();
+			connection.start();
+		} catch (JMSException e) {
+			logger.error("Could not establish connection to MessageBroker: \n" + e.getStackTrace());
 		}
-		new MasterDaemon();
+		logger.info("Connection to MessageBroker established.");
+	}
+
+	public static Session createSession() throws JMSException {
+		return MasterDaemon.connection.createSession(true, 0);
 	}
 
 	public static synchronized Connection getConnection() {
@@ -62,24 +73,25 @@ public class MasterDaemon {
 		return connection;
 	}
 
-	public static Session createSession() throws JMSException {
-		return MasterDaemon.connection.createSession(true, 0);
-	}
+	public static void main(String[] args) {
 
-	public static void connectToBroker() {
-		// Create the connection.
-		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(
-				user, password, broker.getVmConnectorURI());
-		try {
-			connection = connectionFactory.createConnection();
-			connection.start();
-		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		// Basic console logging
+		BasicConfigurator.configure();
+
+		ArgumentParser ap = new ArgumentParser(args);
+		String gui = ap.getOption("gui");
+		if (gui == "false") {
+			logger.info("Starting with GUI");
+			MasterDaemon.startGui = false;
+		} else {
+			logger.info("Starting without GUI");
+			MasterDaemon.startGui = true;
 		}
+		new MasterDaemon();
 	}
 
 	public static void startMessageBroker() {
+		logger.info("Starting Messagebroker...");
 		// Start Messagebroker for Slave-Communication
 		try {
 			broker = new BrokerService();
@@ -87,32 +99,39 @@ public class MasterDaemon {
 			broker.addConnector("tcp://localhost:61616");
 			broker.start();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Error while starting MessageBroker: \n" + e.getStackTrace());
 		}
+		logger.info("Messagebroker started.");
 	}
 
 	public static void stopMessageBroker() {
+		logger.info("Stopping Messagebroker...");
 		try {
 			broker.stop();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Error while stopping MessageBroker: \n" + e.getStackTrace());
 		}
+		logger.info("Messagebroker stopped.");
 	}
 
-	private static class ShutdownHook extends Thread {
-		@Override
-		public void run() {
-			try {
-				ActiveMQConnection c = (ActiveMQConnection) connection;
-				c.getConnectionStats().dump(new IndentPrinter());
-				connection.close();
-			} catch (JMSException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			stopMessageBroker();
+	@SuppressWarnings("unused")
+	private ShutdownHook hook;
+
+	public NewSlaveListener newSlaveListener;
+
+	public MasterDaemon() {
+		startMessageBroker();
+		hook = new ShutdownHook();
+		connectToBroker();
+		newSlaveListener = new NewSlaveListener();
+		newSlaveListener.start();
+		if (MasterDaemon.startGui) {
+			javax.swing.SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					programWindow = new ProgramWindow();
+					programWindow.setVisible(true);
+				}
+			});
 		}
 	}
 

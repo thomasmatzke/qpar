@@ -8,20 +8,56 @@ import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
+import org.apache.log4j.Logger;
+
 import main.java.messages.InformationMessage;
 
 public class NewSlaveListener implements MessageListener {
 
-	private Session session;
+	private MessageConsumer consumer;
 	private Destination destination_reg;
 	private boolean running;
-	private MessageConsumer consumer;
+	private Session session;
+	
+	static Logger logger = Logger.getLogger(MasterDaemon.class);
+
+	public void handleInformationMessage(InformationMessage i) {
+		logger.info("Handling InformationMessage...");
+		try {
+			Slave slave = Slave.create(i.getHostName());
+			slave.setCores(i.getCores());
+			slave.setToolIds(i.getToolIds());
+		} catch (JMSException e) {
+			logger.error("Error while creating slave...\n" + e.getStackTrace());
+		}
+		logger.info("InformationMessage handled.");
+	}
 
 	public boolean isRunning() {
 		return running;
 	}
 
+	public void onMessage(Message m) {
+		if (!(m instanceof ObjectMessage)) {
+			logger.error("Received unknown Non-Object-Message. Ignoring");
+			return;
+		}
+		Object t = null;
+		try {
+			t = ((ObjectMessage) m).getObject();
+		} catch (JMSException e) {
+			logger.error("Error while retrieving Object from Message... \n" + e.getStackTrace());
+		}
+		if (t instanceof InformationMessage) {
+			logger.info("Received InformationMessage...");
+			handleInformationMessage((InformationMessage) t);
+		} else {
+			logger.error("Received message object of unknown type.");
+		}
+	}
+
 	public void start() {
+		logger.info("Starting NewSlaveListener...");
 		running = true;
 		try {
 			this.session = MasterDaemon.createSession();
@@ -29,50 +65,20 @@ public class NewSlaveListener implements MessageListener {
 			consumer = session.createConsumer(destination_reg);
 			consumer.setMessageListener(this);
 		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Error while starting NewSlaveListener: \n" + e.getStackTrace());
 		}
+		logger.info("NewSlaveListener started.");
 	}
 
 	public void stop() {
+		logger.info("Stopping NewSlaveListener...");
 		try {
 			session.close();
 			running = false;
 		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("Error while stopping NewSlaveListener: \n" + e.getStackTrace());
 		}
-	}
-
-	public void onMessage(Message m) {
-		System.out.println("Rcvd msg...");
-		if (!(m instanceof ObjectMessage)) {
-			System.err.println("Received Non-ObjectMessage");
-			return;
-		}
-		Object t = null;
-		try {
-			t = ((ObjectMessage) m).getObject();
-		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if (t instanceof InformationMessage) {
-			handleInformationMessage((InformationMessage) t);
-		} else {
-			System.err.println("Message object of unknown type.");
-		}
-	}
-
-	public void handleInformationMessage(InformationMessage i) {
-		try {
-			Slave slave = Slave.create(i.getHostName());
-			slave.setCores(i.getCores());
-			slave.setToolIds(i.getToolIds());
-		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		logger.info("NewSlaveListener stopped.");
 	}
 
 }

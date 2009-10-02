@@ -22,6 +22,7 @@ import javax.swing.ListSelectionModel;
 import main.java.logic.HeuristicFactory;
 import main.java.master.Job;
 import main.java.master.Slave;
+import java.awt.Font;
 
 public class ProgramWindow extends JFrame {
 
@@ -259,7 +260,7 @@ public class ProgramWindow extends JFrame {
 			gridBagConstraints2.gridy = 0;
 			jobsActionPanel = new JPanel();
 			jobsActionPanel.setLayout(new GridBagLayout());
-			jobsActionPanel.setSize(new Dimension(200, 100));
+			//jobsActionPanel.setSize(new Dimension(200, 100));
 			jobsActionPanel.add(getNewJobButton(), gridBagConstraints6);
 			jobsActionPanel.add(getDeleteJobButton(), gridBagConstraints4);
 			jobsActionPanel.add(getViewJobButton(), gridBagConstraints5);
