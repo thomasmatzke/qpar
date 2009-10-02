@@ -20,22 +20,35 @@ import main.java.master.Job;
 public class CreateJobDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
-	private JLabel inputFileLabel = null;
-	private JPanel dialogContentPane = null;
-	private JLabel outputFileLabel = null;
-	private JLabel solverLabel = null;
-	private JLabel heuristicLabel = null;
-	private JTextField formulaTextField = null;
-	private JButton inputFileButton = null;
-	private JTextField outputFileTextField = null;
-	private JButton outputFileButton = null;
-	private JComboBox solverComboBox = null;
-	private JComboBox heuristicComboBox = null;
-	private JButton saveButton = null;
+
+	/** Returns an ImageIcon, or null if the path was invalid. */
+	protected static ImageIcon getIcon(String path) {
+		String img_path = Thread.currentThread().getContextClassLoader()
+				.getResource(path).getFile();
+		if (img_path != null) {
+			return new ImageIcon(img_path);
+		}
+		System.err.println("Couldn't find file: " + path);
+		return null;
+	}
+
 	private JPanel actionPanel = null;
 	private JButton cancelButton = null;
-	private String[] solvers;
+	private JPanel dialogContentPane = null;
+	private JTextField formulaTextField = null;
+	private JComboBox heuristicComboBox = null;
+	private JLabel heuristicLabel = null;
 	private String[] heuristics;
+	private JButton inputFileButton = null;
+	private JLabel inputFileLabel = null;
+	private JButton outputFileButton = null;
+	private JLabel outputFileLabel = null;
+	private JTextField outputFileTextField = null;
+	private JButton saveButton = null;
+	private JComboBox solverComboBox = null;
+	private JLabel solverLabel = null;
+
+	private String[] solvers;
 
 	/**
 	 * @param owner
@@ -48,16 +61,39 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes this
+	 * This method initializes actionPanel
 	 * 
-	 * @return void
+	 * @return javax.swing.JPanel
 	 */
-	private void initialize() {
-		inputFileLabel = new JLabel();
-		inputFileLabel.setText("Formula File");
-		inputFileLabel.setName("inputFileLabel");
-		this.setSize(380, 219);
-		this.setContentPane(getDialogContentPane());
+	private JPanel getActionPanel() {
+		if (actionPanel == null) {
+			GridBagConstraints gridBagConstraints7 = new GridBagConstraints();
+			gridBagConstraints7.gridx = -1;
+			gridBagConstraints7.gridy = -1;
+			actionPanel = new JPanel();
+			actionPanel.setLayout(new GridBagLayout());
+			actionPanel.add(getSaveButton(), gridBagConstraints7);
+			actionPanel.add(getCancelButton(), new GridBagConstraints());
+		}
+		return actionPanel;
+	}
+
+	/**
+	 * This method initializes cancelButton
+	 * 
+	 * @return javax.swing.JButton
+	 */
+	private JButton getCancelButton() {
+		if (cancelButton == null) {
+			cancelButton = new JButton();
+			cancelButton.setText("Cancel");
+			cancelButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					dispose();
+				}
+			});
+		}
+		return cancelButton;
 	}
 
 	/**
@@ -163,6 +199,18 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
+	 * This method initializes heuristicComboBox
+	 * 
+	 * @return javax.swing.JComboBox
+	 */
+	private JComboBox getHeuristicComboBox() {
+		if (heuristicComboBox == null) {
+			heuristicComboBox = new JComboBox(heuristics);
+		}
+		return heuristicComboBox;
+	}
+
+	/**
 	 * This method initializes inputFileButton
 	 * 
 	 * @return javax.swing.JButton
@@ -170,19 +218,48 @@ public class CreateJobDialog extends JDialog {
 	private JButton getInputFileButton() {
 		if (inputFileButton == null) {
 			inputFileButton = new JButton(getIcon("open.gif"));
-			//inputFileButton.setText("Open");
-			inputFileButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent e) {
-					JFileChooser fc = new JFileChooser();
-					int returnVal = fc.showOpenDialog(getDialogContentPane());
-					if(returnVal == JFileChooser.APPROVE_OPTION) {
-						File file = fc.getSelectedFile();
-						getFormulaTextField().setText(file.getAbsolutePath());
-					}					
-				}
-			});
+			// inputFileButton.setText("Open");
+			inputFileButton
+					.addActionListener(new java.awt.event.ActionListener() {
+						public void actionPerformed(java.awt.event.ActionEvent e) {
+							JFileChooser fc = new JFileChooser();
+							int returnVal = fc
+									.showOpenDialog(getDialogContentPane());
+							if (returnVal == JFileChooser.APPROVE_OPTION) {
+								File file = fc.getSelectedFile();
+								getFormulaTextField().setText(
+										file.getAbsolutePath());
+							}
+						}
+					});
 		}
 		return inputFileButton;
+	}
+
+	/**
+	 * This method initializes outputFileButton
+	 * 
+	 * @return javax.swing.JButton
+	 */
+	private JButton getOutputFileButton() {
+		if (outputFileButton == null) {
+			outputFileButton = new JButton(getIcon("open.gif"));
+			// outputFileButton.setText("Open");
+			outputFileButton
+					.addActionListener(new java.awt.event.ActionListener() {
+						public void actionPerformed(java.awt.event.ActionEvent e) {
+							JFileChooser fc = new JFileChooser();
+							int returnVal = fc
+									.showSaveDialog(getDialogContentPane());
+							if (returnVal == JFileChooser.APPROVE_OPTION) {
+								File file = fc.getSelectedFile();
+								getOutputFileTextField().setText(
+										file.getAbsolutePath());
+							}
+						}
+					});
+		}
+		return outputFileButton;
 	}
 
 	/**
@@ -198,26 +275,29 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes outputFileButton
+	 * This method initializes saveButton
 	 * 
 	 * @return javax.swing.JButton
 	 */
-	private JButton getOutputFileButton() {
-		if (outputFileButton == null) {
-			outputFileButton = new JButton(getIcon("open.gif"));
-			//outputFileButton.setText("Open");
-			outputFileButton.addActionListener(new java.awt.event.ActionListener() {
+	private JButton getSaveButton() {
+		if (saveButton == null) {
+			saveButton = new JButton();
+			saveButton.setText("Save");
+			saveButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					JFileChooser fc = new JFileChooser();
-					int returnVal = fc.showSaveDialog(getDialogContentPane());
-					if(returnVal == JFileChooser.APPROVE_OPTION) {
-						File file = fc.getSelectedFile();
-						getOutputFileTextField().setText(file.getAbsolutePath());
-					}					
+					if (formulaTextField.getText().equals("")
+							|| outputFileTextField.getText().equals("")) {
+						return;
+					}
+					Job.createJob(getFormulaTextField().getText(),
+							getOutputFileTextField().getText(),
+							(String) getSolverComboBox().getSelectedItem(),
+							(String) getHeuristicComboBox().getSelectedItem());
+					dispose();
 				}
 			});
 		}
-		return outputFileButton;
+		return saveButton;
 	}
 
 	/**
@@ -233,88 +313,16 @@ public class CreateJobDialog extends JDialog {
 	}
 
 	/**
-	 * This method initializes heuristicComboBox
+	 * This method initializes this
 	 * 
-	 * @return javax.swing.JComboBox
+	 * @return void
 	 */
-	private JComboBox getHeuristicComboBox() {
-		if (heuristicComboBox == null) {
-			heuristicComboBox = new JComboBox(heuristics);
-		}
-		return heuristicComboBox;
+	private void initialize() {
+		inputFileLabel = new JLabel();
+		inputFileLabel.setText("Formula File");
+		inputFileLabel.setName("inputFileLabel");
+		this.setSize(380, 219);
+		this.setContentPane(getDialogContentPane());
 	}
-
-	/**
-	 * This method initializes saveButton
-	 * 
-	 * @return javax.swing.JButton
-	 */
-	private JButton getSaveButton() {
-		if (saveButton == null) {
-			saveButton = new JButton();
-			saveButton.setText("Save");
-			saveButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent e) {
-					if(formulaTextField.getText().equals("") || 
-					   outputFileTextField.getText().equals("")) {
-						return;
-					}
-					Job.createJob(getFormulaTextField().getText(),
-							getOutputFileTextField().getText(),
-							(String) getSolverComboBox().getSelectedItem(),
-							(String) getHeuristicComboBox().getSelectedItem());
-					dispose();
-				}
-			});
-		}
-		return saveButton;
-	}
-
-	/**
-	 * This method initializes actionPanel
-	 * 
-	 * @return javax.swing.JPanel
-	 */
-	private JPanel getActionPanel() {
-		if (actionPanel == null) {
-			GridBagConstraints gridBagConstraints7 = new GridBagConstraints();
-			gridBagConstraints7.gridx = -1;
-			gridBagConstraints7.gridy = -1;
-			actionPanel = new JPanel();
-			actionPanel.setLayout(new GridBagLayout());
-			actionPanel.add(getSaveButton(), gridBagConstraints7);
-			actionPanel.add(getCancelButton(), new GridBagConstraints());
-		}
-		return actionPanel;
-	}
-
-	/**
-	 * This method initializes cancelButton
-	 * 
-	 * @return javax.swing.JButton
-	 */
-	private JButton getCancelButton() {
-		if (cancelButton == null) {
-			cancelButton = new JButton();
-			cancelButton.setText("Cancel");
-			cancelButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent e) {
-					dispose();
-				}
-			});
-		}
-		return cancelButton;
-	}
-
-	
-	/** Returns an ImageIcon, or null if the path was invalid. */
-    protected static ImageIcon getIcon(String path) {
-    	String img_path = Thread.currentThread().getContextClassLoader().getResource(path).getFile();
-        if (img_path != null) {
-            return new ImageIcon(img_path);
-        }
-		System.err.println("Couldn't find file: " + path);
-		return null;
-    }
 
 } // @jve:decl-index=0:visual-constraint="157,2"

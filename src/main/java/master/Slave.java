@@ -122,7 +122,8 @@ public class Slave implements MessageListener {
 
 	private boolean running;
 
-	private Map<String, TransmissionQbf> runningComputations = new HashMap<String, TransmissionQbf>();
+	// Maps tqbf ids to Jobs
+	private Map<String, Job> runningComputations = new HashMap<String, Job>();
 
 	// private String user = ActiveMQConnection.DEFAULT_USER;
 	// private String password = ActiveMQConnection.DEFAULT_PASSWORD;
@@ -139,13 +140,9 @@ public class Slave implements MessageListener {
 		this.sendAbortMessage(tqbfId);
 	}
 
-	public void computeFormula(TransmissionQbf tqbf, String jobId) {
-		this.sendFormulaMessage(tqbf, jobId);
-		this.runningComputations.put(tqbf.getId(), tqbf);
-	}
-
-	public String[] getAssignedJobIds() {
-		return new String[] { "test1", "test2" };
+	public void computeFormula(TransmissionQbf tqbf, Job job) {
+		this.sendFormulaMessage(tqbf);
+		this.runningComputations.put(tqbf.getId(), job);
 	}
 
 	public int getCores() {
@@ -156,7 +153,7 @@ public class Slave implements MessageListener {
 		return hostName;
 	}
 
-	public Map<String, TransmissionQbf> getRunningComputations() {
+	public Map<String, Job> getRunningComputations() {
 		return runningComputations;
 	}
 
@@ -165,31 +162,42 @@ public class Slave implements MessageListener {
 	}
 
 	private void handleAbortConfirmMessage(AbortConfirmMessage m) {
+		logger.info("Receiving AbortConfirmMessage from " + this.getHostName());
+		this.runningComputations.remove(m.getTqbfId());
+		logger.info("Removed tqbf(" + m.getTqbfId() + ") from running computations.");
 	}
 
 	private void handleInformationMessage(InformationMessage m) {
+		logger.info("Receiving InformationMessage from " + this.getHostName());
 		this.setHostName(m.getHostName());
 		this.setCores(m.getCores());
 		this.setToolIds(m.getToolIds());
 		if (tableModel != null) {
 			tableModel.fireTableDataChanged();
 		}
+		logger.info("Slave information updated.");
 	}
 
 	private void handleResultMessage(ResultMessage m) {
-		// Qbf.merge
+		logger.info("Receiving ResultMessage from " + this.getHostName());
+		Job job = this.runningComputations.get(m.getTqbfId());
+		job.getFormula().mergeQbf(m.getTqbfId(), m.getResult());
+		this.runningComputations.remove(m.getTqbfId());
+		logger.info("Result of tqbf(" + m.getTqbfId() + ") merged into Qbf of Job " + job.getId());
 	}
 
 	private void handleShutdownMessage(ShutdownMessage m) {
+		logger.info("ShutdownMessage received. Removing slave " + this.getHostName());
 		stop();
 		// TODO notify someone about unfinished computation
 		Slave.removeSlave(this);
+		logger.info("Slave " + this.getHostName() + " removed");
 	}
 
 	public void kill(String reason) {
+		logger.info("Killing Slave " + this.getHostName() + " ...");
 		this.sendKillMessage(reason);
-		this.stop();
-		Slave.removeSlave(this);
+		logger.info("Kill-Message sent to " + this.getHostName());
 	}
 
 	public void onMessage(Message m) {
@@ -224,11 +232,10 @@ public class Slave implements MessageListener {
 		logger.info("AbortMessage sent");
 	}
 
-	public void sendFormulaMessage(TransmissionQbf tqbf, String jobId) {
+	public void sendFormulaMessage(TransmissionQbf tqbf) {
 		logger.info("Sending FormulaMessage to Slave " + this.getHostName());
 		FormulaMessage msg = new FormulaMessage();
 		msg.setFormula(tqbf);
-		msg.setJobId(jobId);
 		sendObject(msg);
 		logger.info("FormulaMessage sent");
 	}

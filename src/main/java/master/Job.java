@@ -182,7 +182,7 @@ public class Job {
 		for (int i = 0; i < subformulas.size(); i++) {
 			Slave designatedSlave = slaves.get(i % slaves.size());
 			subformulas.get(i).setStatus("computing");
-			designatedSlave.computeFormula(subformulas.get(i), this.getId());
+			designatedSlave.computeFormula(subformulas.get(i), this);
 			formulaDesignations
 					.put(subformulas.get(i).getId(), designatedSlave);
 		}

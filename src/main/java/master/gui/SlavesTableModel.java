@@ -1,9 +1,12 @@
 package main.java.master.gui;
 
+import java.util.Vector;
+
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
 import main.java.Util;
+import main.java.master.Job;
 import main.java.master.Slave;
 
 public class SlavesTableModel extends AbstractTableModel {
@@ -34,7 +37,12 @@ public class SlavesTableModel extends AbstractTableModel {
 		case 1:
 			return slave.getCores();
 		case 2:
-			return Util.join(slave.getAssignedJobIds(), ",");
+			Vector<String> jobs = new Vector<String>();
+			for(Job job : slave.getRunningComputations().values()) {
+				jobs.add(job.getId());
+			}
+			String[] foo = null;
+			return Util.join(jobs.toArray(foo), ",");
 		default:
 			return null;
 		}

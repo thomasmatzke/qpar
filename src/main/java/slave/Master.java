@@ -16,6 +16,7 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
+import main.java.master.MasterDaemon;
 import main.java.messages.AbortConfirmMessage;
 import main.java.messages.AbortMessage;
 import main.java.messages.FormulaMessage;
@@ -30,6 +31,7 @@ import main.java.slave.solver.Solver;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.log4j.Logger;
 
 public class Master {
 	
@@ -44,8 +46,10 @@ public class Master {
     private MessageProducer producer_reg;
     private MessageConsumer consumer_rcv;
     private boolean running;
+    static Logger logger = Logger.getLogger(MasterDaemon.class);
     
     public void connect(String url) throws JMSException, UnknownHostException {
+    	logger.info("Connecting to MessageBroker...");
     	ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(user, password, url);
         connection = connectionFactory.createConnection();
         connection.start();
@@ -58,42 +62,42 @@ public class Master {
         producer_snd.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
         producer_reg.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
         consumer_rcv = session.createConsumer(destination_rcv);
-		//consumer_rcv.setMessageListener(this);
         sendInformationMessage(producer_reg);
+        logger.info("Connection extablished. Queues, Consumers, Producers created.");
     }
     
     public void disconnect(){
+    	logger.info("Disconnecting from MessageBroker, Stop consuming...");
     	this.running = false;
     	try {
 			Thread.sleep(1000);
 	    	this.session.close();
 	    	this.connection.close();
-    	} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JMSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+    	} catch (Exception e) {
+    		logger.error("Error while disconnecting from MessageBroker... \n" + e.getStackTrace());
 		}
+    	logger.info("Disconnected from MessageBroker");
     }
     
     public void startConsuming() {
+    	logger.info("Starting consuming from incoming queue");
     	this.running = true;
     	Message msg = null;
     	while(running) {
     		try {
 				msg = consumer_rcv.receive(1000);
 			} catch (JMSException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.error("Error while consuming Slavemessage...\n" + e.getStackTrace());
 			}
 			if(msg != null) {
 				onMessage(msg);
 			}
     	}
+    	logger.info("Stopped consuming from incoming queue");
     }
     
     public void stopConsuming() {
+    	logger.info("Stopping consuming from incoming queue");
     	this.running = false;
     }
     
@@ -126,9 +130,9 @@ public class Master {
     	sendObject(msg, p);
     }
     
-    public void sendResultMessage(String jobId, boolean result) {
+    public void sendResultMessage(String tqbfId, boolean result) {
     	ResultMessage msg = new ResultMessage();
-    	msg.setJobId(jobId);
+    	msg.setTqbfId(tqbfId);
     	msg.setResult(result);
     	sendObject(msg, producer_snd);
     }

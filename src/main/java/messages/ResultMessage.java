@@ -3,18 +3,18 @@ package main.java.messages;
 import java.io.Serializable;
 
 public class ResultMessage implements Serializable {
-	private String jobId;
+	private String tqbfId;
 	private boolean result;
 
-	public String getJobId() {
-		return jobId;
+	public String getTqbfId() {
+		return tqbfId;
 	}
 
-	public void setJobId(String jobId) {
-		this.jobId = jobId;
+	public void setTqbfId(String tqbfId) {
+		this.tqbfId = tqbfId;
 	}
 
-	public boolean isResult() {
+	public boolean getResult() {
 		return result;
 	}
 
