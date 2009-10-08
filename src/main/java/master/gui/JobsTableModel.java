@@ -14,17 +14,17 @@ public class JobsTableModel extends AbstractTableModel {
 		return columnNames[col];
 	}
 
-	@Override
+	
 	public int getColumnCount() {
 		return columnNames.length;
 	}
 
-	@Override
+	
 	public int getRowCount() {
 		return Job.getJobs().size();
 	}
 
-	@Override
+	
 	public Object getValueAt(int row, int col) {
 		Job job = Job.getJobs().get(row);
 		switch (col) {

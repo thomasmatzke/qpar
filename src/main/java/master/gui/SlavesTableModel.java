@@ -18,17 +18,17 @@ public class SlavesTableModel extends AbstractTableModel {
 		return columnNames[col];
 	}
 
-	@Override
+	
 	public int getColumnCount() {
 		return columnNames.length;
 	}
 
-	@Override
+	
 	public int getRowCount() {
 		return Slave.getSlaves().size();
 	}
 
-	@Override
+	
 	public Object getValueAt(int row, int col) {
 		Slave slave = Slave.getSlaves().get(row);
 		switch (col) {
