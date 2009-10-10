@@ -41,7 +41,7 @@ public class SlavesTableModel extends AbstractTableModel {
 			for(Job job : slave.getRunningComputations().values()) {
 				jobs.add(job.getId());
 			}
-			String[] foo = null;
+			String[] foo = new String[jobs.size()];
 			return Util.join(jobs.toArray(foo), ",");
 		default:
 			return null;

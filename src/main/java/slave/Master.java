@@ -64,9 +64,21 @@ public class Master {
 		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(
 				user, password, url);
 		try {
-			connection = connectionFactory.createConnection();
-			connection.start();
-			session = connection.createSession(false, 1);
+			boolean connected  = false;
+			while(!connected) {
+				try {
+					connection = connectionFactory.createConnection();
+					connection.start();
+					session = connection.createSession(false, 1);
+					connected = true;
+				} catch (Exception e) {
+					logger.error("Error while connecting to MessageBroker: \n"
+							+ e.getCause());
+					logger.error("Trying again in 5 secs...");
+					Thread.sleep(5000);
+				}
+			}
+			
 			destination_rcv = session.createQueue("TO."
 					+ InetAddress.getLocalHost().getHostName());
 			destination_snd = session.createQueue("FROM."
@@ -79,11 +91,11 @@ public class Master {
 			consumer_rcv = session.createConsumer(destination_rcv);
 		} catch (Exception e) {
 			logger.error("Error while connecting to MessageBroker: \n"
-					+ e.getStackTrace());
+					+ e.getCause());
+			System.exit(-1);
 		}
 		sendInformationMessage(producer_reg);
-		logger
-				.info("Connection extablished. Queues, Consumers, Producers created.");
+		logger.info("Connection extablished. Queues, Consumers, Producers created.");
 	}
 
 	public void disconnect() {
@@ -186,7 +198,7 @@ public class Master {
 		} catch (UnknownHostException e) {
 			logger
 					.error("Error while getting hostname: \n"
-							+ e.getStackTrace());
+							+ e.getCause());
 		}
 		sendObject(msg, p);
 		logger.info("InformationMessage sent.");

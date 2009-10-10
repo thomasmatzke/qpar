@@ -30,7 +30,7 @@ import main.java.messages.ShutdownMessage;
 
 import org.apache.log4j.Logger;
 
-public class Slave implements MessageListener {
+public class Slave implements MessageListener, Runnable {
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
 	private static Vector<Slave> slaves = new Vector<Slave>();
 	private static AbstractTableModel tableModel;
@@ -45,7 +45,7 @@ public class Slave implements MessageListener {
 	public static Slave create(String hostName) throws JMSException {
 		logger.info("Starting new Slaveinstance/thread...");
 		Slave instance = new Slave();
-		instance.start();
+		new Thread(instance).start();
 		Slave.addSlave(instance);
 		return instance;
 	}
@@ -275,30 +275,6 @@ public class Slave implements MessageListener {
 		this.toolIds = toolIds;
 	}
 
-	private void start() throws JMSException {
-		logger.info("Starting Slavehandlerthread...");
-		session = MasterDaemon.createSession();
-		destination_snd = session.createQueue("TO." + hostName);
-		destination_rcv = session.createQueue("FROM." + hostName);
-		producer_snd = session.createProducer(destination_snd);
-		producer_snd.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
-		consumer_rcv = session.createConsumer(destination_rcv);
-
-		this.running = true;
-		Message msg = null;
-		while (running) {
-			try {
-				msg = consumer_rcv.receive(1000);
-			} catch (JMSException e) {
-				logger.error("Error while consuming Slavemessage...\n" + e.getStackTrace());
-			}
-			if (msg != null) {
-				onMessage(msg);
-			}
-		}
-		logger.info("Slavehandlerthread stopped");
-	}
-
 	public void stop() {
 		logger.info("Stopping Slavethread...");
 		//Stopping the loop
@@ -307,7 +283,38 @@ public class Slave implements MessageListener {
 			Thread.sleep(1000);
 			this.session.close();
 		} catch (Exception e) {
-			logger.error("Error while stopping Slavehandler...\n" + e.getStackTrace());
+			logger.error("Error while stopping Slavehandler...\n" + e.getCause());
 		}
+	}
+
+	@Override
+	public void run() {
+		logger.info("Starting Slavehandlerthread...");
+		try {
+			session = MasterDaemon.createSession();
+			destination_snd = session.createQueue("TO." + hostName);
+			destination_rcv = session.createQueue("FROM." + hostName);
+			producer_snd = session.createProducer(destination_snd);
+			producer_snd.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
+			consumer_rcv = session.createConsumer(destination_rcv);
+		} catch (JMSException e) {
+			logger.error("Error while initializing Queues...\n" + e.getCause());
+			System.exit(-1);
+		}
+		
+		this.running = true;
+		Message msg = null;
+		while (running) {
+			try {
+				msg = consumer_rcv.receive(1000);
+			} catch (JMSException e) {
+				logger.error("Error while consuming Slavemessage...\n" + e.getCause());
+			}
+			if (msg != null) {
+				onMessage(msg);
+			}
+		}
+		logger.info("Slavehandlerthread stopped");
+		
 	}
 }
