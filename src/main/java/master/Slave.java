@@ -37,14 +37,18 @@ public class Slave implements MessageListener, Runnable {
 
 	private static void addSlave(Slave slave) {
 		slaves.add(slave);
+		logger.debug("Adding Slave: " + slave);
 		if (tableModel != null) {
 			tableModel.fireTableDataChanged();
 		}
 	}
 
-	public static Slave create(String hostName) throws JMSException {
+	public static Slave create(String hostName, int cores, Vector<String> solvers){
 		logger.info("Starting new Slaveinstance/thread...");
 		Slave instance = new Slave();
+		instance.cores = cores;
+		instance.hostName = hostName;
+		instance.setToolIds(solvers);
 		new Thread(instance).start();
 		Slave.addSlave(instance);
 		return instance;
@@ -124,15 +128,8 @@ public class Slave implements MessageListener, Runnable {
 
 	// Maps tqbf ids to Jobs
 	private Map<String, Job> runningComputations = new HashMap<String, Job>();
-
-	// private String user = ActiveMQConnection.DEFAULT_USER;
-	// private String password = ActiveMQConnection.DEFAULT_PASSWORD;
+	
 	private Session session;
-
-	/*
-	 * private static void removeSlave(int slave) {
-	 * removeSlave(slaves.get(slave)); }
-	 */
 
 	private Vector<String> toolIds;
 
@@ -212,13 +209,13 @@ public class Slave implements MessageListener, Runnable {
 			logger.error("Error while retrieving Object from Message... \n" + e.getStackTrace());
 		}
 		if (t instanceof AbortConfirmMessage) {
-			handleAbortConfirmMessage((AbortConfirmMessage) m);
+			handleAbortConfirmMessage((AbortConfirmMessage) t);
 		} else if (t instanceof InformationMessage) {
-			handleInformationMessage((InformationMessage) m);
+			handleInformationMessage((InformationMessage) t);
 		} else if (t instanceof ResultMessage) {
-			handleResultMessage((ResultMessage) m);
+			handleResultMessage((ResultMessage) t);
 		} else if (t instanceof ShutdownMessage) {
-			handleShutdownMessage((ShutdownMessage) m);
+			handleShutdownMessage((ShutdownMessage) t);
 		} else {
 			logger.error("Received message object of unknown type.");
 		}
@@ -257,6 +254,7 @@ public class Slave implements MessageListener, Runnable {
 
 	private void sendObject(Serializable o) {
 		try {
+			logger.debug("Sending Object of Class : " + o.getClass() + " to " + producer_snd.getDestination());
 			producer_snd.send(session.createObjectMessage(o));
 		} catch (JMSException e) {
 			logger.error("Error while sending Objectmessage...\n" + e.getStackTrace());
@@ -316,5 +314,11 @@ public class Slave implements MessageListener, Runnable {
 		}
 		logger.info("Slavehandlerthread stopped");
 		
+	}
+	
+	public String toString() {
+		return "Slave -- Hostname: " + (this.hostName != null ? this.hostName : "") +
+				", Solvers: " + (this.toolIds != null ? this.toolIds.toString() : "") +
+				", Cores: " + this.cores;
 	}
 }

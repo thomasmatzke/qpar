@@ -23,13 +23,7 @@ public class NewSlaveListener implements MessageListener {
 
 	public void handleInformationMessage(InformationMessage i) {
 		logger.info("Handling InformationMessage...");
-		try {
-			Slave slave = Slave.create(i.getHostName());
-			slave.setCores(i.getCores());
-			slave.setToolIds(i.getToolIds());
-		} catch (JMSException e) {
-			logger.error("Error while creating slave...\n" + e.getStackTrace());
-		}
+		Slave.create(i.getHostName(), i.getCores(), i.getToolIds());
 		logger.info("InformationMessage handled.");
 	}
 

@@ -69,7 +69,7 @@ public class Master {
 				try {
 					connection = connectionFactory.createConnection();
 					connection.start();
-					session = connection.createSession(false, 1);
+					session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 					connected = true;
 				} catch (Exception e) {
 					logger.error("Error while connecting to MessageBroker: \n"
@@ -126,14 +126,6 @@ public class Master {
 		SlaveDaemon.addThread(m.getFormula().getId(), solver);
 	}
 
-	// public void sendSlaveShutdownMessage(String reason) {
-	// logger.info("Sending ShutdownMessage... Reason: " + reason);
-	// SlaveShutdownMessage msg = new SlaveShutdownMessage();
-	// msg.setReason(reason);
-	// this.sendObject(msg, producer_snd);
-	// logger.info("ShutdownMessage sent.");
-	// }
-
 	private void handleInformationRequestMessage(InformationRequestMessage m) {
 		this.sendInformationMessage();
 	}
@@ -164,13 +156,13 @@ public class Master {
 			logger.error("Error while retrieving Object from Message... \n" + e.getStackTrace());
 		}
 		if (t instanceof AbortMessage) {
-			handleAbortMessage((AbortMessage) m);
+			handleAbortMessage((AbortMessage) t);
 		} else if (t instanceof FormulaMessage) {
-			handleFormulaMessage((FormulaMessage) m);
+			handleFormulaMessage((FormulaMessage) t);
 		} else if (t instanceof InformationRequestMessage) {
-			handleInformationRequestMessage((InformationRequestMessage) m);
+			handleInformationRequestMessage((InformationRequestMessage) t);
 		} else if (t instanceof KillMessage) {
-			handleKillMessage((KillMessage) m);
+			handleKillMessage((KillMessage) t);
 		} else {
 			logger.error("Received message object of unknown type.");
 		}
@@ -194,11 +186,9 @@ public class Master {
 		msg.setCores(Runtime.getRuntime().availableProcessors());
 		msg.setToolIds(SlaveDaemon.availableSolvers);
 		try {
-			msg.getHostName(InetAddress.getLocalHost().getHostName());
+			msg.setHostName(InetAddress.getLocalHost().getHostName());
 		} catch (UnknownHostException e) {
-			logger
-					.error("Error while getting hostname: \n"
-							+ e.getCause());
+			logger.error("Error while getting hostname: \n"	+ e.getCause());
 		}
 		sendObject(msg, p);
 		logger.info("InformationMessage sent.");

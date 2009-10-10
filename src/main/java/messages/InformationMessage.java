@@ -12,7 +12,7 @@ public class InformationMessage implements Serializable {
 		return hostName;
 	}
 
-	public void getHostName(String hostName) {
+	public void setHostName(String hostName) {
 		this.hostName = hostName;
 	}
 

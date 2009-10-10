@@ -62,7 +62,7 @@ public class MasterDaemon {
 	}
 
 	public static Session createSession() throws JMSException {
-		return MasterDaemon.connection.createSession(true, 0);
+		return MasterDaemon.connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 	}
 
 	public static synchronized Connection getConnection() {
