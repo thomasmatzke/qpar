@@ -17,7 +17,7 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
 import main.java.master.MasterDaemon;
-import main.java.messages.AbortConfirmMessage;
+import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.AbortMessage;
 import main.java.messages.FormulaMessage;
 import main.java.messages.InformationMessage;
@@ -116,12 +116,13 @@ public class Master {
 		Solver thread = SlaveDaemon.getThreads().get(m.getQbfId());
 		thread.kill();
 		SlaveDaemon.getThreads().remove(m.getQbfId());
-		this.sendAbortConfirmMessage(m.getQbfId());
+		this.sendFormulaAbortedMessage(m.getQbfId());
 	}
 
 	private void handleFormulaMessage(FormulaMessage m) {
 		QProSolver solver = new QProSolver();
 		solver.setTransmissionQbf(m.getFormula());
+		solver.setMaster(this);
 		new Thread(solver).start();
 		SlaveDaemon.addThread(m.getFormula().getId(), solver);
 	}
@@ -168,9 +169,9 @@ public class Master {
 		}
 	}
 
-	public void sendAbortConfirmMessage(String tqbfId) {
+	public void sendFormulaAbortedMessage(String tqbfId) {
 		logger.info("Sending AbortConfirmMessage... tqbfID: " + tqbfId);
-		AbortConfirmMessage msg = new AbortConfirmMessage();
+		FormulaAbortedMessage msg = new FormulaAbortedMessage();
 		msg.setTqbfId(tqbfId);
 		sendObject(msg, producer_snd);
 		logger.info("AbortConfirmMessage sent.");

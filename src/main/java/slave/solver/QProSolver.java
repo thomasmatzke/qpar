@@ -5,15 +5,29 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
+import org.apache.log4j.Logger;
+
 import main.java.logic.TransmissionQbf;
+import main.java.slave.Master;
+import main.java.slave.SlaveDaemon;
 
 public class QProSolver implements Solver {
 
+	static Logger logger = Logger.getLogger(SlaveDaemon.class);
 	public static final String toolId = "qpro";
 	private Boolean result = null;
 	private Process qpro_process;
 	private TransmissionQbf formula;
+	private Master master;
 	
+	public Master getMaster() {
+		return master;
+	}
+
+	public void setMaster(Master master) {
+		this.master = master;
+	}
+
 	public void cleanup() {}
 	
 	public void kill() {
@@ -39,23 +53,24 @@ public class QProSolver implements Solver {
 		prepare();
 		ProcessBuilder pb = new ProcessBuilder("qpro");
 		try {
+			qpro_process = pb.start();
 			PrintWriter stdin = new PrintWriter(qpro_process.getOutputStream());
 			BufferedReader stdout = new BufferedReader(new InputStreamReader(qpro_process.getInputStream()));
 			stdin.print(toInputString(this.formula));
-			qpro_process = pb.start();
+			
 			String firstLine = stdout.readLine();
 			if(firstLine == "1") {
 				this.result = new Boolean(true);
 			} else if (firstLine == "0") {
 				this.result = new Boolean(false);
 			} else {
-				// TODO: Error. send message to master
+				logger.error("Got non-expected result from solver(" + firstLine + "). Aborting Formula.");
+				master.sendFormulaAbortedMessage(formula.getId());
 			}
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		} catch (IOException e) {
+			logger.error("IO Error while getting result from solver: " + e.getCause());
+			master.sendFormulaAbortedMessage(formula.getId());
 		}
-		
 		
 	}
 	

@@ -7,7 +7,7 @@ import java.io.Serializable;
  * @author thomasm
  * 
  */
-public class AbortConfirmMessage implements Serializable {
+public class FormulaAbortedMessage implements Serializable {
 	private String tQbfId;
 
 	public String getTqbfId() {
