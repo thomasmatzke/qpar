@@ -4,7 +4,6 @@ import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
-import main.java.QPar;
 import main.java.Util;
 import main.java.master.Job;
 import main.java.master.Slave;

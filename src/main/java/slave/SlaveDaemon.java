@@ -1,18 +1,15 @@
 package main.java.slave;
 
-import java.net.UnknownHostException;
 import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.Vector;
 
-import javax.jms.JMSException;
+import main.java.ArgumentParser;
+import main.java.slave.solver.Solver;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
-import main.java.ArgumentParser;
-import main.java.master.MasterDaemon;
-import main.java.slave.solver.Solver;
 import sun.misc.Signal;
 
 /**

@@ -4,18 +4,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 
-import org.apache.log4j.Logger;
-
+import main.java.StreamGobbler;
 import main.java.logic.TransmissionQbf;
 import main.java.slave.Master;
 import main.java.slave.SlaveDaemon;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 
 public class QProSolver implements Solver {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
 	public static final String toolId = "qpro";
-	private Boolean result = null;
 	private Process qpro_process;
 	private TransmissionQbf formula;
 	private Master master;
@@ -36,15 +38,7 @@ public class QProSolver implements Solver {
 	}
 
 	public void prepare() {}
-	
-	public boolean result() throws Exception {
-		if(this.result == null) {
-			throw new Exception("Computation not yet completed");
-		}
-		return this.result.booleanValue();
-	}
-
-	
+		
 	public void setTransmissionQbf(TransmissionQbf formula) {
 		this.formula = formula;
 	}
@@ -54,21 +48,30 @@ public class QProSolver implements Solver {
 		ProcessBuilder pb = new ProcessBuilder("qpro");
 		try {
 			qpro_process = pb.start();
+			logger.debug("qpro started");
 			PrintWriter stdin = new PrintWriter(qpro_process.getOutputStream());
-			BufferedReader stdout = new BufferedReader(new InputStreamReader(qpro_process.getInputStream()));
 			stdin.print(toInputString(this.formula));
-			
-			String firstLine = stdout.readLine();
-			if(firstLine == "1") {
-				this.result = new Boolean(true);
-			} else if (firstLine == "0") {
-				this.result = new Boolean(false);
+			stdin.flush();
+//			StreamGobbler gobbler = new StreamGobbler(qpro_process.getInputStream());
+//			gobbler.start();
+			InputStreamReader isr = new InputStreamReader(qpro_process.getInputStream());
+			StringWriter writer = new StringWriter();
+			IOUtils.copy(isr, writer);
+			String readString = writer.toString();
+			int return_val = qpro_process.waitFor();
+						
+			if(readString.startsWith("1")) {
+				master.sendResultMessage(formula.getId(), new Boolean(true));
+				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(true) );
+			} else if (readString.startsWith("0")) {
+				master.sendResultMessage(formula.getId(), new Boolean(false));
+				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(false) );
 			} else {
-				logger.error("Got non-expected result from solver(" + firstLine + "). Aborting Formula.");
+				logger.error("Got non-expected result from solver(" + readString + "). Aborting Formula.");
 				master.sendFormulaAbortedMessage(formula.getId());
 			}
-		} catch (IOException e) {
-			logger.error("IO Error while getting result from solver: " + e.getCause());
+		} catch (Exception e) {
+			logger.error("IO Error while getting result from solver: " + e);
 			master.sendFormulaAbortedMessage(formula.getId());
 		}
 		

@@ -26,8 +26,9 @@ public class MasterDaemon {
 		@Override
 		public void run() {
 			try {
-				ActiveMQConnection c = (ActiveMQConnection) connection;
-				c.getConnectionStats().dump(new IndentPrinter());
+				for(Slave slave : Slave.getSlaves()){
+					slave.stop();
+				}
 				connection.close();
 			} catch (JMSException e) {
 				logger.error("Error while closing connection: \n"
@@ -122,6 +123,7 @@ public class MasterDaemon {
 	public MasterDaemon() {
 		startMessageBroker();
 		hook = new ShutdownHook();
+		Runtime.getRuntime().addShutdownHook(hook);
 		connectToBroker();
 		newSlaveListener = new NewSlaveListener();
 		newSlaveListener.start();

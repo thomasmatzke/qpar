@@ -16,23 +16,21 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
-import main.java.master.MasterDaemon;
-import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.AbortMessage;
+import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.FormulaMessage;
 import main.java.messages.InformationMessage;
 import main.java.messages.InformationRequestMessage;
 import main.java.messages.KillMessage;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
-import main.java.messages.SlaveShutdownMessage;
 import main.java.slave.solver.QProSolver;
 import main.java.slave.solver.Solver;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.log4j.Logger;
-
+import org.apache.activemq.util.IndentPrinter;
 public class Master {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
@@ -62,7 +60,7 @@ public class Master {
 	public void connect(String url) {
 		logger.info("Connecting to MessageBroker...");
 		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(
-				user, password, url);
+				user, password, url); // TODO: add failover:
 		try {
 			boolean connected  = false;
 			while(!connected) {
@@ -107,7 +105,7 @@ public class Master {
 			this.connection.close();
 		} catch (Exception e) {
 			logger.error("Error while disconnecting from MessageBroker... \n"
-					+ e.getStackTrace());
+					+ e.getCause());
 		}
 		logger.info("Disconnected from MessageBroker");
 	}
@@ -154,7 +152,7 @@ public class Master {
 		try {
 			t = ((ObjectMessage) m).getObject();
 		} catch (JMSException e) {
-			logger.error("Error while retrieving Object from Message... \n" + e.getStackTrace());
+			logger.error("Error while retrieving Object from Message... \n" + e.getCause());
 		}
 		if (t instanceof AbortMessage) {
 			handleAbortMessage((AbortMessage) t);
@@ -189,17 +187,16 @@ public class Master {
 		try {
 			msg.setHostName(InetAddress.getLocalHost().getHostName());
 		} catch (UnknownHostException e) {
-			logger.error("Error while getting hostname: \n"	+ e.getCause());
+			logger.error("Error while getting hostname: \n"	+ e);
 		}
 		sendObject(msg, p);
-		logger.info("InformationMessage sent.");
 	}
 
 	private void sendObject(Serializable o, MessageProducer p) {
 		try {
 			p.send(session.createObjectMessage(o));
 		} catch (JMSException e) {
-			logger.error("Error while sending object: \n" + e.getStackTrace());
+			logger.error("Error while sending object: \n" + e);
 		}
 	}
 
@@ -210,7 +207,6 @@ public class Master {
 		msg.setTqbfId(tqbfId);
 		msg.setResult(result);
 		sendObject(msg, producer_snd);
-		logger.info("ResultMessage sent.");
 	}
 
 	public void sendShutdownMessage(String reason, Vector<String> open_jobs) {
@@ -230,7 +226,7 @@ public class Master {
 				msg = consumer_rcv.receive(1000);
 			} catch (JMSException e) {
 				logger.error("Error while consuming Slavemessage...\n"
-						+ e.getStackTrace());
+						+ e.getCause());
 			}
 			if (msg != null) {
 				onMessage(msg);

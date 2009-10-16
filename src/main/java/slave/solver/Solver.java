@@ -12,8 +12,6 @@ public interface Solver extends Runnable{
 	
 	public void prepare();
 	
-	public boolean result() throws Exception;
-	
 	public void cleanup();
 	
 	public void kill();

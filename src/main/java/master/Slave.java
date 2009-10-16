@@ -1,6 +1,7 @@
 package main.java.master;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,7 +19,9 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import javax.swing.table.AbstractTableModel;
 
+import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
+import main.java.master.gui.JobsTableModel;
 import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.AbortMessage;
 import main.java.messages.FormulaMessage;
@@ -178,9 +181,15 @@ public class Slave implements MessageListener, Runnable {
 	private void handleResultMessage(ResultMessage m) {
 		logger.info("Receiving ResultMessage from " + this.getHostName());
 		Job job = this.runningComputations.get(m.getTqbfId());
-		job.getFormula().mergeQbf(m.getTqbfId(), m.getResult());
+		Qbf formula = job.getFormula();
+		boolean solved = formula.mergeQbf(m.getTqbfId(), m.getResult());
 		this.runningComputations.remove(m.getTqbfId());
 		logger.info("Result of tqbf(" + m.getTqbfId() + ") merged into Qbf of Job " + job.getId());
+		if(solved) {
+			job.setStatus("Result: " + formula.getResult());
+			job.setStoppedAt(new Date());
+			Job.getTableModel().fireTableDataChanged();
+		}
 	}
 
 	private void handleShutdownMessage(ShutdownMessage m) {
@@ -241,7 +250,6 @@ public class Slave implements MessageListener, Runnable {
 		logger.info("Sending InformationRequestMessage to Slave " + this.getHostName());
 		InformationRequestMessage msg = new InformationRequestMessage();
 		sendObject(msg);
-		logger.info("InformationRequestMessage sent");
 	}
 
 	public void sendKillMessage(String reason) {
@@ -249,7 +257,6 @@ public class Slave implements MessageListener, Runnable {
 		KillMessage msg = new KillMessage();
 		msg.setReason(reason);
 		sendObject(msg);
-		logger.info("KillMessage sent");
 	}
 
 	private void sendObject(Serializable o) {
@@ -257,7 +264,7 @@ public class Slave implements MessageListener, Runnable {
 			logger.debug("Sending Object of Class : " + o.getClass() + " to " + producer_snd.getDestination());
 			producer_snd.send(session.createObjectMessage(o));
 		} catch (JMSException e) {
-			logger.error("Error while sending Objectmessage...\n" + e.getStackTrace());
+			logger.error("Error while sending Objectmessage...\n" + e.getCause());
 		}
 	}
 

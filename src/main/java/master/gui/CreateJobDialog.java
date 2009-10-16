@@ -1,5 +1,6 @@
 package main.java.master.gui;
 
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -289,11 +290,15 @@ public class CreateJobDialog extends JDialog {
 							|| outputFileTextField.getText().equals("")) {
 						return;
 					}
-					Job.createJob(getFormulaTextField().getText(),
-							getOutputFileTextField().getText(),
-							(String) getSolverComboBox().getSelectedItem(),
-							(String) getHeuristicComboBox().getSelectedItem());
-					dispose();
+					if(new File(formulaTextField.getText()).exists()) {
+						Job.createJob(getFormulaTextField().getText(),
+								getOutputFileTextField().getText(),
+								(String) getSolverComboBox().getSelectedItem(),
+								(String) getHeuristicComboBox().getSelectedItem());
+						dispose();
+					} else {
+						formulaTextField.setBackground(Color.RED);
+					}
 				}
 			});
 		}

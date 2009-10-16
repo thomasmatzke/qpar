@@ -1,5 +1,6 @@
 package main.java.master;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -43,11 +44,11 @@ public class Job {
 		job.setHeuristic(heuristicId);
 		job.setStatus("Not started");
 		addJob(job);
-		logger.info("Job created. Id: " + job.getId() + "\n" +
-				", HeuristicId: " + job.getHeuristic() + "\n" +
-				", SolverId: " + job.getSolver() + "\n" +
-				", Inputfile: " + job.getInputFileString() + "\n" +
-				", Outputfile: " + job.getOutputFileString() + "\n");
+		logger.info("Job created. Id: " + job.getId() + ",\n" +
+				"HeuristicId: " + job.getHeuristic() + ",\n" +
+				"SolverId: " + job.getSolver() + ",\n" +
+				"Inputfile: " + job.getInputFileString() + ",\n" +
+				"Outputfile: " + job.getOutputFileString() + "\n");
 	}
 
 	public static Vector<Job> getJobs() {
@@ -174,7 +175,11 @@ public class Job {
 	public void start() {
 		logger.info("Starting Job " + this.id + "...\n");
 		this.startedAt = new Date();
-		this.formula = new Qbf(inputFileString);
+		try {
+			this.formula = new Qbf(inputFileString);
+		} catch (IOException e) {
+			logger.error("Error while reading formula file: " + e.getCause());
+		}
 		int availableCores = Slave.getCoresForSolver(this.solver);
 		this.subformulas = formula.splitQbf(availableCores);
 		List<Slave> slaves = Slave.getSlavesForSolver(this.solver);
@@ -183,13 +188,14 @@ public class Job {
 			Slave designatedSlave = slaves.get(i % slaves.size());
 			subformulas.get(i).setStatus("computing");
 			designatedSlave.computeFormula(subformulas.get(i), this);
-			formulaDesignations
-					.put(subformulas.get(i).getId(), designatedSlave);
+			formulaDesignations.put(subformulas.get(i).getId(), designatedSlave);
 		}
 
-		tableModel.fireTableDataChanged();
-		logger.info("Job started. Splitted into " + this.subformulas.size() + "subformulas, " +
+		
+		logger.info("Job started. Splitted into " + this.subformulas.size() + " subformulas, " +
 					"with " + availableCores + " available Cores on " + slaves.size() + " slaves.");
+		this.status = "Started";
+		tableModel.fireTableDataChanged();
 	}
 
 }

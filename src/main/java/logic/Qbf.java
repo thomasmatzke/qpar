@@ -3,8 +3,13 @@ package main.java.logic;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import main.java.master.MasterDaemon;
+
+import org.apache.log4j.Logger;
 
 /**
 * A QBF object contains one QBF as well as methods to split it up into subQBFs
@@ -26,30 +31,21 @@ public class Qbf {
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
+	static Logger logger = Logger.getLogger(MasterDaemon.class);
 	
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
+	 * @throws IOException 
 	*/
-	public Qbf(String filename) {
+	public Qbf(String filename) throws IOException {
 		id++;
 		this.filename = filename;
 		file = new File(filename);
+	
+		BufferedReader qbfBuffer =  new BufferedReader(new FileReader(file));
+		qbfString = qbfBuffer.readLine();
 		
-		// check if file exists
-		if (!file.exists()) {
-			System.out.println("There is no file named " + filename);
-			System.exit(1);
-		}
-
-		// read from file and store formula in qbfString
-		try {
-			BufferedReader qbfBuffer =  new BufferedReader(new FileReader(file));
-			qbfString = qbfBuffer.readLine();
-		} catch (Exception e) {
-			System.out.println("Something went wrong reading from " + filename);
-			System.exit(1);
-		}
 
 // syntax checking should now be done in the parser		
 //		// maybe there will be a syntaxcheck somewhesre in the future
