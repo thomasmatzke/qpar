@@ -1,1 +1,8 @@
-so ziemlich alles
+- 	Can a formula be divided to an arbitrary number of subformulas or just 
+	to powers of 2?
+==	Yes
+	
+-	Error handling: What to do with errors returning from the solver? Mark 
+	formula as flawed? (no result) Or retry on another host?
+==	Formula shall be aborted
+

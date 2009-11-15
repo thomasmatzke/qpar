@@ -178,7 +178,7 @@ public class Job {
 		try {
 			this.formula = new Qbf(inputFileString);
 		} catch (IOException e) {
-			logger.error("Error while reading formula file: " + e.getCause());
+			logger.error("Error while reading formula file: " + e);
 		}
 		int availableCores = Slave.getCoresForSolver(this.solver);
 		this.subformulas = formula.splitQbf(availableCores);

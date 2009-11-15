@@ -359,14 +359,18 @@ public class ProgramWindow extends JFrame {
 
 	private void abortSelectedJob() { 
 		int row = getJobsTable().getSelectedRow(); 
-		Job job = Job.getJobs().get(row);
-		job.abort(); 
+		if(row != -1) {
+			Job job = Job.getJobs().get(row);
+			job.abort(); 
+		}
 	}
 	
-	private void startSelectedJob() { 
+	private void startSelectedJob() {
 		int row = getJobsTable().getSelectedRow(); 
-		Job job = Job.getJobs().get(row);
-		job.start(); 
+		if(row != -1) {
+			Job job = Job.getJobs().get(row);
+			job.start();
+		}
 	}	
 
 	/**

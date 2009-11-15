@@ -161,7 +161,7 @@ public class Slave implements MessageListener, Runnable {
 		return toolIds;
 	}
 
-	private void handleAbortConfirmMessage(FormulaAbortedMessage m) {
+	private void handleFormulaAbortedMessage(FormulaAbortedMessage m) {
 		logger.info("Receiving AbortConfirmMessage from " + this.getHostName());
 		this.runningComputations.remove(m.getTqbfId());
 		logger.info("Removed tqbf(" + m.getTqbfId() + ") from running computations.");
@@ -218,7 +218,7 @@ public class Slave implements MessageListener, Runnable {
 			logger.error("Error while retrieving Object from Message... \n" + e.getCause());
 		}
 		if (t instanceof FormulaAbortedMessage) {
-			handleAbortConfirmMessage((FormulaAbortedMessage) t);
+			handleFormulaAbortedMessage((FormulaAbortedMessage) t);
 		} else if (t instanceof InformationMessage) {
 			handleInformationMessage((InformationMessage) t);
 		} else if (t instanceof ResultMessage) {
