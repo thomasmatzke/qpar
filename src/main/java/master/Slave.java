@@ -28,16 +28,30 @@ import main.java.messages.FormulaMessage;
 import main.java.messages.InformationMessage;
 import main.java.messages.InformationRequestMessage;
 import main.java.messages.KillMessage;
+import main.java.messages.Ping;
+import main.java.messages.Pong;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
 
 import org.apache.log4j.Logger;
 
 public class Slave implements MessageListener, Runnable {
+
+	public static final int ACTIVE			= 0;
+	public static final int IRRESPONSIVE 	= 1;
+	public static final int SHUTDOWN	 	= 2;
+	public static final int KILLED		 	= 3;
+	
+	// The slave has that much time to answer to the ping
+	public static final long KEEPALIVE_TIMEOUT = 10 * 1000; // In Millis
+	
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
 	private static Vector<Slave> slaves = new Vector<Slave>();
 	private static AbstractTableModel tableModel;
-
+	private long lastPingMillis = 0;
+	private long lastPongMillis = System.currentTimeMillis();
+	
+	
 	private static void addSlave(Slave slave) {
 		slaves.add(slave);
 		logger.debug("Adding Slave: " + slave);
@@ -217,6 +231,7 @@ public class Slave implements MessageListener, Runnable {
 		} catch (JMSException e) {
 			logger.error("Error while retrieving Object from Message... \n" + e.getCause());
 		}
+		logger.debug("Received message of type " + t.getClass().toString());
 		if (t instanceof FormulaAbortedMessage) {
 			handleFormulaAbortedMessage((FormulaAbortedMessage) t);
 		} else if (t instanceof InformationMessage) {
@@ -225,6 +240,8 @@ public class Slave implements MessageListener, Runnable {
 			handleResultMessage((ResultMessage) t);
 		} else if (t instanceof ShutdownMessage) {
 			handleShutdownMessage((ShutdownMessage) t);
+		} else if (t instanceof Pong) {
+			this.lastPongMillis = System.currentTimeMillis();
 		} else {
 			logger.error("Received message object of unknown type.");
 		}
@@ -257,6 +274,11 @@ public class Slave implements MessageListener, Runnable {
 		KillMessage msg = new KillMessage();
 		msg.setReason(reason);
 		sendObject(msg);
+	}
+	
+	public void sendPing() {
+		sendObject(new Ping());
+		this.lastPingMillis = System.currentTimeMillis();
 	}
 
 	private void sendObject(Serializable o) {
@@ -309,6 +331,10 @@ public class Slave implements MessageListener, Runnable {
 		
 		this.running = true;
 		Message msg = null;
+		
+		long currentMillis;
+		this.sendPing();		
+		
 		while (running) {
 			try {
 				msg = consumer_rcv.receive(1000);
@@ -318,13 +344,27 @@ public class Slave implements MessageListener, Runnable {
 			if (msg != null) {
 				onMessage(msg);
 			}
+			currentMillis = System.currentTimeMillis();
+			
+			if((this.lastPingMillis + KEEPALIVE_TIMEOUT) < currentMillis) {
+				if(this.lastPingMillis <= this.lastPongMillis && 
+				   this.lastPongMillis < currentMillis) {
+					this.sendPing();
+				} else {
+					logger.error("Slave " + this.getHostName() + " timed out. Removing from pool...");
+					stop();
+					// TODO notify someone about unfinished computation
+					Slave.removeSlave(this);
+				}
+			}
+							
 		}
 		logger.info("Slavehandlerthread stopped");
 		
 	}
 	
 	public String toString() {
-		return "Slave -- Hostname: " + (this.hostName != null ? this.hostName : "") +
+		return "Slave -- Hostname: " + this.getHostName() +
 				", Solvers: " + (this.toolIds != null ? this.toolIds.toString() : "") +
 				", Cores: " + this.cores;
 	}

@@ -6,3 +6,18 @@
 	formula as flawed? (no result) Or retry on another host?
 ==	Formula shall be aborted
 
+-	Keepalivemessages. 
+==	Done
+
+-	Slavelist not updated when Slave is terminated
+==  Only because Eclipse sends SIGKILL to the client, which cant be cought
+	Solved with Ping/pong
+
+-	Strategies if one Slave dies.
+
+-	CLI
+
+-	15.11.2009 17:55:06 org.apache.activemq.broker.TransportConnector$1 onAcceptError
+	SCHWERWIEGEND: Could not accept connection : Channel was inactive for too long: /192.168.1.108:52425
+	When Georg connected from Notebook to Master on Phoenix
+	

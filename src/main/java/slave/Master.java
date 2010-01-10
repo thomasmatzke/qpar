@@ -22,6 +22,8 @@ import main.java.messages.FormulaMessage;
 import main.java.messages.InformationMessage;
 import main.java.messages.InformationRequestMessage;
 import main.java.messages.KillMessage;
+import main.java.messages.Ping;
+import main.java.messages.Pong;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
 import main.java.slave.solver.QProSolver;
@@ -154,6 +156,7 @@ public class Master {
 		} catch (JMSException e) {
 			logger.error("Error while retrieving Object from Message... \n" + e.getCause());
 		}
+		logger.debug("Received message of type " + t.getClass().toString());
 		if (t instanceof AbortMessage) {
 			handleAbortMessage((AbortMessage) t);
 		} else if (t instanceof FormulaMessage) {
@@ -162,6 +165,8 @@ public class Master {
 			handleInformationRequestMessage((InformationRequestMessage) t);
 		} else if (t instanceof KillMessage) {
 			handleKillMessage((KillMessage) t);
+		} else if (t instanceof Ping) {
+			this.sendPong();
 		} else {
 			logger.error("Received message object of unknown type.");
 		}
@@ -194,6 +199,7 @@ public class Master {
 
 	private void sendObject(Serializable o, MessageProducer p) {
 		try {
+			logger.debug("Sending Object of Class : " + o.getClass() + " to " + p.getDestination());
 			p.send(session.createObjectMessage(o));
 		} catch (JMSException e) {
 			logger.error("Error while sending object: \n" + e);
@@ -215,6 +221,10 @@ public class Master {
 		msg.setOpenJobs(open_jobs);
 		msg.setReason(reason);
 		this.sendObject(msg, producer_snd);
+	}
+	
+	public void sendPong() {
+		this.sendObject(new Pong(), producer_snd);
 	}
 
 	public void startConsuming() {
