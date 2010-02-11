@@ -10,7 +10,8 @@
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
     <path id="QPar.classpath">
-        <pathelement location="bin"/>
+<pathelement location = "lib/commons-io-1.4.jar"/>        
+<pathelement location="bin"/>
         <pathelement location="lib/activemq-all-5.2.0.jar"/>
         <pathelement location="img"/>
         <pathelement location="lib/log4j-1.2.15.jar"/>

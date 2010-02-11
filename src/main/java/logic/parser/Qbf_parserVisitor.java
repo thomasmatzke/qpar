@@ -4,11 +4,5 @@ package main.java.logic.parser;
 public interface Qbf_parserVisitor
 {
   public Object visit(SimpleNode node, Object data);
-  public Object visit(ASTStart node, Object data);
-  public Object visit(ASTQuant node, Object data);
-  public Object visit(ASTAnd node, Object data);
-  public Object visit(ASTOr node, Object data);
-  public Object visit(ASTNot node, Object data);
-  public Object visit(ASTVar node, Object data);
 }
-/* JavaCC - OriginalChecksum=7f807d3eaf9188e4c1d3efe12be958a5 (do not edit this line) */
+/* JavaCC - OriginalChecksum=5a5953d4c3e20954b20de052eafa8bb4 (do not edit this line) */
