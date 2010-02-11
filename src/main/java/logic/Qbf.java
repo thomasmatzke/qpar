@@ -36,7 +36,7 @@ public class Qbf {
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
-	 * @throws IOException 
+	* @throws IOException 
 	*/
 	public Qbf(String filename) throws IOException {
 		id++;
@@ -44,7 +44,7 @@ public class Qbf {
 		file = new File(filename);
 	
 		BufferedReader qbfBuffer =  new BufferedReader(new FileReader(file));
-		qbfString = qbfBuffer.readLine();
+		// qbfString = qbfBuffer.readLine();
 		
 
 // syntax checking should now be done in the parser		
@@ -66,8 +66,7 @@ public class Qbf {
 	*/
 	public List<TransmissionQbf> splitQbf(int n) {
 
-		TransmissionQbf tmp;
-		
+		TransmissionQbf tmp;		
 		for (int i = 0; i < n; i++) {
 			qbfResults.add(i, false);
 			resultAvailable.add(i, false);

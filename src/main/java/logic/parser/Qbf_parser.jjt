@@ -23,172 +23,76 @@
 
 options {
 	MULTI = true;
-	VISITOR = true;
-	NODE_DEFAULT_VOID=true;
+//	VISITOR = true;
+//	NODE_DEFAULT_VOID=true;
 }
 
 PARSER_BEGIN(Qbf_parser)
+
 package main.java.logic.parser;
-
 import java.util.Vector;
+import java.util.HashMap;
 import java.util.regex.Pattern;
+import java.io.*;
 
-class Qbf_parser {
+public class Qbf_parser {
 
 	private static Vector<Integer> eVars = new Vector<Integer>();
 	private static Vector<Integer> aVars = new Vector<Integer>();
-	private static Vector<Integer> vars = new Vector<Integer>();
+	private static Vector<Integer> vars  = new Vector<Integer>();
+	private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
 
-// +---
-// | just for testing
-// |
-	public static void main(String args[]) throws ParseException,TokenMgrError {
-		Qbf_parser parser = new Qbf_parser(System.in);
+
+	// thomas' wunschkonzert
+	// anz variable negiert und nicht negiert
+	// 
+
+
+	public static void main(String[] args) {
+		Qbf_parser parser;
+		Node root = null;
 		try {
-			ASTStart n = parser.Start();
-			Qbf_parserVisitor v = new Qbf_parserDumpVisitor();
-			n.jjtAccept(v, null);					
-			System.out.println("vars: "+vars);
-			System.out.println("eVars: "+eVars);
-			System.out.println("aVars: "+aVars);		
-
-			System.out.println(printAsQpro(n));
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println(e.getMessage());
-			System.out.println("Something went wrong while parsing.");
-		}		
-	}
-	
-	// Convert the internal representation of a QBF to a String that Qpro can work with
-	public static String printAsQpro(ASTStart s) {
-		Node n = (Node) s;
-		Node current = n;
-		int child = 0;
-		int i = 0;
-		int numNodes = n.jjtGetNumChildren();
-		int numVars = vars.size();
-		int numOpenQuantifiers = 0;
-		int processedNodes = 0;
-		String returnString = "";
-		String tmp = "";
-		
-		// QPro Header
-		// returnString += "c We could add comments like this at the beginning"
-		// returnString += "c if necessary."
-		returnString += "QBF\n";
-		returnString += numVars;
-		returnString += "\n";		
-		
-		// The root node is not really part of our formula, so just skip it.
-		if (n.toString().equals("Start")) {
-			current = n.jjtGetChild(child);
-			processedNodes++;
+			parser = new Qbf_parser(new FileInputStream(args[0]));
 		}
-		
-		// Traverse through the rest of the tree, until all nodes are processed.
-		while (processedNodes < numNodes) {
-		
-			// Quantifiers and their variables
-			// q
-			// e 1
-			// a 2 3 4
-			// ....
-			// /q
-			if(current.toString().equals("Quant")) {
-				returnString += "q";
+		catch (FileNotFoundException e) {
+			System.out.println("File not found: " + args[0]);
+			return;
+		}
 
-				while (current.toString().equals("Var") || current.toString().equals("Quant")) { 
+		try {
+			parser.Input();
+			System.out.println("Succesful parse");
+			root = parser.jjtree.rootNode();
+//			root.dump("");
 
-					if (current.toString().equals("Quant") && current.getId() == 0) {
-						returnString += "\na ";
-						processedNodes++;
-					}					
-					if (current.toString().equals("Quant") && current.getId() == 1) {
-						returnString += "\ne ";
-						processedNodes++;
-					}
-					
-					child++;
-					current = n.jjtGetChild(child);
+			// convert internal tree to .qpro format
+			String traversedTree = root.traverse();
 
-					while (current.toString().equals("Var")) {
-						returnString += current.getId() + " ";
-						processedNodes++;
-						child++;
-						current = n.jjtGetChild(child);				
-					}
-				}
-				
-				returnString += "\n/q\n";
+//			System.out.println("\nQBF\n"+vars.size()+"\n"+traversedTree+"\nQBF\n");
+			System.out.println("vars: " + vars);
+			System.out.println("all-quantified vars: " + aVars);
+			System.out.println("exists-quantified vars: " + eVars);
+			System.out.println("hashmap: " + literalCount);
+		}
+		catch (ParseException e) {
+			System.out.println("Parse error");			
+			System.out.println(e);
+			return;
+		}
+		catch (TokenMgrError e) {
+			System.out.println(e);
+			return;
+		}
 
-			}
-
-			// Variables			
-			if(current.toString().equals("Var")) {
-				returnString += current.getId();
-				returnString += " ";
-				processedNodes++;
-			}
-			
-			// Conjunction
-			if(current.toString().equals("And")) {
-				returnString += "c ";
-				processedNodes++;
-			}
-			
-			// Disjunction
-			if(current.toString().equals("Or")) {
-				returnString += "d ";
-				processedNodes++;
-			}
-			
-			// Negation
-			if(current.toString().equals("Not")) {
-				processedNodes++;
-			}
-		
-			child++;	
-			if (child < numNodes)
-				current = n.jjtGetChild(child);			
-		}				
-				
-		// return the QBF in QPro format
-		return returnString;
-	}
-// |
-// | end of testing
-// +---
-
-	/**
-	* getter method for variable numbers
-	* @return a Vector<Integer> containing all variable numbers
-	*/	
-	public Vector<Integer> getVars() {
-		return vars;
-	}
-
-	/**
-	* getter method for all variables bound by an exists-quantifier
-	* @return a Vector<Integer> containing variable numbers
-	*/	
-	public Vector<Integer> getEVars() {
-		return eVars;
-	}
-
-	/**
-	* getter method for all variables bound by an all-quantifier
-	* @return a Vector<Integer> containing variable numbers
-	*/	
-	public Vector<Integer> getAVars() {
-		return aVars;
 	}
 }
+
 PARSER_END(Qbf_parser)
 
 SKIP : {" "}
 SKIP : {"\n" | "\r" | "\r\n" }
 
+// terminals
 TOKEN : { < AND		: "&" > }
 TOKEN : { < OR		: "|" > }
 TOKEN : { < NOT		: "!" > }
@@ -203,89 +107,109 @@ TOKEN : { < FORALL	: "forall" > }
 
 TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
 
-ASTStart Start() #Start :
+// non-terminals
+// *	<input>		::= <exp> EOF
+void Input():
+{}
 {
-}
-{
-/*DEBUG*/ {System.out.println("Starting parsing.");} /*DEBUG*/ 
-	Expression() 
-/*DEBUG*/ {System.out.println("Finished parsing. ");} /*DEBUG*/ 
+	Exp()
 	<EOF>
-	{return jjtThis;}
 }
 
-String Quant() #Quant :
-{
-}
-{
-	<FORALL> {jjtThis.setId(0); return "forall";}
-	|
-	<EXISTS> {jjtThis.setId(1); return "exists";}
-}
-
-void Op() :
-{
-}
-{
-	And()
-	|
-	Or()
-}
-
-void And() #And(2) :
-{
-}
-{
-	<AND>
-}
-
-void Or() #Or(2) :
-{
-}
-{
-	<OR>
-}
-
-void Not() #Not :
-{
-}
-{
-	<NOT>
-}
-
-void Expression() :
-{
-}
+// *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
+// *				| <LP> <exp> <RP> | <VAR>
+void Exp():
+{}
 {
 	Not()
-	Expression()
+	Exp()
 	|
-	QSet()
-	Expression()
+	Q_set()
+	Exp()
 	|
-	<LP>
-	Expression()
+	<LP> { jjtThis.debugInfo = "("; }
+	Exp()
 	(
 		Op()
-		Expression()
+		Exp()
 	)?
-	<RP>
+	<RP> { jjtThis.debugInfo = ")"; }
 	|
 	Var("")
+	|
+	<EOF>
 }
 
-void VarList(String s) :
+// *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
+void Q_set():
 {
-	Token t;
+	String s;
 }
 {
+	s = Quant()
+	<LSP> { jjtThis.debugInfo="["; }
 	Var(s)
-	(
-		VarList(s)
-	)?
+	<RSP> { jjtThis.debugInfo="]"; }
 }
 
-void Var(String s) #Var :
+// *	<quant> 	::= <EXISTS> | <FORALL>
+String Quant():
+{}
+{
+	Exists() { jjtThis.op = "e"; return "e"; }
+	|
+	Forall() { jjtThis.op = "f"; return "f"; }
+}
+
+// *	<var_list> 	::= <VAR> <var_list> | <VAR>
+//void Var_list():
+//{}
+//{
+////	Var()
+////	|
+////	Var()
+//}
+
+// *	<op>		::= <OR> | <AND>
+void Op():
+{}
+{
+	Or() { jjtThis.op = "|"; }
+	|
+	And() { jjtThis.op = "&"; }
+}
+
+// content nodes
+void And():
+{}
+{       
+	<AND> { jjtThis.op = "&"; }
+}
+
+void Or():
+{}
+{
+	<OR> { jjtThis.op = "|"; }
+}
+
+void Not():
+{}
+{
+	<NOT> { jjtThis.op = "!"; }
+}
+void Exists():
+{}
+{
+	<EXISTS> { jjtThis.op = "e"; System.out.println("EXISTSEXISTSEXISTSEXISTSEXISTS" + jjtThis.op + jjtThis.getClass().getName()); }
+}
+
+void Forall():
+{}
+{
+	<FORALL> { jjtThis.op = "f";}
+}
+
+void Var(String s):
 {
 	Token t;
 }
@@ -297,24 +221,22 @@ void Var(String s) #Var :
 		// for the funny String s fallthrough)
 		String varName = t.image.replaceAll("[a-z]*","");
 		int varNumber = Integer.valueOf(varName).intValue();
-		jjtThis.setId(varNumber);
-		if (s == "exists")
+		jjtThis.var = varNumber;
+		if (s == "e")
 			eVars.add(varNumber);
-		if (s == "forall")
+		if (s == "f")
 			aVars.add(varNumber);
-		if (s == "")
-			vars.add(varNumber);
-
+		if (s == "") {
+			
+			if (literalCount.get(varNumber) != null) {
+				literalCount.put(varNumber, literalCount.get(varNumber) + 1);
+			}
+			else {
+				literalCount.put(varNumber, 1);			
+			}	
+			if (!vars.contains(varNumber)) {
+				vars.add(varNumber);
+			}
+		}
 	}
-}
-
-void QSet() :
-{
-	String s;
-}
-{
-	s = Quant()
-	<LSP>
-	VarList(s)
-	<RSP>
 }
