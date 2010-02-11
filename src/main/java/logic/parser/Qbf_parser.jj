@@ -46,6 +46,9 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@ege
 	private static Vector<Integer> vars  = new Vector<Integer>();
 	private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
 
+	public HashMap<Integer, Integer> getLiteralCount() {
+		return literalCount;
+	}
 
 	// thomas' wunschkonzert
 	// anz variable negiert und nicht negiert

@@ -1,14 +1,20 @@
 package main.java.logic;
 
+
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
+import java.util.HashMap;
+
 
 import main.java.master.MasterDaemon;
+import main.java.logic.parser.*;
 
 import org.apache.log4j.Logger;
 
@@ -34,7 +40,7 @@ public class Qbf {
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
 	public Vector<Integer> allVars;
-	
+	private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
 	
 	/**
 	* constructor
@@ -49,6 +55,33 @@ public class Qbf {
 		BufferedReader qbfBuffer =  new BufferedReader(new FileReader(file));
 		// qbfString = qbfBuffer.readLine();
 		
+		Qbf_parser parser;
+		Node root = null;
+		try {
+			parser = new Qbf_parser(new FileInputStream(filename));
+		}
+		catch (FileNotFoundException e) {
+			System.out.println("File not found: " + filename);
+			return;
+		}
+
+		try {
+			parser.Input();
+			System.out.println("Succesful parse");
+//			root = parser.jjtree.rootNode();
+//			String traversedTree = root.traverse();
+			literalCount = parser.getLiteralCount();
+		}
+		catch (ParseException e) {
+			System.out.println("Parse error");			
+			System.out.println(e);
+			return;
+		}
+		catch (TokenMgrError e) {
+			System.out.println(e);
+			return;
+		}
+
 
 // syntax checking should now be done in the parser		
 //		// maybe there will be a syntaxcheck somewhesre in the future
@@ -159,6 +192,10 @@ public class Qbf {
 	*/
 	public boolean getResult() {
 		return satisfiable;
+	}
+
+	public HashMap<Integer, Integer> getLiteralCount() {
+		return literalCount;
 	}
 
 // should be in the parser now
