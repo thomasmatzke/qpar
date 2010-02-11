@@ -6,8 +6,9 @@ public class SimpleHeuristic implements Heuristic {
 
 	SimpleHeuristic() {}
 
-	public Vector<String> chooseVariables() {
-		return null;
+	@Override
+	public Vector<Integer> decide(Qbf qbf) {
+		return qbf.allVars;
 	}
 
 }

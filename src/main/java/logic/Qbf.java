@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import main.java.master.MasterDaemon;
 
@@ -32,6 +33,8 @@ public class Qbf {
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	public Vector<Integer> allVars;
+	
 	
 	/**
 	* constructor

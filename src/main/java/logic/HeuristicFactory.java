@@ -17,6 +17,8 @@ public class HeuristicFactory {
 	public static Heuristic getHeuristic(String id) {
 		if (id == "test")
 			return new SimpleHeuristic();
+		if (id == "rand")
+			return new RandHeuristic();
 		return null;
 	}
 }

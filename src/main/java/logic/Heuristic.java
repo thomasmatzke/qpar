@@ -4,6 +4,6 @@ import java.util.Vector;
 
 public interface Heuristic {
 
-	public Vector<String> chooseVariables();
+	public Vector<Integer> decide(Qbf qbf);
 
 }
