@@ -358,7 +358,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
       jj_consume_token(EXISTS);
                    jjtree.closeNodeScope(jjtn000, true);
                    jjtc000 = false;
-                   jjtn000.op = "e"; System.out.println("EXISTSEXISTSEXISTSEXISTSEXISTS" + jjtn000.op + jjtn000.getClass().getName());
+                   jjtn000.op = "e";
     } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);
