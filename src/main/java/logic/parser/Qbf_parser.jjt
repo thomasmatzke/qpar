@@ -198,12 +198,12 @@ void Or():
 void Not():
 {}
 {
-	<NOT> { jjtThis.op = "!"; }
+ 	<NOT> { jjtThis.op = "!"; }
 }
 void Exists():
 {}
 {
-	<EXISTS> { jjtThis.op = "e"; System.out.println("EXISTSEXISTSEXISTSEXISTSEXISTS" + jjtThis.op + jjtThis.getClass().getName()); }
+	<EXISTS> { jjtThis.op = "e"; }
 }
 
 void Forall():

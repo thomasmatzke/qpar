@@ -402,7 +402,7 @@ void Not():
 {/*@bgen(jjtree) Not */
         try {
 /*@egen*/
-	<NOT>/*@bgen(jjtree)*/
+ 	<NOT>/*@bgen(jjtree)*/
               {
                 jjtree.closeNodeScope(jjtn000, true);
                 jjtc000 = false;
@@ -429,7 +429,7 @@ void Exists():
                    jjtree.closeNodeScope(jjtn000, true);
                    jjtc000 = false;
                  }
-/*@egen*/ { jjtn000.op = "e"; System.out.println("EXISTSEXISTSEXISTSEXISTSEXISTS" + jjtn000.op + jjtn000.getClass().getName()); }/*@bgen(jjtree)*/
+/*@egen*/ { jjtn000.op = "e"; }/*@bgen(jjtree)*/
         } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);

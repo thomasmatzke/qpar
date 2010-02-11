@@ -2,7 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY= */
 package main.java.logic.parser;
 import java.lang.String;
-
+import java.util.Scanner; // DEBUG
 public class SimpleNode implements Node {
   protected Node parent;
   protected Node[] children;
@@ -24,6 +24,14 @@ public class SimpleNode implements Node {
        	int numChildren;
 		String tmp = "";
 		String traversedTree = "";
+
+		Scanner s = new java.util.Scanner(System.in); // DEBUG
+		// 		s.next();
+		
+		
+		
+		
+		System.out.println(this.getClass().getName());
 
 		// System.out.println(this.getClass().getName());
 		if (parent != null) {
@@ -52,10 +60,15 @@ public class SimpleNode implements Node {
 				System.out.println("this var = " + this.var);
 //				System.out.println("grandparent op = " + grandparent.op);
 //				System.out.println("grandparent var = " + grandparent.var);
-				System.out.println		 (((grandparent.op == "" ) ? "" : "gp op " + grandparent.op) + ((grandparent.var == -1) ? "" : "gp var " + grandparent.var));
-				System.out.println		 (((parent.op == "" ) ? "" : "gp op " + parent.op) + ((parent.var == -1) ? "" : "gp var " + parent.var));
-	
+				System.out.println(((grandparent.op == "" ) ? "" : "gp op " + grandparent.op) + ((grandparent.var == -1) ? "" : "gp var " + grandparent.var));
+				System.out.println(((parent.op == "" ) ? "" : "gp op " + parent.op) + ((parent.var == -1) ? "" : "gp var " + parent.var));	
+			} else {
+				System.out.println("NOT OP NOT QUANT MUST BE VAR");
+				System.out.println("parent class " + parent.getClass().getName());
+				System.out.println("this class " + this.getClass().getName());
+				System.out.println(((op == "" ) ? "" : "op " + op) + ((var == -1) ? "" : "var " + var));				
 			}
+			
 //			else if (parent.getClass().getName() == "main.java.logic.parser.ASTNot") {
 //				System.out.println("PARENT IS NOT");
 //				Node grandparent = parent.jjtGetParent();
