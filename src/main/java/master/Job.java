@@ -16,10 +16,17 @@ import main.java.logic.TransmissionQbf;
 
 public class Job {
 
+	public static final int READY 		= 0;
+	public static final int RUNNING 	= 1;
+	public static final int COMPLETE 	= 2;
+	public static final int ERROR 		= 3;
+	
 	private static int idCounter = 0;
 	private static Vector<Job> jobs = new Vector<Job>();
 	private static AbstractTableModel tableModel;
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	
+	private boolean result;
 	
 	private static void addJob(Job job) {
 		jobs.add(job);
@@ -42,7 +49,7 @@ public class Job {
 		job.setOutputFileString(outputFile);
 		job.setSolver(solverId);
 		job.setHeuristic(heuristicId);
-		job.setStatus("Not started");
+		job.setStatus(Job.READY);
 		addJob(job);
 		logger.info("Job created. Id: " + job.getId() + ",\n" +
 				"HeuristicId: " + job.getHeuristic() + ",\n" +
@@ -69,6 +76,15 @@ public class Job {
 	private Qbf formula;
 	// Maps tqbfids with to the computing slaves
 	private Map<String, Slave> formulaDesignations = new HashMap<String, Slave>();
+	
+	public Map<String, Slave> getFormulaDesignations() {
+		return formulaDesignations;
+	}
+
+	public void setFormulaDesignations(Map<String, Slave> formulaDesignations) {
+		this.formulaDesignations = formulaDesignations;
+	}
+
 	private String heuristic;
 	private String id;
 
@@ -80,24 +96,28 @@ public class Job {
 
 	private Date startedAt;
 
-	private String status;
+	private int status;
 
 	private Date stoppedAt;
 
 	private List<TransmissionQbf> subformulas;
 
 	public void abort() {
+		if(this.status != Job.RUNNING) return;
 		logger.info("Aborting Job " + this.id + "...\n");
 		logger.info("Aborting Formulas. Sending AbortFormulaMessages to corresponding slaves...");
+		abortComputations();
+		tableModel.fireTableDataChanged();
+		logger.info("AbortMessages sent.");
+	}
+	
+	public void abortComputations() {
 		for (Map.Entry<String, Slave> entry : this.formulaDesignations
 				.entrySet()) {
 			Slave s = entry.getValue();
 			String tqbfId = entry.getKey();
 			s.abortFormulaComputation(tqbfId);
 		}
-
-		tableModel.fireTableDataChanged();
-		logger.info("AbortMessages sent.");
 	}
 
 	public Qbf getFormula() {
@@ -128,7 +148,7 @@ public class Job {
 		return startedAt;
 	}
 
-	public String getStatus() {
+	public int getStatus() {
 		return status;
 	}
 
@@ -164,7 +184,7 @@ public class Job {
 		this.startedAt = startedAt;
 	}
 
-	public void setStatus(String status) {
+	public void setStatus(int status) {
 		this.status = status;
 	}
 
@@ -182,20 +202,30 @@ public class Job {
 		}
 		int availableCores = Slave.getCoresForSolver(this.solver);
 		this.subformulas = formula.splitQbf(availableCores);
-		List<Slave> slaves = Slave.getSlavesForSolver(this.solver);
+		List<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
 
-		for (int i = 0; i < subformulas.size(); i++) {
-			Slave designatedSlave = slaves.get(i % slaves.size());
-			subformulas.get(i).setStatus("computing");
-			designatedSlave.computeFormula(subformulas.get(i), this);
-			formulaDesignations.put(subformulas.get(i).getId(), designatedSlave);
+		int j = 0;
+		outerLoop: for(Slave slave : slaves) {
+			for(int i = 0; i < slave.getCores(); i++) {
+				slave.computeFormula(subformulas.get(j), this);
+				formulaDesignations.put(subformulas.get(j).getId(), slave);
+				j++;
+				if(formulaDesignations.size() == subformulas.size()) break outerLoop;
+			}
 		}
-
 		
 		logger.info("Job started. Splitted into " + this.subformulas.size() + " subformulas, " +
 					"with " + availableCores + " available Cores on " + slaves.size() + " slaves.");
-		this.status = "Started";
+		this.status = Job.RUNNING;
 		tableModel.fireTableDataChanged();
+	}
+
+	public void setResult(boolean result) {
+		this.result = result;
+	}
+
+	public boolean getResult() {
+		return result;
 	}
 
 }

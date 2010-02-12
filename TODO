@@ -10,11 +10,4 @@
 
 -	CLI
 
--	15.11.2009 17:55:06 org.apache.activemq.broker.TransportConnector$1 onAcceptError
-	SCHWERWIEGEND: Could not accept connection : Channel was inactive for too long: /192.168.1.108:52425
-	When Georg connected from Notebook to Master on Phoenix
-==	Could not reproduce(Tom)
-
 -	Make identifier of machines more unique. Currently all slave-machines must have unique hostname
-
--	

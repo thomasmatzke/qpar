@@ -16,6 +16,7 @@ public class LCHeuristic implements Heuristic {
 	@Override
 	public Vector<Integer> decide(Qbf qbf) {
 		literalCounts = qbf.getLiteralCount();
+		sortByCount();
 		return res;
 	}
 

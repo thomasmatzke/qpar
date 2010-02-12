@@ -17,11 +17,11 @@ import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
+import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
-import main.java.master.gui.JobsTableModel;
 import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.AbortMessage;
 import main.java.messages.FormulaMessage;
@@ -37,21 +37,20 @@ import org.apache.log4j.Logger;
 
 public class Slave implements MessageListener, Runnable {
 
-	public static final int ACTIVE			= 0;
-	public static final int IRRESPONSIVE 	= 1;
-	public static final int SHUTDOWN	 	= 2;
-	public static final int KILLED		 	= 3;
+	public static final int READY = 0;
+	public static final int BUSY = 1;
+
+	public int status;
 	
 	// The slave has that much time to answer to the ping
 	public static final long KEEPALIVE_TIMEOUT = 10 * 1000; // In Millis
-	
+
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
 	private static Vector<Slave> slaves = new Vector<Slave>();
 	private static AbstractTableModel tableModel;
 	private long lastPingMillis = 0;
 	private long lastPongMillis = System.currentTimeMillis();
-	
-	
+
 	private static void addSlave(Slave slave) {
 		slaves.add(slave);
 		logger.debug("Adding Slave: " + slave);
@@ -60,12 +59,14 @@ public class Slave implements MessageListener, Runnable {
 		}
 	}
 
-	public static Slave create(String hostName, int cores, Vector<String> solvers){
+	public static Slave create(String hostName, int cores,
+			Vector<String> solvers) {
 		logger.info("Starting new Slaveinstance/thread...");
 		Slave instance = new Slave();
 		instance.cores = cores;
 		instance.hostName = hostName;
 		instance.setToolIds(solvers);
+		instance.status = Slave.READY;
 		new Thread(instance).start();
 		Slave.addSlave(instance);
 		return instance;
@@ -78,17 +79,13 @@ public class Slave implements MessageListener, Runnable {
 				allSolvers.add(id);
 			}
 		}
-		// TODO: remove following
-		allSolvers.add("test1");
-		allSolvers.add("test2");
-		allSolvers.add("test3");
 		return allSolvers;
 	}
 
 	public static int getCoresForSolver(String solverId) {
 		int cores = 0;
 		for (Slave slave : slaves) {
-			if (slave.getToolIds().contains(solverId)) {
+			if (slave.getToolIds().contains(solverId) && slave.status == Slave.READY) {
 				cores += slave.getCores();
 			}
 		}
@@ -102,7 +99,7 @@ public class Slave implements MessageListener, Runnable {
 		return slaves;
 	}
 
-	public static Vector<Slave> getSlavesForSolver(String solverId) {
+	public static Vector<Slave> getSlavesWithSolver(String solverId) {
 		Vector<Slave> slavesWithSolver = new Vector<Slave>();
 
 		for (Slave slave : slaves) {
@@ -138,14 +135,14 @@ public class Slave implements MessageListener, Runnable {
 	private Destination destination_snd;
 
 	private String hostName;
-
+	
 	private MessageProducer producer_snd;
 
 	private boolean running;
 
 	// Maps tqbf ids to Jobs
 	private Map<String, Job> runningComputations = new HashMap<String, Job>();
-	
+
 	private Session session;
 
 	private Vector<String> toolIds;
@@ -155,7 +152,7 @@ public class Slave implements MessageListener, Runnable {
 	}
 
 	public void computeFormula(TransmissionQbf tqbf, Job job) {
-		this.sendFormulaMessage(tqbf);
+		this.sendFormulaMessage(tqbf, job.getSolver());
 		this.runningComputations.put(tqbf.getId(), job);
 	}
 
@@ -178,7 +175,8 @@ public class Slave implements MessageListener, Runnable {
 	private void handleFormulaAbortedMessage(FormulaAbortedMessage m) {
 		logger.info("Receiving AbortConfirmMessage from " + this.getHostName());
 		this.runningComputations.remove(m.getTqbfId());
-		logger.info("Removed tqbf(" + m.getTqbfId() + ") from running computations.");
+		logger.info("Removed tqbf(" + m.getTqbfId()
+				+ ") from running computations.");
 	}
 
 	private void handleInformationMessage(InformationMessage m) {
@@ -198,18 +196,23 @@ public class Slave implements MessageListener, Runnable {
 		Qbf formula = job.getFormula();
 		boolean solved = formula.mergeQbf(m.getTqbfId(), m.getResult());
 		this.runningComputations.remove(m.getTqbfId());
-		logger.info("Result of tqbf(" + m.getTqbfId() + ") merged into Qbf of Job " + job.getId());
-		if(solved) {
-			job.setStatus("Result: " + formula.getResult());
+		logger.info("Result of tqbf(" + m.getTqbfId()
+				+ ") merged into Qbf of Job " + job.getId());
+		if (solved) {
+			// Remove all still running computations
+			job.abortComputations();
+			job.setStatus(Job.COMPLETE);
+			job.setResult(formula.getResult());
 			job.setStoppedAt(new Date());
 			Job.getTableModel().fireTableDataChanged();
 		}
 	}
 
 	private void handleShutdownMessage(ShutdownMessage m) {
-		logger.info("ShutdownMessage received. Removing slave " + this.getHostName());
+		logger.info("ShutdownMessage received. Removing slave "
+				+ this.getHostName());
 		stop();
-		// TODO notify someone about unfinished computation
+		handleDeath();
 		Slave.removeSlave(this);
 		logger.info("Slave " + this.getHostName() + " removed");
 	}
@@ -229,7 +232,8 @@ public class Slave implements MessageListener, Runnable {
 		try {
 			t = ((ObjectMessage) m).getObject();
 		} catch (JMSException e) {
-			logger.error("Error while retrieving Object from Message... \n" + e.getCause());
+			logger.error("Error while retrieving Object from Message... \n"
+					+ e.getCause());
 		}
 		logger.debug("Received message of type " + t.getClass().toString());
 		if (t instanceof FormulaAbortedMessage) {
@@ -255,16 +259,18 @@ public class Slave implements MessageListener, Runnable {
 		logger.info("AbortMessage sent");
 	}
 
-	public void sendFormulaMessage(TransmissionQbf tqbf) {
+	public void sendFormulaMessage(TransmissionQbf tqbf, String solver) {
 		logger.info("Sending FormulaMessage to Slave " + this.getHostName());
 		FormulaMessage msg = new FormulaMessage();
 		msg.setFormula(tqbf);
+		msg.setSolver(solver);
 		sendObject(msg);
 		logger.info("FormulaMessage sent");
 	}
 
 	public void sendInformationRequestMessage() {
-		logger.info("Sending InformationRequestMessage to Slave " + this.getHostName());
+		logger.info("Sending InformationRequestMessage to Slave "
+				+ this.getHostName());
 		InformationRequestMessage msg = new InformationRequestMessage();
 		sendObject(msg);
 	}
@@ -275,7 +281,7 @@ public class Slave implements MessageListener, Runnable {
 		msg.setReason(reason);
 		sendObject(msg);
 	}
-	
+
 	public void sendPing() {
 		sendObject(new Ping());
 		this.lastPingMillis = System.currentTimeMillis();
@@ -283,10 +289,12 @@ public class Slave implements MessageListener, Runnable {
 
 	private void sendObject(Serializable o) {
 		try {
-			logger.debug("Sending Object of Class : " + o.getClass() + " to " + producer_snd.getDestination());
+			logger.debug("Sending Object of Class : " + o.getClass() + " to "
+					+ producer_snd.getDestination());
 			producer_snd.send(session.createObjectMessage(o));
 		} catch (JMSException e) {
-			logger.error("Error while sending Objectmessage...\n" + e.getCause());
+			logger.error("Error while sending Objectmessage...\n"
+					+ e.getCause());
 		}
 	}
 
@@ -304,13 +312,14 @@ public class Slave implements MessageListener, Runnable {
 
 	public void stop() {
 		logger.info("Stopping Slavethread...");
-		//Stopping the loop
+		// Stopping the loop
 		this.running = false;
 		try {
 			Thread.sleep(1000);
 			this.session.close();
 		} catch (Exception e) {
-			logger.error("Error while stopping Slavehandler...\n" + e.getCause());
+			logger.error("Error while stopping Slavehandler...\n"
+					+ e.getCause());
 		}
 	}
 
@@ -328,44 +337,65 @@ public class Slave implements MessageListener, Runnable {
 			logger.error("Error while initializing Queues...\n" + e.getCause());
 			System.exit(-1);
 		}
-		
+
 		this.running = true;
 		Message msg = null;
-		
+
 		long currentMillis;
-		this.sendPing();		
-		
+		this.sendPing();
+
 		while (running) {
 			try {
 				msg = consumer_rcv.receive(1000);
 			} catch (JMSException e) {
-				logger.error("Error while consuming Slavemessage...\n" + e.getCause());
+				logger.error("Error while consuming Slavemessage...\n"
+						+ e.getCause());
 			}
 			if (msg != null) {
 				onMessage(msg);
 			}
 			currentMillis = System.currentTimeMillis();
-			
-			if((this.lastPingMillis + KEEPALIVE_TIMEOUT) < currentMillis) {
-				if(this.lastPingMillis <= this.lastPongMillis && 
-				   this.lastPongMillis < currentMillis) {
+
+			if ((this.lastPingMillis + KEEPALIVE_TIMEOUT) < currentMillis) {
+				if (this.lastPingMillis <= this.lastPongMillis
+						&& this.lastPongMillis < currentMillis) {
 					this.sendPing();
 				} else {
-					logger.error("Slave " + this.getHostName() + " timed out. Removing from pool...");
+					logger.error("Slave " + this.getHostName()
+							+ " timed out. Removing from pool...");
 					stop();
-					// TODO notify someone about unfinished computation
+					handleDeath();
 					Slave.removeSlave(this);
 				}
 			}
-							
+
 		}
 		logger.info("Slavehandlerthread stopped");
-		
+
+	}
+
+	private void handleDeath() {
+		if(this.runningComputations.size() < 1) return;
+		for(Job job : Job.getJobs()) {
+			if(job.getFormulaDesignations().values().contains(this)) {
+				job.abort();
+				job.setStatus(Job.ERROR);
+				if (Job.getTableModel() != null) {
+					SwingUtilities.invokeLater(new Runnable(){
+							public void run() {
+								Job.getTableModel().fireTableDataChanged();
+							}
+					});
+					
+				}
+			}
+		}
 	}
 	
+	@Override
 	public String toString() {
-		return "Slave -- Hostname: " + this.getHostName() +
-				", Solvers: " + (this.toolIds != null ? this.toolIds.toString() : "") +
-				", Cores: " + this.cores;
+		return "Slave -- Hostname: " + this.getHostName() + ", Solvers: "
+				+ (this.toolIds != null ? this.toolIds.toString() : "")
+				+ ", Cores: " + this.cores;
 	}
 }

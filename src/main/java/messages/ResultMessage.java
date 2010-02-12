@@ -2,6 +2,11 @@ package main.java.messages;
 
 import java.io.Serializable;
 
+/**
+ * Encapsulates a result of a qbf-computation done by a slave
+ * @author thomasm
+ *
+ */
 public class ResultMessage implements Serializable {
 	private String tqbfId;
 	private boolean result;
