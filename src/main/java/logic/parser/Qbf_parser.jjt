@@ -54,6 +54,7 @@ public class Qbf_parser {
 	public static void main(String[] args) {
 		Qbf_parser parser;
 		Node root = null;
+
 		try {
 			parser = new Qbf_parser(new FileInputStream(args[0]));
 		}
@@ -65,17 +66,43 @@ public class Qbf_parser {
 		try {
 			parser.Input();
 			System.out.println("Succesful parse");
-			root = parser.jjtree.rootNode();
-//			root.dump("");
+			root = parser.jjtree.rootNode(); 
 
-			// convert internal tree to .qpro format
+			// Convert internal tree to .qpro format
 			String traversedTree = root.traverse();
 
-//			System.out.println("\nQBF\n"+vars.size()+"\n"+traversedTree+"\nQBF\n");
+//			System.out.print(
+//				"\nQBF\n" + 
+//				vars.size() + 
+//				"\nq\n" + 
+//				"a "
+//			);
+//			for (int i=0; i < eVars.size(); i++) System.out.print(eVars.get(i) + " ");
+//			System.out.print(
+//				"\n" + 
+//				"e ");
+//				for (int i=0; i < aVars.size(); i++) System.out.print(aVars.get(i) + " "
+//			);
+//			System.out.println("");
+//			System.out.println(
+//				traversedTree + 
+//				"\nQBF\n"
+//			);
+//			// Conversion end
+
+			// debug stuff					
 			System.out.println("vars: " + vars);
 			System.out.println("all-quantified vars: " + aVars);
 			System.out.println("exists-quantified vars: " + eVars);
 			System.out.println("hashmap: " + literalCount);
+			
+			
+			System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
+			
+			// debug end					
+			
+			
+			
 		}
 		catch (ParseException e) {
 			System.out.println("Parse error");			
@@ -112,56 +139,11 @@ TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
 
 // non-terminals
 // *	<input>		::= <exp> EOF
-void Input():
+void Input():	// Node with one child (Exp())
 {}
 {
 	Exp()
 	<EOF>
-}
-
-// *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
-// *				| <LP> <exp> <RP> | <VAR>
-void Exp():
-{}
-{
-	Not()
-	Exp()
-	|
-	Q_set()
-	Exp()
-	|
-	<LP> { jjtThis.debugInfo = "("; }
-	Exp()
-	(
-		Op()
-		Exp()
-	)?
-	<RP> { jjtThis.debugInfo = ")"; }
-	|
-	Var("")
-	|
-	<EOF>
-}
-
-// *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
-void Q_set():
-{
-	String s;
-}
-{
-	s = Quant()
-	<LSP> { jjtThis.debugInfo="["; }
-	Var(s)
-	<RSP> { jjtThis.debugInfo="]"; }
-}
-
-// *	<quant> 	::= <EXISTS> | <FORALL>
-String Quant():
-{}
-{
-	Exists() { jjtThis.op = "e"; return "e"; }
-	|
-	Forall() { jjtThis.op = "f"; return "f"; }
 }
 
 // *	<var_list> 	::= <VAR> <var_list> | <VAR>
@@ -173,29 +155,19 @@ String Quant():
 ////	Var()
 //}
 
-// *	<op>		::= <OR> | <AND>
-void Op():
-{}
-{
-	Or() { jjtThis.op = "|"; }
-	|
-	And() { jjtThis.op = "&"; }
-}
-
-// content nodes
-void And():
+void And():	// Node with two children (Exp(), Exp())
 {}
 {       
-	<AND> { jjtThis.op = "&"; }
+	<AND> { jjtThis.op = "&"; } 
 }
 
-void Or():
+void Or():	// Node with two children (Exp(), Exp())
 {}
 {
 	<OR> { jjtThis.op = "|"; }
 }
 
-void Not():
+void Not():	// Node with one child (Exp())
 {}
 {
  	<NOT> { jjtThis.op = "!"; }
@@ -243,3 +215,59 @@ void Var(String s):
 		}
 	}
 }
+
+// *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
+// *				| <LP> <exp> <RP> | <VAR>
+void Exp() #void:
+{}
+{
+
+	Not()
+	Exp()
+	|
+	Q_set()
+	Exp()
+	|
+	<LP>
+	Exp()
+	(
+		Op()
+		Exp()
+	)?
+	<RP>
+	|
+	Var("")
+	|
+	<EOF>
+}
+
+// *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
+void Q_set() #void:
+{
+	String s;
+}
+{
+	s = Quant()
+	<LSP>
+	Var(s)
+	<RSP>
+}
+
+// *	<quant> 	::= <EXISTS> | <FORALL>
+String Quant() #void:
+{}
+{
+	Exists() { return "e"; }
+	|
+	Forall() { return "f"; }
+}
+
+// *	<op>		::= <OR> | <AND>
+void Op() #void:
+{}
+{
+	Or() #Or(2)
+	|
+	And() #And(2)
+}
+

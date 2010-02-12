@@ -2,13 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY= */
 package main.java.logic.parser;
 import java.lang.String;
-import java.util.Scanner; // DEBUG
+import java.io.BufferedReader; // dbg
+import java.io.InputStreamReader;// dbg
 public class SimpleNode implements Node {
-  protected Node parent;
-  protected Node[] children;
-  protected int id;
-  protected Object value;
-  protected Qbf_parser parser;
+	protected Node parent;
+	protected Node[] children;
+	protected int id;
+	protected Object value;
+	protected Qbf_parser parser;
 
 	public String debugInfo = "";
 	public String op = "";
@@ -17,104 +18,55 @@ public class SimpleNode implements Node {
 	/**
 	* traverse tree goes through all children of a node and builds a String
 	* in .qpro format
+	* @return A String in qpro format
 	*/	
 	public String traverse() {
-		int i;	
+		int i = 0;	
        	Node child;
        	int numChildren;
 		String tmp = "";
 		String traversedTree = "";
-
-		Scanner s = new java.util.Scanner(System.in); // DEBUG
-		// 		s.next();
 		
-		
-		
-		
-		System.out.println(this.getClass().getName());
-
-		// System.out.println(this.getClass().getName());
-		if (parent != null) {
-			if (parent.getClass().getName() == "main.java.logic.parser.ASTOp") {
-				System.out.println("PARENT IS OP");
-				Node grandparent = parent.jjtGetParent();
-				Node grandgrandparent = grandparent.jjtGetParent();
-				System.out.println("this class = " + this.getClass().getName());
-				System.out.println("grandparent class = " + grandparent.getClass().getName());
-				System.out.println("grandgrandparent class = " + grandgrandparent.getClass().getName());
-				System.out.println("this op = " + this.op);
-				System.out.println("this var = " + this.var);
-				System.out.println		 (((grandparent.op == "" ) ? "" : "gp op " + grandparent.op) + ((grandparent.var == -1) ? "" : "gp var " + grandparent.var));
-				System.out.println		 (((parent.op == "" ) ? "" : "gp op " + parent.op) + ((parent.var == -1) ? "" : "gp var " + parent.var));
-//				System.out.println("parent op = " + parent.op);
-//				System.out.println("parent var = " + parent.var);
-			}
-			else if (parent.getClass().getName() == "main.java.logic.parser.ASTQuant") {
-				System.out.println("PARENT IS QUANTIFIER");
-				Node grandparent = parent.jjtGetParent();
-				Node grandgrandparent = grandparent.jjtGetParent();
-				System.out.println("this class = " + this.getClass().getName());
-				System.out.println("grandparent class = " + grandparent.getClass().getName());
-				System.out.println("grandgrandparent class = " + grandgrandparent.getClass().getName());
-				System.out.println("this op = " + this.op);
-				System.out.println("this var = " + this.var);
-//				System.out.println("grandparent op = " + grandparent.op);
-//				System.out.println("grandparent var = " + grandparent.var);
-				System.out.println(((grandparent.op == "" ) ? "" : "gp op " + grandparent.op) + ((grandparent.var == -1) ? "" : "gp var " + grandparent.var));
-				System.out.println(((parent.op == "" ) ? "" : "gp op " + parent.op) + ((parent.var == -1) ? "" : "gp var " + parent.var));	
-			} else {
-				System.out.println("NOT OP NOT QUANT MUST BE VAR");
-				System.out.println("parent class " + parent.getClass().getName());
-				System.out.println("this class " + this.getClass().getName());
-				System.out.println(((op == "" ) ? "" : "op " + op) + ((var == -1) ? "" : "var " + var));				
-			}
-			
-//			else if (parent.getClass().getName() == "main.java.logic.parser.ASTNot") {
-//				System.out.println("PARENT IS NOT");
-//				Node grandparent = parent.jjtGetParent();
-//				Node grandgrandparent = grandparent.jjtGetParent();
-//				System.out.println("this class = " + this.getClass().getName());
-//				System.out.println("grandparent class = " + grandparent.getClass().getName());
-//				System.out.println("grandgrandparent class = " + grandgrandparent.getClass().getName());
-//				System.out.println("this op = " + this.op);
-//				System.out.println("this var = " + this.var);
-////				System.out.println("grandparent op = " + grandparent.op);
-////				System.out.println("grandparent var = " + grandparent.var);
-//				System.out.println		 (((grandparent.op == "" ) ? "" : "gp op " + grandparent.op) + ((grandparent.var == -1) ? "" : "gp var " + grandparent.var));
-//				System.out.println		 (((parent.op == "" ) ? "" : "gp op " + parent.op) + ((parent.var == -1) ? "" : "gp var " + parent.var));	
-//			}
-		}		
-
-		// find children
 		numChildren = this.jjtGetNumChildren();
-		// recursive through children
-		if (numChildren > 0)  {
-			for (i = 0; i < numChildren; i++) {
-				tmp = jjtGetChild(i).traverse();
-				traversedTree += tmp;
-			}
-		}
-		// leaf node
+
+		if (jjtGetParent() == null) {
+			traversedTree += "node has no parent\n";
+		} 
 		else {
-			if (this.getClass().getName() == "main.java.logic.parser.ASTOp") {
-				if (parent.op == "|") { 
-					tmp += "d\n"; 
-				}
-				if (parent.op == "&") { 
-					tmp += "c\n"; 
-				}
+			traversedTree += "node parent = " + jjtGetParent().getClass().getName() + "\n";
+		}
+
+		traversedTree += "node (" + this.getClass().getName() + ") has " + numChildren + " children:\n";
+		for (i = 0; i < numChildren; i++) {
+			traversedTree += "child #" + i + " : " + jjtGetChild(i).getClass().getName() + "(value: " + jjtGetChild(i).var + ") with " + jjtGetChild(i).jjtGetNumChildren() + " children\n";
+		}
+
+// 		if (true) return traversedTree; // break
+		
+		
+		if (var == -1) {
+			traversedTree += "----------------------------------\n";
+			for (i = 0; i < numChildren; i++) {
+			traversedTree += "node (" + this.getClass().getName() + ") has " + numChildren + " children:\n";
+				traversedTree += this.jjtGetChild(i).traverse();
 			}
-		//	System.out.println(((op == "" ) ? " " + var : op)); // debug
-			tmp += (((op == "" ) ? "" : op) + ((var == -1) ? "" : var));
-			return tmp;
-		}		
-
-		return traversedTree;
+			traversedTree += "----------------------------------\n";
+			return traversedTree;
+		}
+		else {
+			return this.getClass().getName() + " (leaf node): Var: " + var + " #children:" + this.jjtGetNumChildren() + " parent: " + this.jjtGetParent().getClass().getName() + "\n";
+		}
 	}
 
-	public int getId() {
-		return this.id;
-	}
+
+
+
+
+
+
+  public int getId() {
+	return this.id;
+  }
 
   public SimpleNode(int i) {
     id = i;
