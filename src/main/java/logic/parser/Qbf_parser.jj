@@ -24,8 +24,8 @@
 
 options {
 	             
-//	VISITOR = true;
-//	NODE_DEFAULT_VOID=true;
+  	               
+	                       
 }
 
 PARSER_BEGIN(Qbf_parser)
@@ -75,26 +75,27 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@ege
 			// Convert internal tree to .qpro format
 			String traversedTree = root.traverse();
 
-//			System.out.print(
-//				"\nQBF\n" + 
-//				vars.size() + 
-//				"\nq\n" + 
-//				"a "
-//			);
-//			for (int i=0; i < eVars.size(); i++) System.out.print(eVars.get(i) + " ");
-//			System.out.print(
-//				"\n" + 
-//				"e ");
-//				for (int i=0; i < aVars.size(); i++) System.out.print(aVars.get(i) + " "
-//			);
-//			System.out.println("");
-//			System.out.println(
-//				traversedTree + 
-//				"\nQBF\n"
-//			);
-//			// Conversion end
+			System.out.print(
+				"\nQBF\n" + 
+				vars.size() + 
+				"\nq\n" + 
+				"a "
+			);
+			for (int i=0; i < eVars.size(); i++) System.out.print(eVars.get(i) + " ");
+			System.out.print(
+				"\n" + 
+				"e ");
+				for (int i=0; i < aVars.size(); i++) System.out.print(aVars.get(i) + " "
+			);
+			System.out.println("");
+			System.out.println(
+				traversedTree + 
+				"\nQBF\n"
+			);
+			// Conversion end
 
-			// debug stuff					
+			// debug stuff			
+			root.dump("");		
 			System.out.println("vars: " + vars);
 			System.out.println("all-quantified vars: " + aVars);
 			System.out.println("exists-quantified vars: " + eVars);
@@ -102,6 +103,13 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@ege
 			
 			
 			System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
+			
+			root.setTruthValue(1,false);
+			root.setTruthValue(3,true);
+			traversedTree = root.traverse();
+
+			System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
+			
 			
 			// debug end					
 			
@@ -144,36 +152,10 @@ TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
 // non-terminals
 // *	<input>		::= <exp> EOF
 void Input():	// Node with one child (Exp())
-{/*@bgen(jjtree) Input */
-  ASTInput jjtn000 = new ASTInput(JJTINPUT);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-/*@egen*/}
-{/*@bgen(jjtree) Input */
-        try {
-/*@egen*/
+{}
+{
 	Exp()
-	<EOF>/*@bgen(jjtree)*/
-        } catch (Throwable jjte000) {
-          if (jjtc000) {
-            jjtree.clearNodeScope(jjtn000);
-            jjtc000 = false;
-          } else {
-            jjtree.popNode();
-          }
-          if (jjte000 instanceof RuntimeException) {
-            throw (RuntimeException)jjte000;
-          }
-          if (jjte000 instanceof ParseException) {
-            throw (ParseException)jjte000;
-          }
-          throw (Error)jjte000;
-        } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-        }
-/*@egen*/
+	<EOF>
 }
 
 // *	<var_list> 	::= <VAR> <var_list> | <VAR>
@@ -185,7 +167,7 @@ void Input():	// Node with one child (Exp())
 ////	Var()
 //}
 
-void And():	// Node with two children (Exp(), Exp())
+void And()     :	// Node with two children (Exp(), Exp())
 {/*@bgen(jjtree) And */
   ASTAnd jjtn000 = new ASTAnd(JJTAND);
   boolean jjtc000 = true;
@@ -208,7 +190,7 @@ void And():	// Node with two children (Exp(), Exp())
 /*@egen*/ 
 }
 
-void Or():	// Node with two children (Exp(), Exp())
+void Or()    :	// Node with two children (Exp(), Exp())
 {/*@bgen(jjtree) Or */
   ASTOr jjtn000 = new ASTOr(JJTOR);
   boolean jjtc000 = true;
@@ -231,7 +213,7 @@ void Or():	// Node with two children (Exp(), Exp())
 /*@egen*/
 }
 
-void Not():	// Node with one child (Exp())
+void Not()     :	// Node with one child (Exp())
 {/*@bgen(jjtree) Not */
   ASTNot jjtn000 = new ASTNot(JJTNOT);
   boolean jjtc000 = true;
@@ -253,7 +235,7 @@ void Not():	// Node with one child (Exp())
         }
 /*@egen*/
 }
-void Exists():
+void Exists()        :
 {/*@bgen(jjtree) Exists */
   ASTExists jjtn000 = new ASTExists(JJTEXISTS);
   boolean jjtc000 = true;
@@ -276,7 +258,7 @@ void Exists():
 /*@egen*/
 }
 
-void Forall():
+void Forall()        :
 {/*@bgen(jjtree) Forall */
   ASTForall jjtn000 = new ASTForall(JJTFORALL);
   boolean jjtc000 = true;
@@ -299,7 +281,7 @@ void Forall():
 /*@egen*/
 }
 
-void Var(String s):
+void Var(String s)     :
 {/*@bgen(jjtree) Var */
         ASTVar jjtn000 = new ASTVar(JJTVAR);
         boolean jjtc000 = true;
@@ -351,26 +333,61 @@ void Var(String s):
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
 // *				| <LP> <exp> <RP> | <VAR>
 void Exp()      :
-{}
+{
+	String op = "";
+}
 {
 
-	Not()
-	Exp()
-	|
-	Q_set()
-	Exp()
-	|
-	<LP>
-	Exp()
+//	Not()
+//	Exp()
+//	|
+//	Q_set()
+//	Exp()
+//	|
+	<LP>/*@bgen(jjtree) #Logical(> 1) */
+        {
+          ASTLogical jjtn001 = new ASTLogical(JJTLOGICAL);
+          boolean jjtc001 = true;
+          jjtree.openNodeScope(jjtn001);
+        }
+        try {
+/*@egen*/
 	(
-		Op()
 		Exp()
-	)?
+		(
+			(
+				"|" {jjtn001.op = "|"; }
+				|
+				"&" {jjtn001.op = "&"; }
+			)
+			Exp()
+		)?
+	)/*@bgen(jjtree)*/
+        } catch (Throwable jjte001) {
+          if (jjtc001) {
+            jjtree.clearNodeScope(jjtn001);
+            jjtc001 = false;
+          } else {
+            jjtree.popNode();
+          }
+          if (jjte001 instanceof RuntimeException) {
+            throw (RuntimeException)jjte001;
+          }
+          if (jjte001 instanceof ParseException) {
+            throw (ParseException)jjte001;
+          }
+          throw (Error)jjte001;
+        } finally {
+          if (jjtc001) {
+            jjtree.closeNodeScope(jjtn001, jjtree.nodeArity() > 1);
+          }
+        }
+/*@egen*/               
 	<RP>
 	|
 	Var("")
-	|
-	<EOF>
+//	|
+//	<EOF>
 }
 
 // *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
@@ -397,63 +414,9 @@ String Quant()      :
 // *	<op>		::= <OR> | <AND>
 void Op()      :
 {}
-{/*@bgen(jjtree) #Or( 2) */
-        {
-          ASTOr jjtn001 = new ASTOr(JJTOR);
-          boolean jjtc001 = true;
-          jjtree.openNodeScope(jjtn001);
-        }
-        try {
-/*@egen*/
-	Or()/*@bgen(jjtree)*/
-        } catch (Throwable jjte001) {
-          if (jjtc001) {
-            jjtree.clearNodeScope(jjtn001);
-            jjtc001 = false;
-          } else {
-            jjtree.popNode();
-          }
-          if (jjte001 instanceof RuntimeException) {
-            throw (RuntimeException)jjte001;
-          }
-          if (jjte001 instanceof ParseException) {
-            throw (ParseException)jjte001;
-          }
-          throw (Error)jjte001;
-        } finally {
-          if (jjtc001) {
-            jjtree.closeNodeScope(jjtn001,  2);
-          }
-        }
-/*@egen*/       
-	|/*@bgen(jjtree) #And( 2) */
-        {
-          ASTAnd jjtn002 = new ASTAnd(JJTAND);
-          boolean jjtc002 = true;
-          jjtree.openNodeScope(jjtn002);
-        }
-        try {
-/*@egen*/
-	And()/*@bgen(jjtree)*/
-        } catch (Throwable jjte002) {
-          if (jjtc002) {
-            jjtree.clearNodeScope(jjtn002);
-            jjtc002 = false;
-          } else {
-            jjtree.popNode();
-          }
-          if (jjte002 instanceof RuntimeException) {
-            throw (RuntimeException)jjte002;
-          }
-          if (jjte002 instanceof ParseException) {
-            throw (ParseException)jjte002;
-          }
-          throw (Error)jjte002;
-        } finally {
-          if (jjtc002) {
-            jjtree.closeNodeScope(jjtn002,  2);
-          }
-        }
-/*@egen*/        
+{
+	Or()
+	|
+	And()
 }
 

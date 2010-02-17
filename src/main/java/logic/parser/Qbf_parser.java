@@ -41,26 +41,27 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                         // Convert internal tree to .qpro format
                         String traversedTree = root.traverse();
 
-//			System.out.print(
-//				"\nQBF\n" + 
-//				vars.size() + 
-//				"\nq\n" + 
-//				"a "
-//			);
-//			for (int i=0; i < eVars.size(); i++) System.out.print(eVars.get(i) + " ");
-//			System.out.print(
-//				"\n" + 
-//				"e ");
-//				for (int i=0; i < aVars.size(); i++) System.out.print(aVars.get(i) + " "
-//			);
-//			System.out.println("");
-//			System.out.println(
-//				traversedTree + 
-//				"\nQBF\n"
-//			);
-//			// Conversion end
+                        System.out.print(
+                                "\nQBF\n" +
+                                vars.size() +
+                                "\nq\n" +
+                                "a "
+                        );
+                        for (int i=0; i < eVars.size(); i++) System.out.print(eVars.get(i) + " ");
+                        System.out.print(
+                                "\n" +
+                                "e ");
+                                for (int i=0; i < aVars.size(); i++) System.out.print(aVars.get(i) + " "
+                        );
+                        System.out.println("");
+                        System.out.println(
+                                traversedTree +
+                                "\nQBF\n"
+                        );
+                        // Conversion end
 
-                        // debug stuff					
+                        // debug stuff			
+                        root.dump("");
                         System.out.println("vars: " + vars);
                         System.out.println("all-quantified vars: " + aVars);
                         System.out.println("exists-quantified vars: " + eVars);
@@ -68,6 +69,13 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
 
 
                         System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
+
+                        root.setTruthValue(1,false);
+                        root.setTruthValue(3,true);
+                        traversedTree = root.traverse();
+
+                        System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
+
 
                         // debug end					
 
@@ -89,32 +97,8 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
 // non-terminals
 // *	<input>		::= <exp> EOF
   static final public void Input() throws ParseException {
- /*@bgen(jjtree) Input */
-  ASTInput jjtn000 = new ASTInput(JJTINPUT);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-    try {
-      Exp();
-      jj_consume_token(0);
-    } catch (Throwable jjte000) {
-          if (jjtc000) {
-            jjtree.clearNodeScope(jjtn000);
-            jjtc000 = false;
-          } else {
-            jjtree.popNode();
-          }
-          if (jjte000 instanceof RuntimeException) {
-            {if (true) throw (RuntimeException)jjte000;}
-          }
-          if (jjte000 instanceof ParseException) {
-            {if (true) throw (ParseException)jjte000;}
-          }
-          {if (true) throw (Error)jjte000;}
-    } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-    }
+    Exp();
+    jj_consume_token(0);
   }
 
 // *	<var_list> 	::= <VAR> <var_list> | <VAR>
@@ -252,39 +236,64 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
 // *				| <LP> <exp> <RP> | <VAR>
   static final public void Exp() throws ParseException {
+        String op = "";
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-    case NOT:
-      Not();
-      Exp();
-      break;
-    case EXISTS:
-    case FORALL:
-      Q_set();
-      Exp();
-      break;
     case LP:
       jj_consume_token(LP);
-      Exp();
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case AND:
-      case OR:
-        Op();
+          ASTLogical jjtn001 = new ASTLogical(JJTLOGICAL);
+          boolean jjtc001 = true;
+          jjtree.openNodeScope(jjtn001);
+      try {
         Exp();
-        break;
-      default:
-        jj_la1[0] = jj_gen;
-        ;
+        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case AND:
+        case OR:
+          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+          case OR:
+            jj_consume_token(OR);
+                                     jjtn001.op = "|";
+            break;
+          case AND:
+            jj_consume_token(AND);
+                                     jjtn001.op = "&";
+            break;
+          default:
+            jj_la1[0] = jj_gen;
+            jj_consume_token(-1);
+            throw new ParseException();
+          }
+          Exp();
+          break;
+        default:
+          jj_la1[1] = jj_gen;
+          ;
+        }
+      } catch (Throwable jjte001) {
+          if (jjtc001) {
+            jjtree.clearNodeScope(jjtn001);
+            jjtc001 = false;
+          } else {
+            jjtree.popNode();
+          }
+          if (jjte001 instanceof RuntimeException) {
+            {if (true) throw (RuntimeException)jjte001;}
+          }
+          if (jjte001 instanceof ParseException) {
+            {if (true) throw (ParseException)jjte001;}
+          }
+          {if (true) throw (Error)jjte001;}
+      } finally {
+          if (jjtc001) {
+            jjtree.closeNodeScope(jjtn001, jjtree.nodeArity() > 1);
+          }
       }
       jj_consume_token(RP);
       break;
     case VAR:
       Var("");
       break;
-    case 0:
-      jj_consume_token(0);
-      break;
     default:
-      jj_la1[1] = jj_gen;
+      jj_la1[2] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -311,7 +320,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                    {if (true) return "f";}
       break;
     default:
-      jj_la1[2] = jj_gen;
+      jj_la1[3] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -322,59 +331,13 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
   static final public void Op() throws ParseException {
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case OR:
-          ASTOr jjtn001 = new ASTOr(JJTOR);
-          boolean jjtc001 = true;
-          jjtree.openNodeScope(jjtn001);
-      try {
-        Or();
-      } catch (Throwable jjte001) {
-          if (jjtc001) {
-            jjtree.clearNodeScope(jjtn001);
-            jjtc001 = false;
-          } else {
-            jjtree.popNode();
-          }
-          if (jjte001 instanceof RuntimeException) {
-            {if (true) throw (RuntimeException)jjte001;}
-          }
-          if (jjte001 instanceof ParseException) {
-            {if (true) throw (ParseException)jjte001;}
-          }
-          {if (true) throw (Error)jjte001;}
-      } finally {
-          if (jjtc001) {
-            jjtree.closeNodeScope(jjtn001,  2);
-          }
-      }
+      Or();
       break;
     case AND:
-          ASTAnd jjtn002 = new ASTAnd(JJTAND);
-          boolean jjtc002 = true;
-          jjtree.openNodeScope(jjtn002);
-      try {
-        And();
-      } catch (Throwable jjte002) {
-          if (jjtc002) {
-            jjtree.clearNodeScope(jjtn002);
-            jjtc002 = false;
-          } else {
-            jjtree.popNode();
-          }
-          if (jjte002 instanceof RuntimeException) {
-            {if (true) throw (RuntimeException)jjte002;}
-          }
-          if (jjte002 instanceof ParseException) {
-            {if (true) throw (ParseException)jjte002;}
-          }
-          {if (true) throw (Error)jjte002;}
-      } finally {
-          if (jjtc002) {
-            jjtree.closeNodeScope(jjtn002,  2);
-          }
-      }
+      And();
       break;
     default:
-      jj_la1[3] = jj_gen;
+      jj_la1[4] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -390,13 +353,13 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
   static public Token jj_nt;
   static private int jj_ntk;
   static private int jj_gen;
-  static final private int[] jj_la1 = new int[4];
+  static final private int[] jj_la1 = new int[5];
   static private int[] jj_la1_0;
   static {
       jj_la1_init_0();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x60,0x7181,0x3000,0x60,};
+      jj_la1_0 = new int[] {0x60,0x60,0x4100,0x3000,0x60,};
    }
 
   /** Constructor with InputStream. */
@@ -417,7 +380,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 4; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 5; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -432,7 +395,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 4; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 5; i++) jj_la1[i] = -1;
   }
 
   /** Constructor. */
@@ -449,7 +412,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 4; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 5; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -460,7 +423,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 4; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 5; i++) jj_la1[i] = -1;
   }
 
   /** Constructor with generated Token Manager. */
@@ -476,7 +439,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 4; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 5; i++) jj_la1[i] = -1;
   }
 
   /** Reinitialise. */
@@ -486,7 +449,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 4; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 5; i++) jj_la1[i] = -1;
   }
 
   static private Token jj_consume_token(int kind) throws ParseException {
@@ -542,7 +505,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {

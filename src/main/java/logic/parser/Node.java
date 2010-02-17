@@ -8,12 +8,15 @@ package main.java.logic.parser;
 
 public interface Node {
 
+	// custom stuff begin
 	public String op = "";
-	public String debugInfo = "";
+	public String truthValue = "";
 	public int var = -1;	
-
+	
 	public String traverse();
+	public void setTruthValue(int v, boolean b);
 	public void dump(String prefix);
+	// custon stuff end
 
   /** This method is called after the node has been made the current
     node.  It indicates that child nodes can now be added to it. */

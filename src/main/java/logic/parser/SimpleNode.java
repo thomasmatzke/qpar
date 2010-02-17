@@ -2,8 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY= */
 package main.java.logic.parser;
 import java.lang.String;
-import java.io.BufferedReader; // dbg
-import java.io.InputStreamReader;// dbg
+
 public class SimpleNode implements Node {
 	protected Node parent;
 	protected Node[] children;
@@ -11,9 +10,32 @@ public class SimpleNode implements Node {
 	protected Object value;
 	protected Qbf_parser parser;
 
-	public String debugInfo = "";
 	public String op = "";
 	public int var = -1;	
+	public String truthValue = "";
+	
+	/**
+	* assign a truth value to a specific var
+	* @param v the var to assign a truth value to
+	* @param b the truth value to assign
+	*/
+	public void setTruthValue(int v, boolean b) {
+		int i = 0;
+		int numChildren = this.jjtGetNumChildren();
+		
+		// not in a leaf node, nothing to set
+		if (numChildren > 0) {
+			for (i = 0; i < numChildren; i++) {
+				jjtGetChild(i).setTruthValue(v, b);
+			}
+		}
+		// in a leaf node now
+		else {
+			if (var == v) {
+				if (b) truthValue = "TRUE"; else truthValue = "FALSE";
+			}
+		}	
+	}
 	
 	/**
 	* traverse tree goes through all children of a node and builds a String
@@ -22,47 +44,46 @@ public class SimpleNode implements Node {
 	*/	
 	public String traverse() {
 		int i = 0;	
-       	Node child;
-       	int numChildren;
 		String tmp = "";
 		String traversedTree = "";
-		
-		numChildren = this.jjtGetNumChildren();
+       	Node child;
+       	int numChildren = this.jjtGetNumChildren();
 
-		if (jjtGetParent() == null) {
-			traversedTree += "node has no parent\n";
-		} 
-		else {
-			traversedTree += "node parent = " + jjtGetParent().getClass().getName() + "\n";
-		}
-
-		traversedTree += "node (" + this.getClass().getName() + ") has " + numChildren + " children:\n";
-		for (i = 0; i < numChildren; i++) {
-			traversedTree += "child #" + i + " : " + jjtGetChild(i).getClass().getName() + "(value: " + jjtGetChild(i).var + ") with " + jjtGetChild(i).jjtGetNumChildren() + " children\n";
-		}
-
-// 		if (true) return traversedTree; // break
-		
-		
-		if (var == -1) {
-			traversedTree += "----------------------------------\n";
-			for (i = 0; i < numChildren; i++) {
-			traversedTree += "node (" + this.getClass().getName() + ") has " + numChildren + " children:\n";
-				traversedTree += this.jjtGetChild(i).traverse();
+		System.out.println("A:"+truthValue); // TODO JUST DEBUG INFO
+					
+		if (numChildren > 0) { // we're not in a leaf node...
+			traversedTree += op;
+			traversedTree += truthValue;
+			for (i = 0; i < numChildren; i++) { // ... so we just traverse through all it's children
+				traversedTree += jjtGetChild(i).traverse();
 			}
-			traversedTree += "----------------------------------\n";
-			return traversedTree;
 		}
-		else {
-			return this.getClass().getName() + " (leaf node): Var: " + var + " #children:" + this.jjtGetNumChildren() + " parent: " + this.jjtGetParent().getClass().getName() + "\n";
+		else { // we're in a leaf node...
+			if (truthValue == "") {
+				// ...but not a truth-assigned one
+				traversedTree += var;
+			} else { // we're in a truth-assigned leaf node, let's see what to do
+				// false & x = false
+				if ((jjtGetParent().op == "&") && (truthValue == "FALSE")) {
+					// PARENT MUST ALSO FALSE
+				}
+				// true & x = x
+				if ((jjtGetParent().op == "&") && (truthValue == "TRUE")) {
+					// CHECK SIBLING TODO
+				}
+				// false | x = x			
+				if ((jjtGetParent().op == "|") && (truthValue == "FALSE")) {
+					// CHECK SIBLING TODO
+				}
+				// true | x = true
+				if ((jjtGetParent().op == "|") && (truthValue == "TRUE")) {
+					// PARENT MUST BE ALSO TRUE
+				}
+				traversedTree += " " + truthValue + " "; // TODO DEBUG INFO ONLY
+			}
 		}
+		return traversedTree;
 	}
-
-
-
-
-
-
 
   public int getId() {
 	return this.id;

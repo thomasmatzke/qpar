@@ -2,12 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY= */
 package main.java.logic.parser;
 
-
-
 public class ASTVar extends SimpleNode {
-
-	
-
   public ASTVar(int id) {
     super(id);
   }
