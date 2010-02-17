@@ -3,6 +3,13 @@ package main.java.messages;
 import java.io.Serializable;
 import java.util.Vector;
 
+/**
+ * Holds Information about the slave. Is the first message 
+ * transmitted to the master, to register the slave. The hostname is used 
+ * as a unique id for the slave.
+ * @author thomasm
+ *
+ */
 public class InformationMessage implements Serializable {
 	private int cores;
 	private Vector<String> toolIds;

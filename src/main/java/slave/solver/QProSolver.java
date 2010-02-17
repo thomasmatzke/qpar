@@ -14,6 +14,11 @@ import main.java.slave.SlaveDaemon;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
+/**
+ * This class encapsulates the qpro-solver
+ * @author thomasm
+ *
+ */
 public class QProSolver implements Solver {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
@@ -29,12 +34,9 @@ public class QProSolver implements Solver {
 	public void setMaster(Master master) {
 		this.master = master;
 	}
-
-	public void cleanup() {}
 	
 	public void kill() {
 		qpro_process.destroy();
-		cleanup();
 	}
 
 	public void prepare() {}
@@ -59,7 +61,7 @@ public class QProSolver implements Solver {
 			IOUtils.copy(isr, writer);
 			String readString = writer.toString();
 			int return_val = qpro_process.waitFor();
-						
+			Thread.sleep(100000);
 			if(readString.startsWith("1")) {
 				master.sendResultMessage(formula.getId(), new Boolean(true));
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(true) );
@@ -76,12 +78,7 @@ public class QProSolver implements Solver {
 		}
 		
 	}
-	
-	@Override
-	protected void finalize() throws Throwable {
-		cleanup();
-	}
-	
+		
 	public static String toInputString(TransmissionQbf t) {
 		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";
 	}

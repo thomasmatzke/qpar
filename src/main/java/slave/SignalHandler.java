@@ -9,6 +9,11 @@ import org.apache.log4j.Logger;
 
 import sun.misc.Signal;
 
+/**
+ * Handles external signals to the Java VM to exit gracefully
+ * @author thomasm
+ *
+ */
 public class SignalHandler implements sun.misc.SignalHandler {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
@@ -21,12 +26,8 @@ public class SignalHandler implements sun.misc.SignalHandler {
 			t.kill();
 		}
 		logger.info("Informing MasterDaemon...");
-		Vector<String> tqbf_ids = new Vector<String>();
-		for(String t : SlaveDaemon.getThreads().keySet()) {
-			tqbf_ids.add(t);
-		}
-		
-		SlaveDaemon.master.sendShutdownMessage("Cought Signal " + sig.getName(), tqbf_ids);
+				
+		SlaveDaemon.master.sendShutdownMessage("Cought Signal " + sig.getName());
 		logger.info("Shutting down...");
 		SlaveDaemon.master.disconnect();
 	}

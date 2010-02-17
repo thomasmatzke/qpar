@@ -12,6 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -142,7 +143,7 @@ public class ProgramWindow extends JFrame {
 			jobsActionPanel.setLayout(new GridBagLayout());
 			// jobsActionPanel.setSize(new Dimension(200, 100));
 			jobsActionPanel.add(getNewJobButton(), gridBagConstraints6);
-			jobsActionPanel.add(getViewJobButton(), gridBagConstraints5);
+			//jobsActionPanel.add(getViewJobButton(), gridBagConstraints5);
 			jobsActionPanel.add(getStartJobButton(), gridBagConstraints3);
 			jobsActionPanel.add(getAbortJobButton(), gridBagConstraints2);
 		}
@@ -239,6 +240,11 @@ public class ProgramWindow extends JFrame {
 			newJobButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					Set<String> solvers = Slave.getAllAvaliableSolverIds();
+					if(solvers.size() < 1) {
+						JOptionPane.showMessageDialog(null, "There are currently no slaves registered. " +
+								"Slaves have to register their solver-options with the Master to create a new job.");
+						return;
+					}
 					Vector<String> heuristics = HeuristicFactory
 							.getAvailableHeuristics();
 					CreateJobDialog dialog = new CreateJobDialog(frame, solvers

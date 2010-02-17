@@ -13,7 +13,8 @@ import org.apache.log4j.Logger;
 import sun.misc.Signal;
 
 /**
- * Handles communication with MasterDaemon
+ * Represents the slave-process.
+ * Handles parameter-parsing, Signal-handling
  * @author thomasm
  *
  */
@@ -25,6 +26,10 @@ public class SlaveDaemon {
 	private static Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
 	
+	/**
+	 * Program execution entry point
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		// Basic console logging
 		BasicConfigurator.configure();

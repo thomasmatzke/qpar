@@ -28,11 +28,18 @@ import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
 import main.java.slave.solver.QProSolver;
 import main.java.slave.solver.Solver;
+import main.java.slave.solver.SolverFactory;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.log4j.Logger;
 import org.apache.activemq.util.IndentPrinter;
+
+/**
+ * Represents the Master-server from client perspective
+ * @author thomasm
+ *
+ */
 public class Master {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
@@ -59,10 +66,15 @@ public class Master {
 
 	private String user = ActiveMQConnection.DEFAULT_USER;
 
+	/**
+	 * Connects to the JMX Messagebroker.
+	 * Creates the queues/consumer for communication with the master
+	 * @param url
+	 */
 	public void connect(String url) {
 		logger.info("Connecting to MessageBroker...");
 		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(
-				user, password, url); // TODO: add failover:
+				user, password, url);
 		try {
 			boolean connected  = false;
 			while(!connected) {
@@ -98,6 +110,9 @@ public class Master {
 		logger.info("Connection extablished. Queues, Consumers, Producers created.");
 	}
 
+	/**
+	 * Disconnects from the MessageBroker
+	 */
 	public void disconnect() {
 		logger.info("Disconnecting from MessageBroker, Stop consuming...");
 		this.run = false;
@@ -112,6 +127,12 @@ public class Master {
 		logger.info("Disconnected from MessageBroker");
 	}
 
+	/**
+	 * Stops the thread associated with the qbf in the message, 
+	 * removes the thread from the thread-index and reports the successful 
+	 * termination of the thread back to the master
+	 * @param m
+	 */
 	private void handleAbortMessage(AbortMessage m) {
 		Solver thread = SlaveDaemon.getThreads().get(m.getQbfId());
 		thread.kill();
@@ -119,32 +140,49 @@ public class Master {
 		this.sendFormulaAbortedMessage(m.getQbfId());
 	}
 
+	/**
+	 * Receives a formula, and feeds it to the solver
+	 * @param m
+	 */
 	private void handleFormulaMessage(FormulaMessage m) {
-		QProSolver solver = new QProSolver();
+		
+		Solver solver = SolverFactory.getSolver(m.getSolver());
 		solver.setTransmissionQbf(m.getFormula());
 		solver.setMaster(this);
+		solver.prepare();
 		new Thread(solver).start();
 		SlaveDaemon.addThread(m.getFormula().getId(), solver);
 	}
 
+	/**
+	 * Sends basic information of the slave to the master. Currently only 
+	 * the number of available cores
+	 * @param m
+	 */
 	private void handleInformationRequestMessage(InformationRequestMessage m) {
 		this.sendInformationMessage();
 	}
 
+	/**
+	 * Terminates the slave on request of the master
+	 * Kills all threads first
+	 * @param m
+	 */
 	private void handleKillMessage(KillMessage m) {
 		logger.info("Received KillMessage. Killing Workerthreads...");
 		Hashtable<String, Solver> threads = SlaveDaemon.getThreads();
 		for (Solver t : threads.values()) {
 			t.kill();
 		}
-		Vector<String> qbf_ids = new Vector<String>();
-		for (String t : SlaveDaemon.getThreads().keySet()) {
-			qbf_ids.add(t);
-		}
-		this.sendShutdownMessage("Kill requested by Masterserver", qbf_ids);
+		this.sendShutdownMessage("Kill requested by Masterserver");
 		this.run = false;
 	}
 
+	/**
+	 * This method is called whenever a message is received on
+	 * the TO.<slave_name> queue.
+	 * @param m
+	 */
 	public void onMessage(Message m) {
 		if (!(m instanceof ObjectMessage)) {
 			logger.error("Received unknown Non-Object-Message. Ignoring");
@@ -172,6 +210,11 @@ public class Master {
 		}
 	}
 
+	/**
+	 * On completed termination of the threads associated with a qbf, this method
+	 * sends a success-message to the master
+	 * @param tqbfId
+	 */
 	public void sendFormulaAbortedMessage(String tqbfId) {
 		logger.info("Sending AbortConfirmMessage... tqbfID: " + tqbfId);
 		FormulaAbortedMessage msg = new FormulaAbortedMessage();
@@ -180,10 +223,18 @@ public class Master {
 		logger.info("AbortConfirmMessage sent.");
 	}
 
+	/**
+	 * Sends basic information of the slave to the master. Currently only 
+	 * the number of available cores
+	 */
 	public void sendInformationMessage() {
 		sendInformationMessage(producer_snd);
 	}
 
+	/**
+	 * Sends an InformationMessage to the queue specified by the producer
+	 * @param p The message producer to send the message to
+	 */
 	public void sendInformationMessage(MessageProducer p) {
 		logger.info("Sending InformationMessage...");
 		InformationMessage msg = new InformationMessage();
@@ -197,6 +248,11 @@ public class Master {
 		sendObject(msg, p);
 	}
 
+	/**
+	 * Sends an Object-Message to a queue represented by the message producer
+	 * @param o	The object to send
+	 * @param p The message producer the object is sent to
+	 */
 	private void sendObject(Serializable o, MessageProducer p) {
 		try {
 			logger.debug("Sending Object of Class : " + o.getClass() + " to " + p.getDestination());
@@ -206,6 +262,11 @@ public class Master {
 		}
 	}
 
+	/**
+	 * Returns a result of a computation back to the master
+	 * @param tqbfId
+	 * @param result
+	 */
 	public void sendResultMessage(String tqbfId, boolean result) {
 		logger.info("Sending ResultMessage... tqbfId: " + tqbfId + ", Result: "
 				+ result);
@@ -215,18 +276,29 @@ public class Master {
 		sendObject(msg, producer_snd);
 	}
 
-	public void sendShutdownMessage(String reason, Vector<String> open_jobs) {
+	/**
+	 * Tells the master that the slave is going to shutdown; transmitting 
+	 * a list of open jobs and the reason for shutdown in the process
+	 * @param reason
+	 * @param open_jobs
+	 */
+	public void sendShutdownMessage(String reason) {
 		logger.info("Sending ShutdownMessage");
 		ShutdownMessage msg = new ShutdownMessage();
-		msg.setOpenJobs(open_jobs);
 		msg.setReason(reason);
 		this.sendObject(msg, producer_snd);
 	}
 	
+	/**
+	 * Sends a pong to the master, responding to a ping
+	 */
 	public void sendPong() {
 		this.sendObject(new Pong(), producer_snd);
 	}
-
+	
+	/**
+	 * Starts consuming of messages from the TO.<slave_name> queue.
+	 */
 	public void startConsuming() {
 		logger.info("Starting consuming from incoming queue");
 		this.run = true;
@@ -245,6 +317,9 @@ public class Master {
 		logger.info("Stopped consuming from incoming queue");
 	}
 
+	/**
+	 * Stops consuming of messages from the TO.<slave_name> queue.
+	 */
 	public void stopConsuming() {
 		logger.info("Stopping consuming from incoming queue");
 		this.run = false;

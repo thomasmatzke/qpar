@@ -1,12 +1,36 @@
 package main.java.slave.solver;
 
+import java.util.Vector;
 
+/**
+ * A solver-factory
+ * @author thomasm
+ *
+ */
 public class SolverFactory {
+	private static Vector<String> solvers;
 	
-	public Solver getToolByName(String name) {
-		if(name == "qpro") {
+	/**
+	 * Returns all available/implemented solvers. 
+	 * @return
+	 */
+	public static Vector<String> getavailableSolvers() {
+		if(solvers == null) {
+			solvers = new Vector<String>();
+			solvers.add("qpro");	
+		}
+		return solvers;
+	}
+	
+	/**
+	 * Returns a new solver-instance identified with the corresponding id
+	 * @param id
+	 * @return
+	 */
+	public static Solver getSolver(String id) {
+		if(id.equals("qpro")) {
 			return new QProSolver();
-		} // TODO: Add code for more tools here
+		}
 		return null;
 	}
 	

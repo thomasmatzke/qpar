@@ -2,6 +2,11 @@ package main.java.messages;
 
 import java.io.Serializable;
 
+/**
+ * Tells the slave to shut down
+ * @author thomasm
+ *
+ */
 public class SlaveShutdownMessage implements Serializable {
 	private String reason;
 

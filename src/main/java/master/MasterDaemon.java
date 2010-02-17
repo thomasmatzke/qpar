@@ -32,7 +32,7 @@ public class MasterDaemon {
 				connection.close();
 			} catch (JMSException e) {
 				logger.error("Error while closing connection: \n"
-						+ e.getStackTrace());
+						+ e);
 			}
 			stopMessageBroker();
 		}
