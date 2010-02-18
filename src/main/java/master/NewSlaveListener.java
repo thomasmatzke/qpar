@@ -40,7 +40,7 @@ public class NewSlaveListener implements MessageListener {
 		try {
 			t = ((ObjectMessage) m).getObject();
 		} catch (JMSException e) {
-			logger.error("Error while retrieving Object from Message... \n" + e.getCause());
+			logger.error("Error while retrieving Object from Message... \n" + e);
 		}
 		if (t instanceof InformationMessage) {
 			logger.info("Received InformationMessage...");
@@ -59,7 +59,7 @@ public class NewSlaveListener implements MessageListener {
 			consumer = session.createConsumer(destination_reg);
 			consumer.setMessageListener(this);
 		} catch (JMSException e) {
-			logger.error("Error while starting NewSlaveListener: \n" + e.getCause());
+			logger.error("Error while starting NewSlaveListener: \n" + e);
 		}
 		logger.info("NewSlaveListener started.");
 	}
@@ -70,7 +70,7 @@ public class NewSlaveListener implements MessageListener {
 			session.close();
 			running = false;
 		} catch (JMSException e) {
-			logger.error("Error while stopping NewSlaveListener: \n" + e.getStackTrace());
+			logger.error("Error while stopping NewSlaveListener: \n" + e);
 		}
 		logger.info("NewSlaveListener stopped.");
 	}

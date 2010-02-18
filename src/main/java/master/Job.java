@@ -107,6 +107,7 @@ public class Job {
 		logger.info("Aborting Job " + this.id + "...\n");
 		logger.info("Aborting Formulas. Sending AbortFormulaMessages to corresponding slaves...");
 		abortComputations();
+		this.status	= Job.ERROR;
 		tableModel.fireTableDataChanged();
 		logger.info("AbortMessages sent.");
 	}

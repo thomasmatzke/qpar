@@ -1,5 +1,7 @@
 package main.java.master.gui;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
@@ -40,8 +42,12 @@ public class SlavesTableModel extends AbstractTableModel {
 			for(Job job : slave.getRunningComputations().values()) {
 				jobs.add(job.getId());
 			}
-			String[] foo = new String[jobs.size()];
-			return Util.join(jobs.toArray(foo), ",");
+			String[] jobsArr = new String[jobs.size()];
+			jobs.toArray(jobsArr);
+			
+			Set<String> set = new HashSet<String>(jobs);
+			String[] uniqJobs = (set.toArray(new String[set.size()]));
+			return Util.join(uniqJobs, ",");
 		default:
 			return null;
 		}
@@ -54,7 +60,7 @@ public class SlavesTableModel extends AbstractTableModel {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Class getColumnClass(int col) {
+	public Class<String> getColumnClass(int col) {
 		switch (col) {
 		case 0:
 			return String.class;

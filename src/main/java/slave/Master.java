@@ -17,6 +17,7 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
 import main.java.messages.AbortMessage;
+import main.java.messages.ErrorMessage;
 import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.FormulaMessage;
 import main.java.messages.InformationMessage;
@@ -85,7 +86,7 @@ public class Master {
 					connected = true;
 				} catch (Exception e) {
 					logger.error("Error while connecting to MessageBroker: \n"
-							+ e.getCause());
+							+ e);
 					logger.error("Trying again in 5 secs...");
 					Thread.sleep(5000);
 				}
@@ -103,7 +104,7 @@ public class Master {
 			consumer_rcv = session.createConsumer(destination_rcv);
 		} catch (Exception e) {
 			logger.error("Error while connecting to MessageBroker: \n"
-					+ e.getCause());
+					+ e);
 			System.exit(-1);
 		}
 		sendInformationMessage(producer_reg);
@@ -122,7 +123,7 @@ public class Master {
 			this.connection.close();
 		} catch (Exception e) {
 			logger.error("Error while disconnecting from MessageBroker... \n"
-					+ e.getCause());
+					+ e);
 		}
 		logger.info("Disconnected from MessageBroker");
 	}
@@ -192,7 +193,7 @@ public class Master {
 		try {
 			t = ((ObjectMessage) m).getObject();
 		} catch (JMSException e) {
-			logger.error("Error while retrieving Object from Message... \n" + e.getCause());
+			logger.error("Error while retrieving Object from Message... \n" + e);
 		}
 		logger.debug("Received message of type " + t.getClass().toString());
 		if (t instanceof AbortMessage) {
@@ -297,6 +298,15 @@ public class Master {
 	}
 	
 	/**
+	 * Sends an errormessage
+	 * @param qbfId		The id of the qbf in which the error occurred
+	 * @param message	the toString output of the error/exception
+	 */
+	public void sendErrorMessage(String qbfId, String message) {
+		this.sendObject(new ErrorMessage(qbfId, message), producer_snd);
+	}
+	
+	/**
 	 * Starts consuming of messages from the TO.<slave_name> queue.
 	 */
 	public void startConsuming() {
@@ -308,7 +318,7 @@ public class Master {
 				msg = consumer_rcv.receive(1000);
 			} catch (JMSException e) {
 				logger.error("Error while consuming Slavemessage...\n"
-						+ e.getCause());
+						+ e);
 			}
 			if (msg != null) {
 				onMessage(msg);
@@ -324,5 +334,7 @@ public class Master {
 		logger.info("Stopping consuming from incoming queue");
 		this.run = false;
 	}
+
+	
 
 }

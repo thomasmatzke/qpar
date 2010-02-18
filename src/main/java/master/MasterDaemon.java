@@ -5,6 +5,7 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 
 import main.java.ArgumentParser;
+import main.java.master.Console.Shell;
 import main.java.master.gui.ProgramWindow;
 
 import org.apache.activemq.ActiveMQConnection;
@@ -45,7 +46,7 @@ public class MasterDaemon {
 	private static String password = ActiveMQConnection.DEFAULT_PASSWORD;
 	private static ProgramWindow programWindow;
 
-	private static boolean startGui;
+	private static boolean startGui = false;
 	private static String user = ActiveMQConnection.DEFAULT_USER;
 
 	public static void connectToBroker() {
@@ -57,7 +58,7 @@ public class MasterDaemon {
 			connection = connectionFactory.createConnection();
 			connection.start();
 		} catch (JMSException e) {
-			logger.error("Could not establish connection to MessageBroker: \n" + e.getStackTrace());
+			logger.error("Could not establish connection to MessageBroker: \n" + e);
 		}
 		logger.info("Connection to MessageBroker established.");
 	}
@@ -80,14 +81,14 @@ public class MasterDaemon {
 		BasicConfigurator.configure();
 
 		ArgumentParser ap = new ArgumentParser(args);
-		String gui = ap.getOption("gui");
-		if (gui == "false") {
-			logger.info("Starting with GUI");
-			MasterDaemon.startGui = false;
-		} else {
-			logger.info("Starting without GUI");
-			MasterDaemon.startGui = true;
-		}
+		MasterDaemon.startGui = ap.hasOption("gui");
+//		if (gui == "false") {
+//			logger.info("Starting without GUI");
+//			MasterDaemon.startGui = false;
+//		} else {
+//			logger.info("Starting with GUI");
+//			MasterDaemon.startGui = true;
+//		}
 		new MasterDaemon();
 	}
 
@@ -100,7 +101,7 @@ public class MasterDaemon {
 			broker.addConnector("tcp://localhost:61616");
 			broker.start();
 		} catch (Exception e) {
-			logger.error("Error while starting MessageBroker: \n" + e.getStackTrace());
+			logger.error("Error while starting MessageBroker: \n" + e);
 		}
 		logger.info("Messagebroker started.");
 	}
@@ -110,7 +111,7 @@ public class MasterDaemon {
 		try {
 			broker.stop();
 		} catch (Exception e) {
-			logger.error("Error while stopping MessageBroker: \n" + e.getStackTrace());
+			logger.error("Error while stopping MessageBroker: \n" + e);
 		}
 		logger.info("Messagebroker stopped.");
 	}
@@ -134,6 +135,8 @@ public class MasterDaemon {
 					programWindow.setVisible(true);
 				}
 			});
+		} else {
+			new Thread(new Shell()).start();
 		}
 	}
 

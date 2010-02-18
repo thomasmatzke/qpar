@@ -22,6 +22,7 @@ import javax.swing.table.AbstractTableModel;
 
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
+import main.java.messages.ErrorMessage;
 import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.AbortMessage;
 import main.java.messages.FormulaMessage;
@@ -173,12 +174,18 @@ public class Slave implements MessageListener, Runnable {
 	}
 
 	private void handleFormulaAbortedMessage(FormulaAbortedMessage m) {
-		logger.info("Receiving AbortConfirmMessage from " + this.getHostName());
+		logger.info("Receiving FormulaAbortedMessage from " + this.getHostName());
 		this.runningComputations.remove(m.getTqbfId());
 		logger.info("Removed tqbf(" + m.getTqbfId()
 				+ ") from running computations.");
 	}
 
+	private void handleErrorMessage(ErrorMessage t) {
+		logger.error("Receiving ErrorMessage from " + this.getHostName() + ":" + t.getMessage());
+		Job job = this.runningComputations.get(t.getTQbfId());
+		job.abort();
+	}
+	
 	private void handleInformationMessage(InformationMessage m) {
 		logger.info("Receiving InformationMessage from " + this.getHostName());
 		this.setHostName(m.getHostName());
@@ -217,6 +224,8 @@ public class Slave implements MessageListener, Runnable {
 		logger.info("Slave " + this.getHostName() + " removed");
 	}
 
+	
+	
 	public void kill(String reason) {
 		logger.info("Killing Slave " + this.getHostName() + " ...");
 		this.sendKillMessage(reason);
@@ -233,7 +242,7 @@ public class Slave implements MessageListener, Runnable {
 			t = ((ObjectMessage) m).getObject();
 		} catch (JMSException e) {
 			logger.error("Error while retrieving Object from Message... \n"
-					+ e.getCause());
+					+ e);
 		}
 		logger.debug("Received message of type " + t.getClass().toString());
 		if (t instanceof FormulaAbortedMessage) {
@@ -246,10 +255,14 @@ public class Slave implements MessageListener, Runnable {
 			handleShutdownMessage((ShutdownMessage) t);
 		} else if (t instanceof Pong) {
 			this.lastPongMillis = System.currentTimeMillis();
+		} else if (t instanceof ErrorMessage) {
+			handleErrorMessage((ErrorMessage) t);
 		} else {
 			logger.error("Received message object of unknown type.");
 		}
 	}
+
+	
 
 	public void sendAbortMessage(String tqbfId) {
 		logger.info("Sending AbortMessage to Slave " + this.getHostName());
@@ -294,7 +307,7 @@ public class Slave implements MessageListener, Runnable {
 			producer_snd.send(session.createObjectMessage(o));
 		} catch (JMSException e) {
 			logger.error("Error while sending Objectmessage...\n"
-					+ e.getCause());
+					+ e);
 		}
 	}
 
@@ -319,7 +332,7 @@ public class Slave implements MessageListener, Runnable {
 			this.session.close();
 		} catch (Exception e) {
 			logger.error("Error while stopping Slavehandler...\n"
-					+ e.getCause());
+					+ e);
 		}
 	}
 
@@ -334,7 +347,7 @@ public class Slave implements MessageListener, Runnable {
 			producer_snd.setDeliveryMode(DeliveryMode.NON_PERSISTENT);
 			consumer_rcv = session.createConsumer(destination_rcv);
 		} catch (JMSException e) {
-			logger.error("Error while initializing Queues...\n" + e.getCause());
+			logger.error("Error while initializing Queues...\n" + e);
 			System.exit(-1);
 		}
 
@@ -349,7 +362,7 @@ public class Slave implements MessageListener, Runnable {
 				msg = consumer_rcv.receive(1000);
 			} catch (JMSException e) {
 				logger.error("Error while consuming Slavemessage...\n"
-						+ e.getCause());
+						+ e);
 			}
 			if (msg != null) {
 				onMessage(msg);

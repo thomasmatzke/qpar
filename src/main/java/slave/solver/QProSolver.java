@@ -31,20 +31,28 @@ public class QProSolver implements Solver {
 		return master;
 	}
 
+	/**
+	 * Sets a master instance to send a result back to it
+	 */
 	public void setMaster(Master master) {
 		this.master = master;
 	}
 	
+	/**
+	 * Kills the qpro-process
+	 */
 	public void kill() {
 		qpro_process.destroy();
 	}
 
+	
 	public void prepare() {}
-		
+	
 	public void setTransmissionQbf(TransmissionQbf formula) {
 		this.formula = formula;
 	}
 
+	
 	public void run() {
 		prepare();
 		ProcessBuilder pb = new ProcessBuilder("qpro");
@@ -61,22 +69,26 @@ public class QProSolver implements Solver {
 			IOUtils.copy(isr, writer);
 			String readString = writer.toString();
 			int return_val = qpro_process.waitFor();
+			// TODO: Remove this
 			Thread.sleep(100000);
+			// If qpro returns 1 the subformula is satisfiable
 			if(readString.startsWith("1")) {
 				master.sendResultMessage(formula.getId(), new Boolean(true));
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(true) );
+			// IF qpro returns 0 the subformula is unsatisfiable
 			} else if (readString.startsWith("0")) {
 				master.sendResultMessage(formula.getId(), new Boolean(false));
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(false) );
+			// anything else is an error
 			} else {
 				logger.error("Got non-expected result from solver(" + readString + "). Aborting Formula.");
-				master.sendFormulaAbortedMessage(formula.getId());
+				master.sendErrorMessage(formula.getId(), "Got non-expected result from solver(" + readString + "). Aborting Formula.");
 			}
 		} catch (Exception e) {
 			logger.error("IO Error while getting result from solver: " + e);
-			master.sendFormulaAbortedMessage(formula.getId());
+			master.sendErrorMessage(formula.getId(), e.toString());
 		}
-		
+		SlaveDaemon.getThreads().remove(formula.getId());
 	}
 		
 	public static String toInputString(TransmissionQbf t) {
