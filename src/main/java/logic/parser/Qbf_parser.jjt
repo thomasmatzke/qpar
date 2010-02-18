@@ -23,8 +23,8 @@
 
 options {
 	MULTI = true;
-//	VISITOR = true;
-	NODE_DEFAULT_VOID=true;
+	NODE_DEFAULT_VOID = true;
+	// VISITOR = true;
 }
 
 PARSER_BEGIN(Qbf_parser)
@@ -46,6 +46,7 @@ public class Qbf_parser {
 		return literalCount;
 	}
 
+	// TODO DO THE STUFF AT THE RIGHT PLACE Qbf.java might be good
 	public static void main(String[] args) {
 		Qbf_parser parser;
 		Node root = null;
@@ -63,6 +64,14 @@ public class Qbf_parser {
 			System.out.println("Succesful parse");
 			root = parser.jjtree.rootNode(); 
 
+			root.dump("");
+			root.assignTruthValue(2,false);
+
+
+	System.out.println("reducing tree begin");
+			root.reduceTree();
+			root.reduceTree();
+	System.out.println("reducing tree end");
 			// Convert internal tree to .qpro format
 			String traversedTree = root.traverse();
 
@@ -85,27 +94,20 @@ public class Qbf_parser {
 			);
 			// Conversion end
 
-			// debug stuff			
-			root.dump("");		
+			// TODO REMOVE JUST DEBUG INFO AND setTruth() test
+			System.out.println("\nDEBUG INFO\n");
+			root.dump("");
+			System.out.println("");				
 			System.out.println("vars: " + vars);
 			System.out.println("all-quantified vars: " + aVars);
 			System.out.println("exists-quantified vars: " + eVars);
 			System.out.println("hashmap: " + literalCount);
 			
 			
-			System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
-			
-			root.setTruthValue(1,false);
-			root.setTruthValue(3,true);
-			traversedTree = root.traverse();
-
-			System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
-			
-			
-			// debug end					
-			
-			
-			
+/*			root.setTruthValue(1,false);*/
+/*			root.setTruthValue(3,true);*/
+/*			traversedTree = root.traverse();*/
+			// TODO REMOVE JUST DEBUG INFO END
 		}
 		catch (ParseException e) {
 			System.out.println("Parse error");			
@@ -113,6 +115,7 @@ public class Qbf_parser {
 			return;
 		}
 		catch (TokenMgrError e) {
+			System.out.println("Token error");			
 			System.out.println(e);
 			return;
 		}
@@ -150,7 +153,6 @@ void Input():	// Node with one child (Exp())
 }
 
 // *	<var_list> 	::= <VAR> <var_list> | <VAR>
-//void Var_list():
 //{}
 //{
 ////	Var()
@@ -170,24 +172,24 @@ void Or() #Or:	// Node with two children (Exp(), Exp())
 	<OR> { jjtThis.op = "|"; }
 }
 
-void Not() #Not:	// Node with one child (Exp())
+void Not():	// Node with one child (Exp())
 {}
 {
- 	<NOT> { jjtThis.op = "!"; }
+ 	<NOT>
 }
-void Exists() #Exists:
+void Exists():
 {}
 {
-	<EXISTS> { jjtThis.op = "e"; }
-}
-
-void Forall() #Forall:
-{}
-{
-	<FORALL> { jjtThis.op = "f";}
+	<EXISTS>// { jjtThis.op = "e"; }
 }
 
-void Var(String s) #Var:
+void Forall():
+{}
+{
+	<FORALL>// { jjtThis.op = "f";}
+}
+
+void Var() #Var:
 {
 	Token t;
 }
@@ -200,11 +202,13 @@ void Var(String s) #Var:
 		String varName = t.image.replaceAll("[a-z]*","");
 		int varNumber = Integer.valueOf(varName).intValue();
 		jjtThis.var = varNumber;
-		if (s == "e")
-			eVars.add(varNumber);
-		if (s == "f")
-			aVars.add(varNumber);
-		if (s == "") {
+/*		if (s == "e") {*/
+/*			eVars.add(varNumber);*/
+/*		}*/
+/*		if (s == "f") {*/
+/*			aVars.add(varNumber);*/
+/*		}*/
+/*		if (s == "") {*/
 			
 			if (literalCount.get(varNumber) != null) {
 				literalCount.put(varNumber, literalCount.get(varNumber) + 1);
@@ -215,7 +219,28 @@ void Var(String s) #Var:
 			if (!vars.contains(varNumber)) {
 				vars.add(varNumber);
 			}
+/*		}*/
+	}
+}
+
+void VarQ(String s):
+{
+	Token t;
+}
+{
+	t = <VAR>
+	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
+		// adding it to a vector containing all variable numbers as well as to a
+		// vector with all exist- or allquantified variables (that's the reason
+		// for the funny String s fallthrough)
+		String varName = t.image.replaceAll("[a-z]*","");
+		int varNumber = Integer.valueOf(varName).intValue();
+		if (s == "e") {
+			eVars.add(varNumber);
 		}
+		if (s == "f") {
+			aVars.add(varNumber);
+		} 
 	}
 }
 
@@ -226,13 +251,14 @@ void Exp() #void:
 	String op = "";
 }
 {
-
-//	Not()
-//	Exp()
-//	|
-//	Q_set()
-//	Exp()
-//	|
+	(
+		Not() { jjtThis.op = "!"; }
+		Exp()
+	) #Logical(1)
+	|
+	Q_set()
+	Exp()
+	|
 	<LP>
 	(
 		Exp()
@@ -247,7 +273,7 @@ void Exp() #void:
 	) #Logical(>1)  
 	<RP>
 	|
-	Var("")
+	Var()
 //	|
 //	<EOF>
 }
@@ -260,7 +286,7 @@ void Q_set() #void:
 {
 	s = Quant()
 	<LSP>
-	Var(s)
+	VarQ(s)
 	<RSP>
 }
 

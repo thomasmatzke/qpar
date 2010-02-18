@@ -24,8 +24,8 @@
 
 options {
 	             
-  	               
-	                       
+	                         
+	// VISITOR = true;
 }
 
 PARSER_BEGIN(Qbf_parser)
@@ -50,6 +50,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@ege
 		return literalCount;
 	}
 
+	// TODO DO THE STUFF AT THE RIGHT PLACE Qbf.java might be good
 	public static void main(String[] args) {
 		Qbf_parser parser;
 		Node root = null;
@@ -67,6 +68,14 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@ege
 			System.out.println("Succesful parse");
 			root = parser.jjtree.rootNode(); 
 
+			root.dump("");
+			root.assignTruthValue(2,false);
+
+
+	System.out.println("reducing tree begin");
+			root.reduceTree();
+			root.reduceTree();
+	System.out.println("reducing tree end");
 			// Convert internal tree to .qpro format
 			String traversedTree = root.traverse();
 
@@ -89,27 +98,20 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@ege
 			);
 			// Conversion end
 
-			// debug stuff			
-			root.dump("");		
+			// TODO REMOVE JUST DEBUG INFO AND setTruth() test
+			System.out.println("\nDEBUG INFO\n");
+			root.dump("");
+			System.out.println("");				
 			System.out.println("vars: " + vars);
 			System.out.println("all-quantified vars: " + aVars);
 			System.out.println("exists-quantified vars: " + eVars);
 			System.out.println("hashmap: " + literalCount);
 			
 			
-			System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
-			
-			root.setTruthValue(1,false);
-			root.setTruthValue(3,true);
-			traversedTree = root.traverse();
-
-			System.out.println("\n\nTRAVERSED TREE\n\n"+traversedTree+"\n\n\n");
-			
-			
-			// debug end					
-			
-			
-			
+/*			root.setTruthValue(1,false);*/
+/*			root.setTruthValue(3,true);*/
+/*			traversedTree = root.traverse();*/
+			// TODO REMOVE JUST DEBUG INFO END
 		}
 		catch (ParseException e) {
 			System.out.println("Parse error");			
@@ -117,6 +119,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants/*@ege
 			return;
 		}
 		catch (TokenMgrError e) {
+			System.out.println("Token error");			
 			System.out.println(e);
 			return;
 		}
@@ -154,7 +157,6 @@ void Input():	// Node with one child (Exp())
 }
 
 // *	<var_list> 	::= <VAR> <var_list> | <VAR>
-//void Var_list():
 //{}
 //{
 ////	Var()
@@ -208,75 +210,24 @@ void Or()    :	// Node with two children (Exp(), Exp())
 /*@egen*/
 }
 
-void Not()     :	// Node with one child (Exp())
-{/*@bgen(jjtree) Not */
-  ASTNot jjtn000 = new ASTNot(JJTNOT);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-/*@egen*/}
-{/*@bgen(jjtree) Not */
-        try {
-/*@egen*/
- 	<NOT>/*@bgen(jjtree)*/
-              {
-                jjtree.closeNodeScope(jjtn000, true);
-                jjtc000 = false;
-              }
-/*@egen*/ { jjtn000.op = "!"; }/*@bgen(jjtree)*/
-        } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-        }
-/*@egen*/
+void Not():	// Node with one child (Exp())
+{}
+{
+ 	<NOT>
 }
-void Exists()        :
-{/*@bgen(jjtree) Exists */
-  ASTExists jjtn000 = new ASTExists(JJTEXISTS);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-/*@egen*/}
-{/*@bgen(jjtree) Exists */
-        try {
-/*@egen*/
-	<EXISTS>/*@bgen(jjtree)*/
-                 {
-                   jjtree.closeNodeScope(jjtn000, true);
-                   jjtc000 = false;
-                 }
-/*@egen*/ { jjtn000.op = "e"; }/*@bgen(jjtree)*/
-        } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-        }
-/*@egen*/
+void Exists():
+{}
+{
+	<EXISTS>// { jjtThis.op = "e"; }
 }
 
-void Forall()        :
-{/*@bgen(jjtree) Forall */
-  ASTForall jjtn000 = new ASTForall(JJTFORALL);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-/*@egen*/}
-{/*@bgen(jjtree) Forall */
-        try {
-/*@egen*/
-	<FORALL>/*@bgen(jjtree)*/
-                 {
-                   jjtree.closeNodeScope(jjtn000, true);
-                   jjtc000 = false;
-                 }
-/*@egen*/ { jjtn000.op = "f";}/*@bgen(jjtree)*/
-        } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-        }
-/*@egen*/
+void Forall():
+{}
+{
+	<FORALL>// { jjtThis.op = "f";}
 }
 
-void Var(String s)     :
+void Var()     :
 {/*@bgen(jjtree) Var */
         ASTVar jjtn000 = new ASTVar(JJTVAR);
         boolean jjtc000 = true;
@@ -300,11 +251,13 @@ void Var(String s)     :
 		String varName = t.image.replaceAll("[a-z]*","");
 		int varNumber = Integer.valueOf(varName).intValue();
 		jjtn000.var = varNumber;
-		if (s == "e")
-			eVars.add(varNumber);
-		if (s == "f")
-			aVars.add(varNumber);
-		if (s == "") {
+/*		if (s == "e") {*/
+/*			eVars.add(varNumber);*/
+/*		}*/
+/*		if (s == "f") {*/
+/*			aVars.add(varNumber);*/
+/*		}*/
+/*		if (s == "") {*/
 			
 			if (literalCount.get(varNumber) != null) {
 				literalCount.put(varNumber, literalCount.get(varNumber) + 1);
@@ -315,7 +268,7 @@ void Var(String s)     :
 			if (!vars.contains(varNumber)) {
 				vars.add(varNumber);
 			}
-		}
+/*		}*/
 	}/*@bgen(jjtree)*/
         } finally {
           if (jjtc000) {
@@ -325,21 +278,34 @@ void Var(String s)     :
 /*@egen*/
 }
 
+void VarQ(String s):
+{
+	Token t;
+}
+{
+	t = <VAR>
+	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
+		// adding it to a vector containing all variable numbers as well as to a
+		// vector with all exist- or allquantified variables (that's the reason
+		// for the funny String s fallthrough)
+		String varName = t.image.replaceAll("[a-z]*","");
+		int varNumber = Integer.valueOf(varName).intValue();
+		if (s == "e") {
+			eVars.add(varNumber);
+		}
+		if (s == "f") {
+			aVars.add(varNumber);
+		} 
+	}
+}
+
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
 // *				| <LP> <exp> <RP> | <VAR>
 void Exp()      :
 {
 	String op = "";
 }
-{
-
-//	Not()
-//	Exp()
-//	|
-//	Q_set()
-//	Exp()
-//	|
-	<LP>/*@bgen(jjtree) #Logical(> 1) */
+{/*@bgen(jjtree) #Logical( 1) */
         {
           ASTLogical jjtn001 = new ASTLogical(JJTLOGICAL);
           boolean jjtc001 = true;
@@ -348,15 +314,8 @@ void Exp()      :
         try {
 /*@egen*/
 	(
+		Not() { jjtn001.op = "!"; }
 		Exp()
-		(
-			(
-				"|" {jjtn001.op = "|"; }
-				|
-				"&" {jjtn001.op = "&"; }
-			)
-			Exp()
-		)?
 	)/*@bgen(jjtree)*/
         } catch (Throwable jjte001) {
           if (jjtc001) {
@@ -374,13 +333,56 @@ void Exp()      :
           throw (Error)jjte001;
         } finally {
           if (jjtc001) {
-            jjtree.closeNodeScope(jjtn001, jjtree.nodeArity() > 1);
+            jjtree.closeNodeScope(jjtn001,  1);
+          }
+        }
+/*@egen*/            
+	|
+	Q_set()
+	Exp()
+	|
+	<LP>/*@bgen(jjtree) #Logical(> 1) */
+        {
+          ASTLogical jjtn002 = new ASTLogical(JJTLOGICAL);
+          boolean jjtc002 = true;
+          jjtree.openNodeScope(jjtn002);
+        }
+        try {
+/*@egen*/
+	(
+		Exp()
+		(
+			(
+				"|" {jjtn002.op = "|"; }
+				|
+				"&" {jjtn002.op = "&"; }
+			)
+			Exp()
+		)?
+	)/*@bgen(jjtree)*/
+        } catch (Throwable jjte002) {
+          if (jjtc002) {
+            jjtree.clearNodeScope(jjtn002);
+            jjtc002 = false;
+          } else {
+            jjtree.popNode();
+          }
+          if (jjte002 instanceof RuntimeException) {
+            throw (RuntimeException)jjte002;
+          }
+          if (jjte002 instanceof ParseException) {
+            throw (ParseException)jjte002;
+          }
+          throw (Error)jjte002;
+        } finally {
+          if (jjtc002) {
+            jjtree.closeNodeScope(jjtn002, jjtree.nodeArity() > 1);
           }
         }
 /*@egen*/               
 	<RP>
 	|
-	Var("")
+	Var()
 //	|
 //	<EOF>
 }
@@ -393,7 +395,7 @@ void Q_set()      :
 {
 	s = Quant()
 	<LSP>
-	Var(s)
+	VarQ(s)
 	<RSP>
 }
 
