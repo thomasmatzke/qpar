@@ -2,11 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY= */
 package main.java.logic.parser;
 import java.lang.String;
+import java.util.Arrays;
 
 public class SimpleNode implements Node {
 	protected Node parent;
 	protected Node[] children;
-	protected int id;
+	public int id;
 	protected Object value;
 	protected Qbf_parser parser;
 
@@ -19,20 +20,22 @@ public class SimpleNode implements Node {
 	* @param v the var to assign a truth value to
 	* @param b the truth value to assign
 	*/
-	public void setTruthValue(int v, boolean b) {
+	public void assignTruthValue(int v, boolean b) {
 		int i = 0;
 		int numChildren = this.jjtGetNumChildren();
 		
 		// not in a leaf node, nothing to set
 		if (numChildren > 0) {
 			for (i = 0; i < numChildren; i++) {
-				jjtGetChild(i).setTruthValue(v, b);
+				jjtGetChild(i).assignTruthValue(v, b);
 			}
 		}
 		// in a leaf node now
 		else {
 			if (var == v) {
+System.out.println("assigning truth value " + b + " to var " + v);
 				if (b) truthValue = "TRUE"; else truthValue = "FALSE";
+System.out.println("assiged truth value " + truthValue + " to var " + var);
 			}
 		}	
 	}
@@ -43,17 +46,18 @@ public class SimpleNode implements Node {
 	* @return A String in qpro format
 	*/	
 	public String traverse() {
+	
 		int i = 0;	
 		String tmp = "";
 		String traversedTree = "";
        	Node child;
        	int numChildren = this.jjtGetNumChildren();
-
-		System.out.println(var + ": "+truthValue); // TODO JUST DEBUG INFO
 					
 		if (numChildren > 0) { // we're not in a leaf node...
 
-			if (op == "|") {
+
+
+			if (op == "|") { // TODO java is too stupid to do switch() on anything but int :(
 					traversedTree += "d\n";
 			}
 			else if (op == "&") {
@@ -86,11 +90,11 @@ public class SimpleNode implements Node {
 	*/
 	public void reduceTree() {
 		int i = 0;	
-       	Node parentNode;
-       	Node siblingNode;
+       	Node parentNode = null;
+		Node grandparentNode = null;
+       	Node siblingNode = null;
        	int numChildren = this.jjtGetNumChildren();
-
-		System.out.println(var + ": "+truthValue); // TODO JUST DEBUG INFO
+System.out.println("NODE " + var + " has " + numChildren + " children");				// TODO debug
 					
 		if (numChildren > 0) { // we're not in a leaf node...
 			for (i = 0; i < numChildren; i++) { // ... so we just traverse through all it's children
@@ -99,32 +103,148 @@ public class SimpleNode implements Node {
 		}
 		else { // we're in a leaf node...
 			if (truthValue != "") {
-			} else { // we're in a truth-assigned leaf node, let's see what to do
-				// false & x = false, so set parent to false and make it a leaf node
-				if ((jjtGetParent().op == "&") && (truthValue == "FALSE")) {
-					parentNode = jjtGetParent();
+			// we're in a truth-assigned leaf node, let's see what to do
+
+System.out.println("LEAF "+var + " " + truthValue + " parent op " + this.jjtGetParent().getOp());	 // TODO debug			
+
+				parentNode = jjtGetParent();
+
+				// not x, set the parent to not x
+				if (parentNode.getOp() == "!") {
+					parentNode.setOp("");
+					if (truthValue == "FALSE") {
+						parentNode.setTruthValue("TRUE");
+					}
+					else {
+						parentNode.setTruthValue("FALSE");
+					}
+					parentNode.deleteChildren();
+					jjtSetParent(null);
 				}
+
+				// false & x = false, so set parent to false and make it a leaf node
+				if ((parentNode.getOp() == "&") && (truthValue == "FALSE")) {
+					parentNode.setOp("");
+					parentNode.setTruthValue("FALSE");
+					parentNode.deleteChildren();
+					jjtSetParent(null);
+				}
+
 				// true & x = x, so delete this node, replace the parent node with
 				// the sibling
-				if ((jjtGetParent().op == "&") && (truthValue == "TRUE")) {
-					parentNode = jjtGetParent();
+				if ((parentNode.getOp() == "&") && (truthValue == "TRUE")) {
+					// get grandparent
+					grandparentNode = parentNode.jjtGetParent();
+					// find sibling
+					for (i = 0; i < parentNode.jjtGetNumChildren(); i++) {
+						if (parentNode.jjtGetChild(i) != this) {
+							siblingNode = parentNode.jjtGetChild(i);
+						}
+					}	
+					// make sibling grandparents child
+					grandparentNode.replaceChild(parentNode, siblingNode);
+					// make grandparent siblings parent
+					siblingNode.jjtSetParent(grandparentNode);
+					// remove old parents children and parent
+					parentNode.deleteChildren();
+					parentNode.jjtSetParent(null);
+					// remove current nodes parent
+					jjtSetParent(null);
 				}
+
 				// false | x = x, so delete this node, replace the parent node with
 				// the sibling
-				if ((jjtGetParent().op == "|") && (truthValue == "FALSE")) {
-					parentNode = jjtGetParent();
+				if ((parentNode.getOp() == "|") && (truthValue == "FALSE")) {
+					// get grandparent
+					grandparentNode = parentNode.jjtGetParent();
+					// find sibling
+					for (i = 0; i < parentNode.jjtGetNumChildren(); i++) {
+						if (parentNode.jjtGetChild(i) != this) {
+							siblingNode = parentNode.jjtGetChild(i);
+						}
+					}	
+					// make sibling grandparents child
+					grandparentNode.replaceChild(parentNode, siblingNode);
+					// make grandparent siblings parent
+					siblingNode.jjtSetParent(grandparentNode);
+					// remove old parents children and parent
+					parentNode.deleteChildren();
+					parentNode.jjtSetParent(null);
+					// remove current nodes parent
+					jjtSetParent(null);					
 				}
-				// true | x = true, so replace the the parent node with true, throw
-				// away the sibling
-				if ((jjtGetParent().op == "|") && (truthValue == "TRUE")) {
-					parentNode = jjtGetParent();
+
+				// true | x = true, so set the parent node to true and make it a leaf
+				if ((parentNode.getOp() == "|") && (truthValue == "TRUE")) {
+					parentNode.setOp("");
+					parentNode.setTruthValue("TRUE");
+					parentNode.deleteChildren();
+					jjtSetParent(null);				
 				}
+				
 			}
 		}
 	}
 
+	/**
+	* removes all children of a node by setting the childrens parent to null and
+	* cleaning the children[] array. Hopefully the garbage collector will really
+	* delete them
+	*/
+	public void deleteChildren() {
+		for (int i = 0; i < jjtGetNumChildren(); i++) {
+			jjtGetChild(i).jjtSetParent(null);
+		}
+System.out.println("vor delchildren: " + jjtGetNumChildren() + " children left " + op + var + truthValue); // TODO debug
+		children = null;
+System.out.println("delchildren: " + jjtGetNumChildren() + " children left " + op + var + truthValue); // TODO debug
+
+	}
+	
+	/**
+	* replaces node old with node new in the parent list of a node
+	* @param oldNode the node to be replaced
+	* @param newNode the node that will take the old nodes place
+	*/
+	public boolean replaceChild(Node oldNode, Node newNode) {
+		for (int i = 0; i < jjtGetNumChildren(); i++) {
+			if (jjtGetChild(i) == oldNode) {
+				children[i] = newNode;
+				return true;
+			}
+		}
+		return false;
+	}
+
+  // mostly auto-generated stuff from here plus some simple getter/setter methods
+  // one doesn't really need because all vars are public anyway :)
+
+	public void setTruthValue(String t) {
+		this.truthValue = t;
+	}
+
+	public String getTruthValue() {
+		return truthValue;
+	}
+
+	public void setVar(int v) {
+		this.var = v;
+	}
+
+	public int getVar() {
+		return var;
+	}
+
+	public void setOp(String o) {
+		this.op = o;
+	}
+
+	public String getOp() {
+		return op;
+	}
+
   public int getId() {
-	return this.id;
+	return id;
   }
 
   public SimpleNode(int i) {
@@ -173,7 +293,7 @@ public class SimpleNode implements Node {
      toString(String), otherwise overriding toString() is probably all
      you need to do. */
 	
-  public String toString() { return Qbf_parserTreeConstants.jjtNodeName[id]; }
+  public String toString() { return Qbf_parserTreeConstants.jjtNodeName[id] + " (op= " + op + ", var= " + var + " "  + truthValue + ")"; }
   public String toString(String prefix) { return prefix + toString(); }
 
   /* Override this method if you want to customize how the node dumps

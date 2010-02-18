@@ -12,11 +12,21 @@ public interface Node {
 	public String op = "";
 	public String truthValue = "";
 	public int var = -1;	
+	public int id = 0;
 	
 	public String traverse();
 	public void reduceTree();
-	public void setTruthValue(int v, boolean b);
+	public void assignTruthValue(int v, boolean b);
 	public void dump(String prefix);
+	public void deleteChildren();
+	public String getOp();
+	public void setOp(String o);
+	public void setTruthValue(String t);
+	public String getTruthValue();
+	public void setVar(int v);
+	public int getVar();
+	public boolean replaceChild(Node oldNode, Node newNode);
+	public int getId();
 	// custon stuff end
 
   /** This method is called after the node has been made the current

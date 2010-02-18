@@ -6,22 +6,16 @@ public interface Qbf_parserTreeConstants
   public int JJTVOID = 0;
   public int JJTAND = 1;
   public int JJTOR = 2;
-  public int JJTNOT = 3;
-  public int JJTEXISTS = 4;
-  public int JJTFORALL = 5;
-  public int JJTVAR = 6;
-  public int JJTLOGICAL = 7;
+  public int JJTVAR = 3;
+  public int JJTLOGICAL = 4;
 
 
   public String[] jjtNodeName = {
     "void",
     "And",
     "Or",
-    "Not",
-    "Exists",
-    "Forall",
     "Var",
     "Logical",
   };
 }
-/* JavaCC - OriginalChecksum=5a874bc756590ce24bc821799aa15b57 (do not edit this line) */
+/* JavaCC - OriginalChecksum=7a3e4246db56e224276ef79a153d9468 (do not edit this line) */
