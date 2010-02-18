@@ -16,11 +16,6 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                 return literalCount;
         }
 
-        // thomas' wunschkonzert
-        // anz variable negiert und nicht negiert
-        // 
-
-
         public static void main(String[] args) {
                 Qbf_parser parser;
                 Node root = null;

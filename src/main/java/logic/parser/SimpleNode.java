@@ -49,40 +49,78 @@ public class SimpleNode implements Node {
        	Node child;
        	int numChildren = this.jjtGetNumChildren();
 
-		System.out.println("A:"+truthValue); // TODO JUST DEBUG INFO
+		System.out.println(var + ": "+truthValue); // TODO JUST DEBUG INFO
 					
 		if (numChildren > 0) { // we're not in a leaf node...
-			traversedTree += op;
-			traversedTree += truthValue;
+
+			if (op == "|") {
+					traversedTree += "d\n";
+			}
+			else if (op == "&") {
+					traversedTree += "c\n";
+			}
+
 			for (i = 0; i < numChildren; i++) { // ... so we just traverse through all it's children
 				traversedTree += jjtGetChild(i).traverse();
 			}
+
+			if (op == "|") {
+					traversedTree += "\n/d\n";
+			}
+			else if (op == "&") {
+					traversedTree += "\n/c\n";
+			}
+
 		}
 		else { // we're in a leaf node...
 			if (truthValue == "") {
 				// ...but not a truth-assigned one
-				traversedTree += var;
-			} else { // we're in a truth-assigned leaf node, let's see what to do
-				// false & x = false
-				if ((jjtGetParent().op == "&") && (truthValue == "FALSE")) {
-					// PARENT MUST ALSO FALSE
-				}
-				// true & x = x
-				if ((jjtGetParent().op == "&") && (truthValue == "TRUE")) {
-					// CHECK SIBLING TODO
-				}
-				// false | x = x			
-				if ((jjtGetParent().op == "|") && (truthValue == "FALSE")) {
-					// CHECK SIBLING TODO
-				}
-				// true | x = true
-				if ((jjtGetParent().op == "|") && (truthValue == "TRUE")) {
-					// PARENT MUST BE ALSO TRUE
-				}
-				traversedTree += " " + truthValue + " "; // TODO DEBUG INFO ONLY
+				traversedTree += var + " ";
 			}
 		}
 		return traversedTree;
+	}
+
+	/** 
+	* reduces a tree containung truth-assigned variables to a tree without them
+	*/
+	public void reduceTree() {
+		int i = 0;	
+       	Node parentNode;
+       	Node siblingNode;
+       	int numChildren = this.jjtGetNumChildren();
+
+		System.out.println(var + ": "+truthValue); // TODO JUST DEBUG INFO
+					
+		if (numChildren > 0) { // we're not in a leaf node...
+			for (i = 0; i < numChildren; i++) { // ... so we just traverse through all it's children
+				jjtGetChild(i).reduceTree();
+			}
+		}
+		else { // we're in a leaf node...
+			if (truthValue != "") {
+			} else { // we're in a truth-assigned leaf node, let's see what to do
+				// false & x = false, so set parent to false and make it a leaf node
+				if ((jjtGetParent().op == "&") && (truthValue == "FALSE")) {
+					parentNode = jjtGetParent();
+				}
+				// true & x = x, so delete this node, replace the parent node with
+				// the sibling
+				if ((jjtGetParent().op == "&") && (truthValue == "TRUE")) {
+					parentNode = jjtGetParent();
+				}
+				// false | x = x, so delete this node, replace the parent node with
+				// the sibling
+				if ((jjtGetParent().op == "|") && (truthValue == "FALSE")) {
+					parentNode = jjtGetParent();
+				}
+				// true | x = true, so replace the the parent node with true, throw
+				// away the sibling
+				if ((jjtGetParent().op == "|") && (truthValue == "TRUE")) {
+					parentNode = jjtGetParent();
+				}
+			}
+		}
 	}
 
   public int getId() {

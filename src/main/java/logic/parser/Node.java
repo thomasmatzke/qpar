@@ -14,6 +14,7 @@ public interface Node {
 	public int var = -1;	
 	
 	public String traverse();
+	public void reduceTree();
 	public void setTruthValue(int v, boolean b);
 	public void dump(String prefix);
 	// custon stuff end
