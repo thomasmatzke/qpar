@@ -3,19 +3,21 @@ package main.java.logic.parser;
 
 public interface Qbf_parserTreeConstants
 {
-  public int JJTVOID = 0;
+  public int JJTINPUT = 0;
   public int JJTAND = 1;
   public int JJTOR = 2;
-  public int JJTVAR = 3;
-  public int JJTLOGICAL = 4;
+  public int JJTVOID = 3;
+  public int JJTVAR = 4;
+  public int JJTLOGICAL = 5;
 
 
   public String[] jjtNodeName = {
-    "void",
+    "Input",
     "And",
     "Or",
+    "void",
     "Var",
     "Logical",
   };
 }
-/* JavaCC - OriginalChecksum=7a3e4246db56e224276ef79a153d9468 (do not edit this line) */
+/* JavaCC - OriginalChecksum=4f5791e8f42e219f92428f33efa185a1 (do not edit this line) */

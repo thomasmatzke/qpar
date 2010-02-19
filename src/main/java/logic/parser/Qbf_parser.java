@@ -41,6 +41,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
         System.out.println("reducing tree begin");
                         root.reduceTree();
                         root.reduceTree();
+                        root.reduceTree();
         System.out.println("reducing tree end");
                         // Convert internal tree to .qpro format
                         String traversedTree = root.traverse();
@@ -95,8 +96,32 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
 // non-terminals
 // *	<input>		::= <exp> EOF
   static final public void Input() throws ParseException {
-    Exp();
-    jj_consume_token(0);
+ /*@bgen(jjtree) Input */
+  ASTInput jjtn000 = new ASTInput(JJTINPUT);
+  boolean jjtc000 = true;
+  jjtree.openNodeScope(jjtn000);
+    try {
+      Exp();
+      jj_consume_token(0);
+    } catch (Throwable jjte000) {
+          if (jjtc000) {
+            jjtree.clearNodeScope(jjtn000);
+            jjtc000 = false;
+          } else {
+            jjtree.popNode();
+          }
+          if (jjte000 instanceof RuntimeException) {
+            {if (true) throw (RuntimeException)jjte000;}
+          }
+          if (jjte000 instanceof ParseException) {
+            {if (true) throw (ParseException)jjte000;}
+          }
+          {if (true) throw (Error)jjte000;}
+    } finally {
+          if (jjtc000) {
+            jjtree.closeNodeScope(jjtn000, true);
+          }
+    }
   }
 
 // *	<var_list> 	::= <VAR> <var_list> | <VAR>

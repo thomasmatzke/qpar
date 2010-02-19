@@ -71,6 +71,7 @@ public class Qbf_parser {
 	System.out.println("reducing tree begin");
 			root.reduceTree();
 			root.reduceTree();
+			root.reduceTree();
 	System.out.println("reducing tree end");
 			// Convert internal tree to .qpro format
 			String traversedTree = root.traverse();
@@ -145,7 +146,7 @@ TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
 
 // non-terminals
 // *	<input>		::= <exp> EOF
-void Input():	// Node with one child (Exp())
+void Input() #Input:	// Node with one child (Exp())
 {}
 {
 	Exp()

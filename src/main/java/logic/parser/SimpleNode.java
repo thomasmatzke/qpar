@@ -96,8 +96,8 @@ System.out.println("assiged truth value " + truthValue + " to var " + var);
        	int numChildren = this.jjtGetNumChildren();
 System.out.println("NODE " + var + " has " + numChildren + " children");				// TODO debug
 					
-		if (numChildren > 0) { // we're not in a leaf node...
-			for (i = 0; i < numChildren; i++) { // ... so we just traverse through all it's children
+		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
+			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just traverse through all it's children
 				jjtGetChild(i).reduceTree();
 			}
 		}
