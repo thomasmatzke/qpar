@@ -209,6 +209,7 @@ public class Job {
 		// logger.error("Error while reading formula file: " + e);
 		// }
 		int availableCores = Slave.getCoresForSolver(this.solver);
+		
 		this.subformulas = formula.splitQbf(availableCores, HeuristicFactory
 				.getHeuristic(this.getHeuristic()));
 		List<Slave> slaves = Slave.getSlavesWithSolver(this.solver);

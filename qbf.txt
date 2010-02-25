@@ -1,0 +1,1 @@
+(forall [v1] (exists [v2] ((v2 | v1) & (v1 | v2))))

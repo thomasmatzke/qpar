@@ -17,11 +17,11 @@ public class HeuristicFactory {
 	}
 	
 	public static Heuristic getHeuristic(String id) {
-		if (id == "simple")
+		if (id.equals("simple"))
 			return new SimpleHeuristic();
-		if (id == "rand")
+		if (id.equals("rand"))
 			return new RandHeuristic();
-		if (id == "litcount")
+		if (id.equals("litcount"))
 			return new LCHeuristic();
 		return null;
 	}
