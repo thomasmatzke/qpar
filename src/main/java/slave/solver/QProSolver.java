@@ -1,5 +1,9 @@
 package main.java.slave.solver;
 
+import main.java.logic.parser.SimpleNode;
+
+import java.util.Vector;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -79,6 +83,7 @@ public class QProSolver implements Solver {
 			if(readString.startsWith("1")) {
 				master.sendResultMessage(formula.getId(), new Boolean(true));
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(true) );
+
 			// IF qpro returns 0 the subformula is unsatisfiable
 			} else if (readString.startsWith("0")) {
 				master.sendResultMessage(formula.getId(), new Boolean(false));
@@ -96,7 +101,25 @@ public class QProSolver implements Solver {
 	}
 		
 	public static String toInputString(TransmissionQbf t) {
-		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";
+		Vector<Integer> eVars = null; eVars = t.getEVars();
+		Vector<Integer> aVars = null; aVars = t.getAVars();
+		Vector<Integer> vars = null; vars = t.getVars();
+	
+		String traversedTree = "";
+		SimpleNode root = t.getRootNode();
+		t.assignTruthValues();
+		t.reduceTree();
+
+		traversedTree += "\nQBF\n" + (vars.size()+1) + "\nq\n" + "a ";
+		for (int i=0; i < eVars.size(); i++)
+			traversedTree += eVars.get(i) + " ";
+		traversedTree += "\n" + "e ";
+		for (int i=0; i < aVars.size(); i++)
+			traversedTree += aVars.get(i) + " ";
+		traversedTree += root.traverse();
+		traversedTree += "/q\nQBF\n";	
+		System.out.println(traversedTree);
+		return traversedTree;
 	}
 	
 }
