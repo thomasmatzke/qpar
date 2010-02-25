@@ -41,22 +41,25 @@ public class Qbf {
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
 	public Vector<Integer> allVars;
 	private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
-	
+	private static Vector<Integer> eVars = new Vector<Integer>();
+	private static Vector<Integer> aVars = new Vector<Integer>();
+	private static Vector<Integer> vars  = new Vector<Integer>();
+
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
 	* @throws IOException 
 	*/
 	public Qbf(String filename) throws IOException {
+		Qbf_parser parser;
+		Node root = null;
+
 		id++;
 		this.filename = filename;
 		file = new File(filename);
-	
+
 		BufferedReader qbfBuffer =  new BufferedReader(new FileReader(file));
-		// qbfString = qbfBuffer.readLine();
 		
-		Qbf_parser parser;
-		Node root = null;
 		try {
 			parser = new Qbf_parser(new FileInputStream(filename));
 		}
@@ -65,12 +68,14 @@ public class Qbf {
 			return;
 		}
 
+		// parse the formula, get various vectors of vars
 		try {
 			parser.Input();
 			System.out.println("Succesful parse");
-//			root = parser.jjtree.rootNode();
-//			String traversedTree = root.traverse();
 			literalCount = parser.getLiteralCount();
+			eVars = parser.getEVars();
+			aVars = parser.getAVars();
+			vars = parser.getVars();
 		}
 		catch (ParseException e) {
 			System.out.println("Parse error");			
@@ -82,16 +87,7 @@ public class Qbf {
 			return;
 		}
 
-
-// syntax checking should now be done in the parser		
-//		// maybe there will be a syntaxcheck somewhesre in the future
-//		if (!checkQbfSyntax(qbfString)) {
-//			System.out.println(filename + " seems to have syntax errors. Aborting.");
-//			System.exit(1);
-//		}
-
 		System.out.println("Finished reading a QBF from " + filename);
-		
 	}
 
 	/**

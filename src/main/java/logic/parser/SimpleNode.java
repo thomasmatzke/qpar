@@ -23,7 +23,7 @@ public class SimpleNode implements Node {
 	public void assignTruthValue(int v, boolean b) {
 		int i = 0;
 		int numChildren = this.jjtGetNumChildren();
-		
+		 
 		// not in a leaf node, nothing to set
 		if (numChildren > 0) {
 			for (i = 0; i < numChildren; i++) {
@@ -91,6 +91,7 @@ public class SimpleNode implements Node {
 
 	/** 
 	* reduces a tree containung truth-assigned variables to a tree without them
+	* @return true if tree is still traversable, false if not
 	*/
 	public boolean reduceTree() {
        	Node parentNode = null;
@@ -211,6 +212,7 @@ public class SimpleNode implements Node {
 	* replaces node old with node new in the parent list of a node
 	* @param oldNode the node to be replaced
 	* @param newNode the node that will take the old nodes place
+	* @return true if success, false if the node to replace was not found
 	*/
 	public boolean replaceChild(Node oldNode, Node newNode) {
 		for (int i = 0; i < jjtGetNumChildren(); i++) {
@@ -222,8 +224,8 @@ public class SimpleNode implements Node {
 		return false;
 	}
 
-  // mostly auto-generated stuff from here plus some simple getter/setter methods
-  // one doesn't really need because all vars are public anyway :)
+	// mostly auto-generated stuff from here plus some simple getter/setter methods
+	// one doesn't really need because all vars are public anyway :)
 
 	public void setTruthValue(String t) {
 		this.truthValue = t;
@@ -309,10 +311,10 @@ public class SimpleNode implements Node {
     System.out.println(toString(prefix));
     if (children != null) {
       for (int i = 0; i < children.length; ++i) {
-  SimpleNode n = (SimpleNode)children[i];
-  if (n != null) {
-    n.dump(prefix + " ");
-  }
+		SimpleNode n = (SimpleNode)children[i];
+		if (n != null) {
+		  n.dump(prefix + " ");
+		}
       }
     }
   }

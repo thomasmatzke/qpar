@@ -16,6 +16,18 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                 return literalCount;
         }
 
+        public Vector<Integer> getEVars() {
+                return eVars;
+        }
+
+        public Vector<Integer> getAVars() {
+                return aVars;
+        }
+
+        public Vector<Integer> getVars() {
+                return vars;
+        }
+
         // TODO DO THE STUFF AT THE RIGHT PLACE Qbf.java might be good
         public static void main(String[] args) {
                 Qbf_parser parser;
@@ -64,7 +76,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                         System.out.println("");
                         System.out.println(
                                 traversedTree +
-                                "QBF\n"
+                                "/q\nQBF\n"
                         );
                 // Conversion end
 
