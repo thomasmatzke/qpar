@@ -49,6 +49,8 @@ public class MasterDaemon {
 	}
 	private static String password = ActiveMQConnection.DEFAULT_PASSWORD;
 	private static ProgramWindow programWindow;
+	private static Thread shellthread;
+	private static Shell shell;
 
 	private static boolean startGui = false;
 	private static String user = ActiveMQConnection.DEFAULT_USER;
@@ -140,8 +142,18 @@ public class MasterDaemon {
 				}
 			});
 		} else {
-			new Thread(new Shell()).start();
+			shell = new Shell();
+			shellthread = new Thread(shell);
+			shellthread.start();
 		}
+	}
+
+	public static Shell getShell() {
+		return shell;
+	}
+	
+	public static Thread getShellThread() {
+		return shellthread;
 	}
 
 }

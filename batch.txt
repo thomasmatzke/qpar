@@ -1,2 +1,3 @@
+waitfor 3 qpro
 newjob qbf.txt output.txt qpro simple
 startjob 1

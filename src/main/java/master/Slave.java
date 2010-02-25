@@ -23,6 +23,7 @@ import javax.swing.table.AbstractTableModel;
 import main.java.Util;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
+import main.java.master.Console.Shell;
 import main.java.messages.ErrorMessage;
 import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.AbortMessage;
@@ -75,6 +76,13 @@ public class Slave implements MessageListener, Runnable {
 		instance.status = Slave.READY;
 		new Thread(instance).start();
 		Slave.addSlave(instance);
+		if(solvers.contains(Shell.getWaitfor_solver())) {
+			Shell.setWaitfor_count(cores + Shell.getWaitfor_count());
+			
+			synchronized(MasterDaemon.getShellThread()) {
+				MasterDaemon.getShellThread().notify();
+			}
+		}
 		return instance;
 	}
 

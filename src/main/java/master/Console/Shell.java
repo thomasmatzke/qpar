@@ -28,11 +28,37 @@ public class Shell implements Runnable{
 	boolean run				= true;
 	
 	
+	// Is increased by Slave if a Slave has the right solver
+	private static int waitfor_count = 0;
+	// We want that many cores before proceeding
+	private static int waitfor_cores;
+	// We are waiting for Slaves with this kind of solver
+	private static String waitfor_solver = null;
+	
+	
+	public static int getWaitfor_count() {
+		return waitfor_count;
+	}
+
+	public static void setWaitfor_count(int waitfor_count) {
+		Shell.waitfor_count = waitfor_count;
+	}
+
+	public static String getWaitfor_solver() {
+		return waitfor_solver;
+	}
+
+	public static void setWaitfor_solver(String waitfor_solver) {
+		Shell.waitfor_solver = waitfor_solver;
+	}
+
 	public void run() {	
-		String line;
+		String line = "";
 		while(run) {
 			put(prompt);
 			line = read();
+			if(line == null)
+				return;
 			if(line.length() < 1) continue;
 			parseLine(line);
 
@@ -64,6 +90,9 @@ public class Shell implements Runnable{
 			case SOURCE:
 				source(token);
 				break;
+			case WAITFOR:
+				waitfor(token);
+				break;
 			case HELP:
 				help();
 				break;
@@ -77,6 +106,32 @@ public class Shell implements Runnable{
 		        assert(false);
 		}
 		
+	}
+
+	/**
+	 * Syntax: WAITFOR number_of_cores solverid
+	 * @param token
+	 */
+	private void waitfor(StringTokenizer token) {
+		
+		try{
+			waitfor_cores = new Integer(token.nextToken()).intValue();
+			setWaitfor_solver(token.nextToken());
+		} catch(NoSuchElementException e) {
+			puts("Syntax: WAITFOR number_of_cores solverid");
+		}
+		
+		while(true) {
+			if(waitfor_count > 0 && waitfor_cores <= waitfor_count) {
+				return;
+			}
+				
+			try {
+				synchronized(MasterDaemon.getShellThread()) {
+					MasterDaemon.getShellThread().wait();
+				}
+			} catch (InterruptedException e) {}
+		}
 	}
 
 	/**
@@ -104,7 +159,7 @@ public class Shell implements Runnable{
 	}
 
 	private void help() {
-		puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, QUIT (Case insensitive)");
+		puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFOR, QUIT (Case insensitive)");
 	}
 
 	/**
@@ -189,6 +244,7 @@ public class Shell implements Runnable{
 
 	private void quit() {
 		this.run = false;
+		System.exit(0);
 	}
 	
 	private void put(String s) {
