@@ -1,12 +1,12 @@
 package main.java.master;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
-
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.log4j.Level;
@@ -18,11 +18,11 @@ import main.java.logic.TransmissionQbf;
 
 public class Job {
 
-	public static final int READY 		= 0;
-	public static final int RUNNING 	= 1;
-	public static final int COMPLETE 	= 2;
-	public static final int ERROR 		= 3;
-	
+	public static final int READY = 0;
+	public static final int RUNNING = 1;
+	public static final int COMPLETE = 2;
+	public static final int ERROR = 3;
+
 	private static int idCounter = 0;
 	private static Map<String, Job> jobs = new HashMap<String, Job>();
 	private static AbstractTableModel tableModel;
@@ -30,9 +30,9 @@ public class Job {
 	{
 		logger.setLevel(Level.INFO);
 	}
-	
+
 	private boolean result;
-	
+
 	private static void addJob(Job job) {
 		jobs.put(job.id, job);
 		if (tableModel != null) {
@@ -56,11 +56,10 @@ public class Job {
 		job.setHeuristic(heuristicId);
 		job.setStatus(Job.READY);
 		addJob(job);
-		logger.info("Job created. Id: " + job.getId() + ",\n" +
-				"HeuristicId: " + job.getHeuristic() + ",\n" +
-				"SolverId: " + job.getSolver() + ",\n" +
-				"Inputfile: " + job.getInputFileString() + ",\n" +
-				"Outputfile: " + job.getOutputFileString() + "\n");
+		logger.info("Job created. Id: " + job.getId() + ",\n" + "HeuristicId: "
+				+ job.getHeuristic() + ",\n" + "SolverId: " + job.getSolver()
+				+ ",\n" + "Inputfile: " + job.getInputFileString() + ",\n"
+				+ "Outputfile: " + job.getOutputFileString() + "\n");
 	}
 
 	public static Map<String, Job> getJobs() {
@@ -81,7 +80,7 @@ public class Job {
 	private Qbf formula;
 	// Maps tqbfids with to the computing slaves
 	private Map<String, Slave> formulaDesignations = new HashMap<String, Slave>();
-	
+
 	public Map<String, Slave> getFormulaDesignations() {
 		return formulaDesignations;
 	}
@@ -108,16 +107,18 @@ public class Job {
 	private List<TransmissionQbf> subformulas;
 
 	public void abort() {
-		if(this.status != Job.RUNNING) return;
+		if (this.status != Job.RUNNING)
+			return;
 		logger.info("Aborting Job " + this.id + "...\n");
-		logger.info("Aborting Formulas. Sending AbortFormulaMessages to corresponding slaves...");
+		logger
+				.info("Aborting Formulas. Sending AbortFormulaMessages to corresponding slaves...");
 		abortComputations();
-		this.status	= Job.ERROR;
-		if(tableModel != null)
+		this.status = Job.ERROR;
+		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 		logger.info("AbortMessages sent.");
 	}
-	
+
 	public void abortComputations() {
 		for (Map.Entry<String, Slave> entry : this.formulaDesignations
 				.entrySet()) {
@@ -202,30 +203,32 @@ public class Job {
 	public void start() throws IOException {
 		logger.info("Starting Job " + this.id + "...\n");
 		this.startedAt = new Date();
-		//try {
-			this.formula = new Qbf(inputFileString);
-		//} catch (IOException e) {
-		//	logger.error("Error while reading formula file: " + e);
-		//}
+		// try {
+		this.formula = new Qbf(inputFileString);
+		// } catch (IOException e) {
+		// logger.error("Error while reading formula file: " + e);
+		// }
 		int availableCores = Slave.getCoresForSolver(this.solver);
-		this.subformulas = formula.splitQbf(availableCores, 
-											HeuristicFactory.getHeuristic(this.getHeuristic()));
+		this.subformulas = formula.splitQbf(availableCores, HeuristicFactory
+				.getHeuristic(this.getHeuristic()));
 		List<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
 
 		int j = 0;
-		outerLoop: for(Slave slave : slaves) {
-			for(int i = 0; i < slave.getCores(); i++) {
+		outerLoop: for (Slave slave : slaves) {
+			for (int i = 0; i < slave.getCores(); i++) {
 				slave.computeFormula(subformulas.get(j), this);
 				formulaDesignations.put(subformulas.get(j).getId(), slave);
 				j++;
-				if(formulaDesignations.size() == subformulas.size()) break outerLoop;
+				if (formulaDesignations.size() == subformulas.size())
+					break outerLoop;
 			}
 		}
-		
-		logger.info("Job started. Splitted into " + this.subformulas.size() + " subformulas, " +
-					"with " + availableCores + " available Cores on " + slaves.size() + " slaves.");
+
+		logger.info("Job started. Splitted into " + this.subformulas.size()
+				+ " subformulas, " + "with " + availableCores
+				+ " available Cores on " + slaves.size() + " slaves.");
 		this.status = Job.RUNNING;
-		if(tableModel != null)
+		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 	}
 
@@ -242,8 +245,28 @@ public class Job {
 		this.setStatus(Job.COMPLETE);
 		this.setResult(result);
 		this.setStoppedAt(new Date());
-		if(Job.getTableModel() != null)
+		try {
+			BufferedWriter out = new BufferedWriter(new FileWriter(this.getOutputFileString()));
+			out.write(resultText());
+		} catch (IOException e) {
+			logger.error(e);
+		}
+		
+		if (Job.getTableModel() != null)
 			Job.getTableModel().fireTableDataChanged();
 	}
 
+	private String resultText() {
+		long diff = this.getStoppedAt().getTime() - this.getStartedAt().getTime();
+		String txt;
+		txt = 	"Job Id: " + this.getId() + "\n" +
+				"Started at: " + this.getStartedAt() + "\n" +
+				"Stopped at: " + this.getStoppedAt() + "\n" +
+				"Total secs: " + diff / 1000 + "\n" + 
+				"Solver: " + this.getSolver() + "\n" + 
+				"Heuristic: " + this.getHeuristic();
+				
+		return txt.replaceAll("\n", System.getProperty("line.separator"));
+	}
+	
 }

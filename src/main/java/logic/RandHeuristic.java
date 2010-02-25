@@ -9,7 +9,7 @@ public class RandHeuristic implements Heuristic {
 
 	@Override
 	public Vector<Integer> decide(Qbf qbf) {
-		Permuter p = new Permuter(qbf.allVars);
+		Permuter p = new Permuter(qbf.vars);
 		return p.next();
 	}
 

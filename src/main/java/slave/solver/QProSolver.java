@@ -28,7 +28,7 @@ public class QProSolver implements Solver {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
 	{
-		logger.setLevel(Level.INFO);
+		logger.setLevel(Level.DEBUG);
 	}
 	public static final String toolId = "qpro";
 	private Process qpro_process;
@@ -70,15 +70,13 @@ public class QProSolver implements Solver {
 			PrintWriter stdin = new PrintWriter(qpro_process.getOutputStream());
 			stdin.print(toInputString(this.formula));
 			stdin.flush();
-//			StreamGobbler gobbler = new StreamGobbler(qpro_process.getInputStream());
-//			gobbler.start();
+			//StreamGobbler gobbler = new StreamGobbler(qpro_process.getInputStream());
+			//gobbler.start();
 			InputStreamReader isr = new InputStreamReader(qpro_process.getInputStream());
 			StringWriter writer = new StringWriter();
 			IOUtils.copy(isr, writer);
 			String readString = writer.toString();
 			int return_val = qpro_process.waitFor();
-			// TODO: Remove this
-			Thread.sleep(100000);
 			// If qpro returns 1 the subformula is satisfiable
 			if(readString.startsWith("1")) {
 				master.sendResultMessage(formula.getId(), new Boolean(true));
@@ -93,9 +91,11 @@ public class QProSolver implements Solver {
 				logger.error("Got non-expected result from solver(" + readString + "). Aborting Formula.");
 				master.sendErrorMessage(formula.getId(), "Got non-expected result from solver(" + readString + "). Aborting Formula.");
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			logger.error("IO Error while getting result from solver: " + e);
 			master.sendErrorMessage(formula.getId(), e.toString());
+		} catch (InterruptedException e) {
+			logger.error(e);
 		}
 		SlaveDaemon.getThreads().remove(formula.getId());
 	}

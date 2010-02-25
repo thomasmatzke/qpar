@@ -8,7 +8,7 @@ public class SimpleHeuristic implements Heuristic {
 
 	@Override
 	public Vector<Integer> decide(Qbf qbf) {
-		return qbf.allVars;
+		return qbf.vars;
 	}
 
 }
