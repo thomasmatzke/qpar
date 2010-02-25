@@ -5,6 +5,7 @@ import java.util.Vector;
 
 import main.java.slave.solver.Solver;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import sun.misc.Signal;
@@ -17,6 +18,9 @@ import sun.misc.Signal;
 public class SignalHandler implements sun.misc.SignalHandler {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
+	{
+		logger.setLevel(Level.INFO);
+	}
 	
 	public void handle(Signal sig) {
 		logger.info("Cought Signal " + sig.getName());

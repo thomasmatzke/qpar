@@ -8,6 +8,7 @@ import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import main.java.messages.InformationMessage;
@@ -20,6 +21,9 @@ public class NewSlaveListener implements MessageListener {
 	private Session session;
 	
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	{
+		logger.setLevel(Level.INFO);
+	}
 
 	public void handleInformationMessage(InformationMessage i) {
 		logger.info("Handling InformationMessage...");

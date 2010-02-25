@@ -2,8 +2,9 @@ package main.java.master.Console;
 
 public enum Command {
 	NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS,
-	KILLSLAVE,
-	HELP,
+	KILLSLAVE, VIEWSLAVES,
+	HELP, QUIT,
+	SOURCE,
 	NOVALUE;
 	
 	public static Command toCommand(String str)

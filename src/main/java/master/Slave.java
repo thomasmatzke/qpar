@@ -20,6 +20,7 @@ import javax.jms.Session;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
+import main.java.Util;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 import main.java.messages.ErrorMessage;
@@ -34,6 +35,7 @@ import main.java.messages.Pong;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 public class Slave implements MessageListener, Runnable {
@@ -47,13 +49,16 @@ public class Slave implements MessageListener, Runnable {
 	public static final long KEEPALIVE_TIMEOUT = 10 * 1000; // In Millis
 
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
-	private static Vector<Slave> slaves = new Vector<Slave>();
+	{
+		logger.setLevel(Level.INFO);
+	}
+	private static Map<String, Slave> slaves = new HashMap<String, Slave>();
 	private static AbstractTableModel tableModel;
 	private long lastPingMillis = 0;
 	private long lastPongMillis = System.currentTimeMillis();
 
 	private static void addSlave(Slave slave) {
-		slaves.add(slave);
+		slaves.put(slave.hostName, slave);
 		logger.debug("Adding Slave: " + slave);
 		if (tableModel != null) {
 			tableModel.fireTableDataChanged();
@@ -75,7 +80,7 @@ public class Slave implements MessageListener, Runnable {
 
 	public static Set<String> getAllAvaliableSolverIds() {
 		Set<String> allSolvers = new HashSet<String>();
-		for (Slave slave : slaves) {
+		for (Slave slave : slaves.values()) {
 			for (String id : slave.getToolIds()) {
 				allSolvers.add(id);
 			}
@@ -85,7 +90,7 @@ public class Slave implements MessageListener, Runnable {
 
 	public static int getCoresForSolver(String solverId) {
 		int cores = 0;
-		for (Slave slave : slaves) {
+		for (Slave slave : slaves.values()) {
 			if (slave.getToolIds().contains(solverId) && slave.status == Slave.READY) {
 				cores += slave.getCores();
 			}
@@ -93,9 +98,9 @@ public class Slave implements MessageListener, Runnable {
 		return cores;
 	}
 
-	public static Vector<Slave> getSlaves() {
+	public static Map<String, Slave> getSlaves() {
 		if (slaves == null) {
-			slaves = new Vector<Slave>();
+			slaves = new HashMap<String,Slave>();
 		}
 		return slaves;
 	}
@@ -103,7 +108,7 @@ public class Slave implements MessageListener, Runnable {
 	public static Vector<Slave> getSlavesWithSolver(String solverId) {
 		Vector<Slave> slavesWithSolver = new Vector<Slave>();
 
-		for (Slave slave : slaves) {
+		for (Slave slave : slaves.values()) {
 			if (slave.getToolIds().contains(solverId)) {
 				slavesWithSolver.add(slave);
 			}
@@ -117,7 +122,7 @@ public class Slave implements MessageListener, Runnable {
 	}
 
 	private static void removeSlave(Slave slave) {
-		slaves.remove(slave);
+		slaves.remove(slave.getHostName());
 		if (tableModel != null) {
 			tableModel.fireTableDataChanged();
 		}
@@ -206,12 +211,7 @@ public class Slave implements MessageListener, Runnable {
 		logger.info("Result of tqbf(" + m.getTqbfId()
 				+ ") merged into Qbf of Job " + job.getId());
 		if (solved) {
-			// Remove all still running computations
-			job.abortComputations();
-			job.setStatus(Job.COMPLETE);
-			job.setResult(formula.getResult());
-			job.setStoppedAt(new Date());
-			Job.getTableModel().fireTableDataChanged();
+			job.fireJobCompleted(formula.getResult());
 		}
 	}
 
@@ -389,7 +389,7 @@ public class Slave implements MessageListener, Runnable {
 
 	private void handleDeath() {
 		if(this.runningComputations.size() < 1) return;
-		for(Job job : Job.getJobs()) {
+		for(Job job : Job.getJobs().values()) {
 			if(job.getFormulaDesignations().values().contains(this)) {
 				job.abort();
 				job.setStatus(Job.ERROR);
@@ -411,4 +411,19 @@ public class Slave implements MessageListener, Runnable {
 				+ (this.toolIds != null ? this.toolIds.toString() : "")
 				+ ", Cores: " + this.cores;
 	}
+
+	public String[] getCurrentJobs() {
+		Vector<String> jobs = new Vector<String>();
+		for(Job job : this.getRunningComputations().values()) {
+			jobs.add(job.getId());
+		}
+		String[] jobsArr = new String[jobs.size()];
+		jobs.toArray(jobsArr);
+		
+		Set<String> set = new HashSet<String>(jobs);
+		String[] uniqJobs = (set.toArray(new String[set.size()]));
+		return uniqJobs;
+	}
+
+
 }

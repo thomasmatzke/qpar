@@ -9,6 +9,7 @@ import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import main.java.logic.Qbf;
@@ -22,14 +23,17 @@ public class Job {
 	public static final int ERROR 		= 3;
 	
 	private static int idCounter = 0;
-	private static Vector<Job> jobs = new Vector<Job>();
+	private static Map<String, Job> jobs = new HashMap<String, Job>();
 	private static AbstractTableModel tableModel;
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	{
+		logger.setLevel(Level.INFO);
+	}
 	
 	private boolean result;
 	
 	private static void addJob(Job job) {
-		jobs.add(job);
+		jobs.put(job.id, job);
 		if (tableModel != null) {
 			tableModel.fireTableDataChanged();
 		}
@@ -58,9 +62,9 @@ public class Job {
 				"Outputfile: " + job.getOutputFileString() + "\n");
 	}
 
-	public static Vector<Job> getJobs() {
+	public static Map<String, Job> getJobs() {
 		if (jobs == null) {
-			jobs = new Vector<Job>();
+			jobs = new HashMap<String, Job>();
 		}
 		return jobs;
 	}
@@ -108,7 +112,8 @@ public class Job {
 		logger.info("Aborting Formulas. Sending AbortFormulaMessages to corresponding slaves...");
 		abortComputations();
 		this.status	= Job.ERROR;
-		tableModel.fireTableDataChanged();
+		if(tableModel != null)
+			tableModel.fireTableDataChanged();
 		logger.info("AbortMessages sent.");
 	}
 	
@@ -193,14 +198,14 @@ public class Job {
 		this.stoppedAt = stoppedAt;
 	}
 
-	public void start() {
+	public void start() throws IOException {
 		logger.info("Starting Job " + this.id + "...\n");
 		this.startedAt = new Date();
-		try {
+		//try {
 			this.formula = new Qbf(inputFileString);
-		} catch (IOException e) {
-			logger.error("Error while reading formula file: " + e);
-		}
+		//} catch (IOException e) {
+		//	logger.error("Error while reading formula file: " + e);
+		//}
 		int availableCores = Slave.getCoresForSolver(this.solver);
 		this.subformulas = formula.splitQbf(availableCores);
 		List<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
@@ -218,7 +223,8 @@ public class Job {
 		logger.info("Job started. Splitted into " + this.subformulas.size() + " subformulas, " +
 					"with " + availableCores + " available Cores on " + slaves.size() + " slaves.");
 		this.status = Job.RUNNING;
-		tableModel.fireTableDataChanged();
+		if(tableModel != null)
+			tableModel.fireTableDataChanged();
 	}
 
 	public void setResult(boolean result) {
@@ -227,6 +233,15 @@ public class Job {
 
 	public boolean getResult() {
 		return result;
+	}
+
+	public void fireJobCompleted(boolean result) {
+		this.abortComputations();
+		this.setStatus(Job.COMPLETE);
+		this.setResult(result);
+		this.setStoppedAt(new Date());
+		if(Job.getTableModel() != null)
+			Job.getTableModel().fireTableDataChanged();
 	}
 
 }

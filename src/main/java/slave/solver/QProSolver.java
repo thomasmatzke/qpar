@@ -12,6 +12,7 @@ import main.java.slave.Master;
 import main.java.slave.SlaveDaemon;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -22,6 +23,9 @@ import org.apache.log4j.Logger;
 public class QProSolver implements Solver {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
+	{
+		logger.setLevel(Level.INFO);
+	}
 	public static final String toolId = "qpro";
 	private Process qpro_process;
 	private TransmissionQbf formula;

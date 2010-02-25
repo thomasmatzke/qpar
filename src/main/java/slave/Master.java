@@ -33,6 +33,7 @@ import main.java.slave.solver.SolverFactory;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.activemq.util.IndentPrinter;
 
@@ -44,6 +45,9 @@ import org.apache.activemq.util.IndentPrinter;
 public class Master {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
+	{
+		logger.setLevel(Level.INFO);
+	}
 
 	private Connection connection;
 

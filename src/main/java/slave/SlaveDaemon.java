@@ -8,6 +8,7 @@ import main.java.ArgumentParser;
 import main.java.slave.solver.Solver;
 
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import sun.misc.Signal;
@@ -25,6 +26,9 @@ public class SlaveDaemon {
 	public static Master master;
 	private static Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
+	{
+		logger.setLevel(Level.INFO);
+	}
 	
 	/**
 	 * Program execution entry point

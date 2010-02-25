@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.IOException;
 import java.util.Set;
 import java.util.Vector;
 
@@ -19,8 +20,12 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import main.java.logic.HeuristicFactory;
 import main.java.master.Job;
+import main.java.master.MasterDaemon;
 import main.java.master.Slave;
 
 public class ProgramWindow extends JFrame {
@@ -47,6 +52,11 @@ public class ProgramWindow extends JFrame {
 	private JButton startJobButton = null;
 	private JButton viewJobButton = null;
 
+	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	{
+		logger.setLevel(Level.INFO);
+	}
+	
 	/**
 	 * This is the default constructor
 	 */
@@ -375,7 +385,11 @@ public class ProgramWindow extends JFrame {
 		int row = getJobsTable().getSelectedRow(); 
 		if(row != -1) {
 			Job job = Job.getJobs().get(row);
-			job.start();
+			try {
+				job.start();
+			} catch (IOException e) {
+				logger.error("Error while reading formula file: " + e);
+			}
 		}
 	}	
 

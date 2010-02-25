@@ -13,6 +13,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.util.IndentPrinter;
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -27,7 +28,7 @@ public class MasterDaemon {
 		@Override
 		public void run() {
 			try {
-				for(Slave slave : Slave.getSlaves()){
+				for(Slave slave : Slave.getSlaves().values()){
 					slave.stop();
 				}
 				connection.close();
@@ -43,6 +44,9 @@ public class MasterDaemon {
 
 	private static Connection connection;
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	{
+		logger.setLevel(Level.INFO);
+	}
 	private static String password = ActiveMQConnection.DEFAULT_PASSWORD;
 	private static ProgramWindow programWindow;
 
