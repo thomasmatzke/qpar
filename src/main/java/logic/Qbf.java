@@ -106,8 +106,8 @@ public class Qbf {
 			tmp.setEVars(eVars);
 			tmp.setAVars(aVars);
 			tmp.setVars(vars);	
-			tmp.setTrueVars(h.decide(this));		
 			tmp.setRootNode(root);
+			tmp.setTrueVars(h.decide(this));		
 			subQbfs.add(tmp);
 			
 		}
