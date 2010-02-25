@@ -12,6 +12,7 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import main.java.logic.HeuristicFactory;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 
@@ -207,7 +208,8 @@ public class Job {
 		//	logger.error("Error while reading formula file: " + e);
 		//}
 		int availableCores = Slave.getCoresForSolver(this.solver);
-		this.subformulas = formula.splitQbf(availableCores);
+		this.subformulas = formula.splitQbf(availableCores, 
+											HeuristicFactory.getHeuristic(this.getHeuristic()));
 		List<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
 
 		int j = 0;
