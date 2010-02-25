@@ -11,6 +11,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
         private static Vector<Integer> aVars = new Vector<Integer>();
         private static Vector<Integer> vars  = new Vector<Integer>();
         private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
+        private static Node root = null;
 
         public HashMap<Integer, Integer> getLiteralCount() {
                 return literalCount;
@@ -28,10 +29,13 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                 return vars;
         }
 
+        public SimpleNode getRootNode() {
+                return (SimpleNode)root;
+        }
+
         // TODO DO THE STUFF AT THE RIGHT PLACE Qbf.java might be good
         public static void main(String[] args) {
                 Qbf_parser parser;
-                Node root = null;
 
                 try {
                         parser = new Qbf_parser(new FileInputStream(args[0]));
@@ -63,7 +67,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
 
                         System.out.print(
                                 "\nQBF\n" +
-                                vars.size() +
+                                (vars.size()+1) +
                                 "\nq\n" +
                                 "a "
                         );
@@ -207,6 +211,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                 // for the funny String s fallthrough)
                 String varName = t.image.replaceAll("[a-z]*","");
                 int varNumber = Integer.valueOf(varName).intValue();
+                varNumber++;
                 jjtn000.var = varNumber;
 /*		if (s == "e") {*/
 /*			eVars.add(varNumber);*/
@@ -243,6 +248,7 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                 // for the funny String s fallthrough)
                 String varName = t.image.replaceAll("[a-z]*","");
                 int varNumber = Integer.valueOf(varName).intValue();
+                varNumber++;
                 if (s == "e") {
                         eVars.add(varNumber);
                 }

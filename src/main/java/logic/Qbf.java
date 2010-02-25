@@ -44,7 +44,7 @@ public class Qbf {
 	private static Vector<Integer> eVars = new Vector<Integer>();
 	private static Vector<Integer> aVars = new Vector<Integer>();
 	private static Vector<Integer> vars  = new Vector<Integer>();
-
+	private SimpleNode root = null;
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
@@ -52,7 +52,6 @@ public class Qbf {
 	*/
 	public Qbf(String filename) throws IOException {
 		Qbf_parser parser;
-		Node root = null;
 
 		id++;
 		this.filename = filename;
@@ -76,6 +75,7 @@ public class Qbf {
 			eVars = parser.getEVars();
 			aVars = parser.getAVars();
 			vars = parser.getVars();
+			root = parser.getRootNode();
 		}
 		catch (ParseException e) {
 			System.out.println("Parse error");			
@@ -96,7 +96,7 @@ public class Qbf {
 	* @param n Number of subformulas to return
 	* @return A list of n TransmissionQbfs, each a subformula of the whole QBF
 	*/
-	public List<TransmissionQbf> splitQbf(int n) {
+	public List<TransmissionQbf> splitQbf(int n, Heuristic h) {
 
 		TransmissionQbf tmp;		
 		for (int i = 0; i < n; i++) {
@@ -106,6 +106,10 @@ public class Qbf {
 			
 			tmp = new TransmissionQbf();
 			tmp.setId((new Integer(id * 1000 + i)).toString());
+			tmp.setEVars(eVars);
+			tmp.setAVars(aVars);
+			tmp.setVars(vars);			
+			tmp.setRootNode(root);
 			subQbfs.add(tmp);
 			
 		}
