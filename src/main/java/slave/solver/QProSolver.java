@@ -101,6 +101,8 @@ public class QProSolver implements Solver {
 	}
 		
 	public static String toInputString(TransmissionQbf t) {
+	
+	t.checkQbf();
 		Vector<Integer> eVars = null; eVars = t.getEVars();
 		Vector<Integer> aVars = null; aVars = t.getAVars();
 		Vector<Integer> vars = null; vars = t.getVars();
