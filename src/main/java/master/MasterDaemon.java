@@ -1,5 +1,9 @@
 package main.java.master;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+
 import javax.jms.Connection;
 import javax.jms.JMSException;
 import javax.jms.Session;
@@ -40,6 +44,8 @@ public class MasterDaemon {
 		}
 	}
 
+	private static ArgumentParser ap;
+	
 	private static BrokerService broker;
 
 	private static Connection connection;
@@ -86,15 +92,9 @@ public class MasterDaemon {
 		// Basic console logging
 		BasicConfigurator.configure();
 
-		ArgumentParser ap = new ArgumentParser(args);
+		ap = new ArgumentParser(args);
 		MasterDaemon.startGui = ap.hasOption("gui");
-//		if (gui == "false") {
-//			logger.info("Starting without GUI");
-//			MasterDaemon.startGui = false;
-//		} else {
-//			logger.info("Starting with GUI");
-//			MasterDaemon.startGui = true;
-//		}
+		
 		new MasterDaemon();
 	}
 
@@ -142,7 +142,16 @@ public class MasterDaemon {
 				}
 			});
 		} else {
-			shell = new Shell();
+			if(ap.hasOption("i")) {
+				try {
+					shell = new Shell(new BufferedReader(new FileReader(ap.getOption("i"))));
+				} catch (FileNotFoundException e) {
+					logger.error(e);
+				}
+			} else {
+				shell = new Shell();
+			}
+						
 			shellthread = new Thread(shell);
 			shellthread.start();
 		}

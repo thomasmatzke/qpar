@@ -4,7 +4,7 @@ public enum Command {
 	NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS,
 	KILLSLAVE, VIEWSLAVES,
 	HELP, QUIT,
-	SOURCE, WAITFOR,
+	SOURCE, WAITFORSLAVE, WAITFORRESULT,
 	NOVALUE;
 	
 	public static Command toCommand(String str)

@@ -6,13 +6,14 @@
               as the first entry and export the buildfile again. -->
 <project basedir="." default="build" name="QPar">
     <property environment="env"/>
+    <property name="ECLIPSE_HOME" value="C:/Users/thomasm/Desktop/eclipse"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
     <path id="QPar.classpath">
-<pathelement location = "lib/commons-io-1.4.jar"/>        
-<pathelement location="bin"/>
+        <pathelement location="bin"/>
         <pathelement location="lib/activemq-all-5.2.0.jar"/>
+        <pathelement location="lib/commons-io-1.4.jar"/>
         <pathelement location="img"/>
         <pathelement location="lib/log4j-1.2.15.jar"/>
     </path>
@@ -56,21 +57,27 @@
         <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
         <antcall target="build"/>
     </target>
-    <target name="MasterDaemon">
+    <target name="Master">
+        <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
+            <arg line="-gui"/>
+            <classpath refid="QPar.classpath"/>
+        </java>
+    </target>
+    <target name="Master_console">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
             <classpath refid="QPar.classpath"/>
         </java>
     </target>
-    <target name="SlaveDaemon">
+    <target name="Slave">
         <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
-            <arg line="tcp://localhost:61616 solvers=qpro"/>
+            <arg line="tcp://localhost:61616"/>
             <classpath refid="QPar.classpath"/>
         </java>
     </target>
-    <target name="Test">
-        <java classname="main.java.Test" failonerror="true" fork="yes">
+    <target name="Master_batch">
+        <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
+            <arg line="-i=batch.txt"/>
             <classpath refid="QPar.classpath"/>
         </java>
     </target>
-    
 </project>

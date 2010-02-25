@@ -24,10 +24,18 @@ public class Shell implements Runnable{
 	}
 	
 	private String prompt 	= ">";
-	BufferedReader in 		= new BufferedReader(new InputStreamReader(System.in));
+	BufferedReader in;
 	boolean run				= true;
 	
 	
+	public Shell() {
+		in 	= new BufferedReader(new InputStreamReader(System.in));
+	}
+	
+	public Shell(BufferedReader in) {
+		this.in = in;
+	}
+		
 	// Is increased by Slave if a Slave has the right solver
 	private static int waitfor_count = 0;
 	// We want that many cores before proceeding
@@ -35,7 +43,12 @@ public class Shell implements Runnable{
 	// We are waiting for Slaves with this kind of solver
 	private static String waitfor_solver = null;
 	
+	private static String waitfor_jobid = "";
 	
+	public static String getWaitfor_jobid() {
+		return waitfor_jobid;
+	}
+
 	public static int getWaitfor_count() {
 		return waitfor_count;
 	}
@@ -90,8 +103,11 @@ public class Shell implements Runnable{
 			case SOURCE:
 				source(token);
 				break;
-			case WAITFOR:
-				waitfor(token);
+			case WAITFORRESULT:
+				waitforresult(token);
+				break;
+			case WAITFORSLAVE:
+				waitforslave(token);
 				break;
 			case HELP:
 				help();
@@ -109,16 +125,38 @@ public class Shell implements Runnable{
 	}
 
 	/**
-	 * Syntax: WAITFOR number_of_cores solverid
+	 * Syntax: WAITFORRESULT jobid
 	 * @param token
 	 */
-	private void waitfor(StringTokenizer token) {
+	private void waitforresult(StringTokenizer token) {
+		
+		try{
+			this.waitfor_jobid = token.nextToken();
+		} catch(NoSuchElementException e) {
+			puts("Syntax: WAITFORRESULT jobid");
+			return;
+		}
+		
+		try {
+			synchronized(MasterDaemon.getShellThread()) {
+				MasterDaemon.getShellThread().wait();
+			}
+		} catch (InterruptedException e) {}
+		
+	}
+
+	/**
+	 * Syntax: WAITFORSALVE number_of_cores solverid
+	 * @param token
+	 */
+	private void waitforslave(StringTokenizer token) {
 		
 		try{
 			waitfor_cores = new Integer(token.nextToken()).intValue();
 			setWaitfor_solver(token.nextToken());
 		} catch(NoSuchElementException e) {
-			puts("Syntax: WAITFOR number_of_cores solverid");
+			puts("Syntax: WAITFORSALVE number_of_cores solverid");
+			return;
 		}
 		
 		while(true) {
@@ -159,7 +197,7 @@ public class Shell implements Runnable{
 	}
 
 	private void help() {
-		puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFOR, QUIT (Case insensitive)");
+		puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFORSLAVE, WAITFORRESULT, QUIT (Case insensitive)");
 	}
 
 	/**

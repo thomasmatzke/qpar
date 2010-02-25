@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 import main.java.logic.HeuristicFactory;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
+import main.java.master.Console.Shell;
 
 public class Job {
 
@@ -252,7 +253,11 @@ public class Job {
 		} catch (IOException e) {
 			logger.error(e);
 		}
-		
+		if(Shell.getWaitfor_jobid().equals(this.getId())) {
+			synchronized(MasterDaemon.getShellThread()) {
+				MasterDaemon.getShellThread().notify();
+			}
+		}
 		if (Job.getTableModel() != null)
 			Job.getTableModel().fireTableDataChanged();
 	}
