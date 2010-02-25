@@ -73,6 +73,10 @@ public class Qbf {
 			aVars = parser.getAVars();
 			vars = parser.getVars();
 			root = parser.getRootNode();
+		
+		if (root == null)
+System.out.println("kein root!!!");		
+		
 		}
 		catch (ParseException e) {
 			System.out.println("Parse error");			

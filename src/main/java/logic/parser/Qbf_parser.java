@@ -5,13 +5,13 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 import java.io.*;
 
-public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_parserConstants {/*@bgen(jjtree)*/
+public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Serializable, Qbf_parserConstants {/*@bgen(jjtree)*/
   protected static JJTQbf_parserState jjtree = new JJTQbf_parserState();
         private static Vector<Integer> eVars = new Vector<Integer>();
         private static Vector<Integer> aVars = new Vector<Integer>();
         private static Vector<Integer> vars  = new Vector<Integer>();
         private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
-        private static Node root = null;
+        private static SimpleNode root;
 
         public HashMap<Integer, Integer> getLiteralCount() {
                 return literalCount;
@@ -30,7 +30,8 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
         }
 
         public SimpleNode getRootNode() {
-                return (SimpleNode)root;
+System.out.println("request for root node " + jjtree.rootNode().getClass().getName());
+                return (SimpleNode)this.jjtree.rootNode();
         }
 
 // non-terminals

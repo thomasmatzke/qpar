@@ -14,6 +14,15 @@ public class TransmissionQbf implements Serializable {
 	private static Vector<Integer> trueVars = new Vector<Integer>();
 	private static Vector<Integer> falseVars = new Vector<Integer>();
 
+	public void checkQbf() {
+	System.out.println("qbf check");
+		if(root == null) {
+			System.out.println("der baum ist kaputt!");
+		} else {
+			System.out.println("der baum hat " + root.jjtGetNumChildren() + " kinder");
+		}
+	}
+
 	public void setTrueVars( Vector<Integer> v) {
 		this.trueVars = v;
 	}
