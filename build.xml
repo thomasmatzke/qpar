@@ -67,4 +67,10 @@
             <classpath refid="QPar.classpath"/>
         </java>
     </target>
+    <target name="Test">
+        <java classname="main.java.Test" failonerror="true" fork="yes">
+            <classpath refid="QPar.classpath"/>
+        </java>
+    </target>
+    
 </project>

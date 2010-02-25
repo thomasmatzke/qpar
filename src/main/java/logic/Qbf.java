@@ -1,6 +1,5 @@
 package main.java.logic;
 
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.HashMap;
-
 
 import main.java.master.MasterDaemon;
 import main.java.logic.parser.*;
@@ -108,7 +106,8 @@ public class Qbf {
 			tmp.setId((new Integer(id * 1000 + i)).toString());
 			tmp.setEVars(eVars);
 			tmp.setAVars(aVars);
-			tmp.setVars(vars);			
+			tmp.setVars(vars);	
+			tmp.setTrueVars(h.decide(this));		
 			tmp.setRootNode(root);
 			subQbfs.add(tmp);
 			
