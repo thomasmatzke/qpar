@@ -32,18 +32,21 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                 try {
                         parser.Input();
                         System.out.println("Succesful parse");
-                        root = parser.jjtree.rootNode();
+                        root = parser.jjtree.rootNode().jjtGetChild(0);
 
                         root.dump("");
-                        root.assignTruthValue(2,false);
+/*			root.assignTruthValue(2,true);*/
 
+                // reducing tree begin
+                        boolean reducable = true;
+                        System.out.println("reducing tree begin");
+                        while (reducable) {
+                                reducable = root.reduceTree();
+                        };
+                        System.out.println("reducing tree end");
+                // reducing tree end
 
-        System.out.println("reducing tree begin");
-                        root.reduceTree();
-                        root.reduceTree();
-                        root.reduceTree();
-        System.out.println("reducing tree end");
-                        // Convert internal tree to .qpro format
+                // Convert internal tree to .qpro format
                         String traversedTree = root.traverse();
 
                         System.out.print(
@@ -61,9 +64,9 @@ public class Qbf_parser/*@bgen(jjtree)*/implements Qbf_parserTreeConstants, Qbf_
                         System.out.println("");
                         System.out.println(
                                 traversedTree +
-                                "\nQBF\n"
+                                "QBF\n"
                         );
-                        // Conversion end
+                // Conversion end
 
                         // TODO REMOVE JUST DEBUG INFO AND setTruth() test
                         System.out.println("\nDEBUG INFO\n");

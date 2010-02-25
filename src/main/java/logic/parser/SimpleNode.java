@@ -5,14 +5,14 @@ import java.lang.String;
 import java.util.Arrays;
 
 public class SimpleNode implements Node {
-	protected Node parent;
-	protected Node[] children;
-	public int id;
 	protected Object value;
 	protected Qbf_parser parser;
+	protected Node parent;
+	protected Node[] children;
 
-	public String op = "";
+	public int id;
 	public int var = -1;	
+	public String op = "";
 	public String truthValue = "";
 	
 	/**
@@ -33,9 +33,7 @@ public class SimpleNode implements Node {
 		// in a leaf node now
 		else {
 			if (var == v) {
-System.out.println("assigning truth value " + b + " to var " + v);
 				if (b) truthValue = "TRUE"; else truthValue = "FALSE";
-System.out.println("assiged truth value " + truthValue + " to var " + var);
 			}
 		}	
 	}
@@ -45,36 +43,42 @@ System.out.println("assiged truth value " + truthValue + " to var " + var);
 	* in .qpro format
 	* @return A String in qpro format
 	*/	
-	public String traverse() {
-	
-		int i = 0;	
+	public String traverse() {	
+       	Node child;
 		String tmp = "";
 		String traversedTree = "";
-       	Node child;
+		String partialTree = "";
+		String negatedPartialTree = "";
+		int i = 0;	
        	int numChildren = this.jjtGetNumChildren();
 					
-		if (numChildren > 0) { // we're not in a leaf node...
-
-
-
-			if (op == "|") { // TODO java is too stupid to do switch() on anything but int :(
-					traversedTree += "d\n";
-			}
-			else if (op == "&") {
-					traversedTree += "c\n";
-			}
-
-			for (i = 0; i < numChildren; i++) { // ... so we just traverse through all it's children
-				traversedTree += jjtGetChild(i).traverse();
-			}
-
+		if (numChildren > 0) { // we're not in a leaf node
 			if (op == "|") {
-					traversedTree += "\n/d\n";
+				traversedTree += "d\n";
+				for (i = 0; i < numChildren; i++) {
+					if (jjtGetChild(i).getOp() == "!") {
+						negatedPartialTree += jjtGetChild(i).jjtGetChild(0).traverse();
+					}
+					else {
+						partialTree += jjtGetChild(i).traverse();						
+					}
+				}	
+				traversedTree += partialTree + "\n" + negatedPartialTree + "\n";
+				traversedTree += "/d\n";
 			}
 			else if (op == "&") {
-					traversedTree += "\n/c\n";
+				traversedTree += "c\n";
+				for (i = 0; i < numChildren; i++) {
+					if (jjtGetChild(i).getOp() == "!") {
+						negatedPartialTree += jjtGetChild(i).jjtGetChild(0).traverse();
+					}
+					else {
+						partialTree += jjtGetChild(i).traverse();						
+					}
+				}	
+				traversedTree += partialTree + "\n" + negatedPartialTree + "\n";
+				traversedTree += "/c\n";
 			}
-
 		}
 		else { // we're in a leaf node...
 			if (truthValue == "") {
@@ -88,26 +92,31 @@ System.out.println("assiged truth value " + truthValue + " to var " + var);
 	/** 
 	* reduces a tree containung truth-assigned variables to a tree without them
 	*/
-	public void reduceTree() {
-		int i = 0;	
+	public boolean reduceTree() {
        	Node parentNode = null;
 		Node grandparentNode = null;
        	Node siblingNode = null;
+		int i = 0;	
        	int numChildren = this.jjtGetNumChildren();
-System.out.println("NODE " + var + " has " + numChildren + " children");				// TODO debug
+       	boolean reducable = false;
 					
 		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
 			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just traverse through all it's children
-				jjtGetChild(i).reduceTree();
+				reducable = jjtGetChild(i).reduceTree();
 			}
 		}
 		else { // we're in a leaf node...
 			if (truthValue != "") {
 			// we're in a truth-assigned leaf node, let's see what to do
-
-System.out.println("LEAF "+var + " " + truthValue + " parent op " + this.jjtGetParent().getOp());	 // TODO debug			
-
 				parentNode = jjtGetParent();
+				// if we're in the logical root node, then there's no more reducing
+				// even if it has a truth value assigned, else the tree might be
+				// even more reducable
+				if (parentNode.getClass().getName() == "main.java.logic.parser.ASTInput") {
+					return false;
+				} else {
+					reducable = true;
+				}
 
 				// not x, set the parent to not x
 				if (parentNode.getOp() == "!") {
@@ -181,9 +190,9 @@ System.out.println("LEAF "+var + " " + truthValue + " parent op " + this.jjtGetP
 					parentNode.deleteChildren();
 					jjtSetParent(null);				
 				}
-				
 			}
 		}
+		return reducable;
 	}
 
 	/**
@@ -195,10 +204,7 @@ System.out.println("LEAF "+var + " " + truthValue + " parent op " + this.jjtGetP
 		for (int i = 0; i < jjtGetNumChildren(); i++) {
 			jjtGetChild(i).jjtSetParent(null);
 		}
-System.out.println("vor delchildren: " + jjtGetNumChildren() + " children left " + op + var + truthValue); // TODO debug
 		children = null;
-System.out.println("delchildren: " + jjtGetNumChildren() + " children left " + op + var + truthValue); // TODO debug
-
 	}
 	
 	/**

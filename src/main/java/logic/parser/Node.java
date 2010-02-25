@@ -13,9 +13,9 @@ public interface Node {
 	public String truthValue = "";
 	public int var = -1;	
 	public int id = 0;
-	
+	public boolean reducable = false;
 	public String traverse();
-	public void reduceTree();
+	public boolean reduceTree();
 	public void assignTruthValue(int v, boolean b);
 	public void dump(String prefix);
 	public void deleteChildren();
