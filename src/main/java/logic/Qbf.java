@@ -37,11 +37,10 @@ public class Qbf {
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
-	public Vector<Integer> allVars;
 	private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
 	private static Vector<Integer> eVars = new Vector<Integer>();
 	private static Vector<Integer> aVars = new Vector<Integer>();
-	private static Vector<Integer> vars  = new Vector<Integer>();
+	public static Vector<Integer> vars  = new Vector<Integer>();
 	private SimpleNode root = null;
 	/**
 	* constructor
