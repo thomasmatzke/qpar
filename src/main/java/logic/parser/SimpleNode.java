@@ -11,12 +11,16 @@ import java.io.Serializable;
 
 import main.java.master.MasterDaemon;
 import org.apache.log4j.Logger;
-
+import org.apache.log4j.Level;
 
 		 
 public class SimpleNode implements Node, Serializable {
 
-    static Logger logger = Logger.getLogger(MasterDaemon.class);
+    static Logger logger = Logger.getLogger(SimpleNode.class);
+    {
+		logger.setLevel(Level.DEBUG);
+	}
+
 	protected Object value;
 	protected Qbf_parser parser;
 	protected Node parent;

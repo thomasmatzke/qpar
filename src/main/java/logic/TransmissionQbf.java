@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 import main.java.master.MasterDaemon;
 import org.apache.log4j.Logger;
-
+import org.apache.log4j.Level;
 
 		 
 
@@ -22,7 +22,10 @@ public class TransmissionQbf implements Serializable {
 	private Vector<Integer> vars = new Vector<Integer>();
 	private Vector<Integer> trueVars = new Vector<Integer>();
 	private Vector<Integer> falseVars = new Vector<Integer>();
-	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	static Logger logger = Logger.getLogger(TransmissionQbf.class);
+	{
+		logger.setLevel(Level.DEBUG);
+	}
 
 	// checks if there's a root node with a child
 	public void checkQbf() {

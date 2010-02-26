@@ -14,14 +14,18 @@ import java.util.HashMap;
 import main.java.master.MasterDaemon;
 import main.java.logic.parser.*;
 import org.apache.log4j.Logger;
-
+import org.apache.log4j.Level;
 /**
 * A QBF object contains one QBF as well as methods to split it up into subQBFs
 * and merging subresults back together
 *
 */
 public class Qbf {
-    static Logger logger = Logger.getLogger(MasterDaemon.class);
+    static Logger logger = Logger.getLogger(Qbf.class);
+    {
+		logger.setLevel(Level.DEBUG);
+	}
+
 	Heuristic h = null;
 	File file;
 //	Tree solvingTree = new Tree(); // obsolete?

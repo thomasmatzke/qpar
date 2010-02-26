@@ -26,7 +26,7 @@ import org.apache.log4j.Logger;
  */
 public class QProSolver implements Solver {
 
-	static Logger logger = Logger.getLogger(SlaveDaemon.class);
+	static Logger logger = Logger.getLogger(QProSolver.class);
 	{
 		logger.setLevel(Level.DEBUG);
 	}
