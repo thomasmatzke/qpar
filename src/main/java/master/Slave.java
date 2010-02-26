@@ -210,17 +210,12 @@ public class Slave implements MessageListener, Runnable {
 		logger.info("Slave information updated.");
 	}
 
+	// TODO: move nearly everything in this method to job class
 	private void handleResultMessage(ResultMessage m) {
 		logger.info("Receiving ResultMessage from " + this.getHostName());
 		Job job = this.runningComputations.get(m.getTqbfId());
-		Qbf formula = job.getFormula();
-		boolean solved = formula.mergeQbf(m.getTqbfId(), m.getResult());
 		this.runningComputations.remove(m.getTqbfId());
-		logger.info("Result of tqbf(" + m.getTqbfId()
-				+ ") merged into Qbf of Job " + job.getId());
-		if (solved) {
-			job.fireJobCompleted(formula.getResult());
-		}
+		job.handleResult(m.getTqbfId(), m.getResult());
 	}
 
 	private void handleShutdownMessage(ShutdownMessage m) {

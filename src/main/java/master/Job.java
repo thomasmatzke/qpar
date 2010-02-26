@@ -250,6 +250,7 @@ public class Job {
 		try {
 			BufferedWriter out = new BufferedWriter(new FileWriter(this.getOutputFileString()));
 			out.write(resultText());
+			out.flush();
 		} catch (IOException e) {
 			logger.error(e);
 		}
@@ -273,6 +274,14 @@ public class Job {
 				"Heuristic: " + this.getHeuristic();
 				
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
+	}
+
+	public void handleResult(String tqbfId, boolean result) {
+		boolean solved = formula.mergeQbf(tqbfId, result);
+		logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job " + getId());
+		this.formulaDesignations.remove(tqbfId);
+		if (solved)
+			fireJobCompleted(formula.getResult());
 	}
 	
 }

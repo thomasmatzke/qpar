@@ -106,6 +106,9 @@ public class Shell implements Runnable{
 			case WAITFORRESULT:
 				waitforresult(token);
 				break;
+			case KILLALLSLAVES:
+				killallslaves();
+				break;
 			case WAITFORSLAVE:
 				waitforslave(token);
 				break;
@@ -122,6 +125,15 @@ public class Shell implements Runnable{
 		        assert(false);
 		}
 		
+	}
+
+	/**
+	 * Syntax: KILLALLSLAVES
+	 */
+	private void killallslaves() {
+		for(Slave s : Slave.getSlaves().values()) {
+			s.kill("User request");
+		}
 	}
 
 	/**
@@ -197,7 +209,7 @@ public class Shell implements Runnable{
 	}
 
 	private void help() {
-		puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFORSLAVE, WAITFORRESULT, QUIT (Case insensitive)");
+		puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFORSLAVE, KILLALLSLAVES, WAITFORRESULT, QUIT (Case insensitive)");
 	}
 
 	/**
