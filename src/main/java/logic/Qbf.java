@@ -13,7 +13,6 @@ import java.util.HashMap;
 
 import main.java.master.MasterDaemon;
 import main.java.logic.parser.*;
-
 import org.apache.log4j.Logger;
 
 /**
@@ -22,7 +21,7 @@ import org.apache.log4j.Logger;
 *
 */
 public class Qbf {
-
+    static Logger logger = Logger.getLogger(MasterDaemon.class);
 	Heuristic h = null;
 	File file;
 //	Tree solvingTree = new Tree(); // obsolete?
@@ -36,7 +35,6 @@ public class Qbf {
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
-	static Logger logger = Logger.getLogger(MasterDaemon.class);
 	private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
 	private static Vector<Integer> eVars = new Vector<Integer>();
 	private static Vector<Integer> aVars = new Vector<Integer>();
@@ -55,40 +53,39 @@ public class Qbf {
 		file = new File(filename);
 
 		BufferedReader qbfBuffer =  new BufferedReader(new FileReader(file));
-		
+
 		try {
 			parser = new Qbf_parser(new FileInputStream(filename));
 		}
 		catch (FileNotFoundException e) {
-			System.out.println("File not found: " + filename);
+			logger.error("File not found: " + filename);
 			return;
 		}
 
 		// parse the formula, get various vectors of vars
 		try {
 			parser.Input();
-			System.out.println("Succesful parse");
+			logger.info("Succesful parse");
 			literalCount = parser.getLiteralCount();
-			eVars = parser.getEVars();
-			aVars = parser.getAVars();
-			vars = parser.getVars();
+			this.eVars = parser.getEVars();
+			this.aVars = parser.getAVars();
+			this.vars = parser.getVars();
 			root = parser.getRootNode();
-		
-		if (root == null)
-System.out.println("kein root!!!");		
+		logger.info("VARS QBF:JAVA" +eVars + aVars + vars);
+			logger.info("We have now a root node: " + root.getClass().getName());
 		
 		}
 		catch (ParseException e) {
-			System.out.println("Parse error");			
-			System.out.println(e);
+			logger.error("Parse error");			
+			logger.error(e);
 			return;
 		}
 		catch (TokenMgrError e) {
-			System.out.println(e);
+			logger.error(e);
 			return;
 		}
 
-		System.out.println("Finished reading a QBF from " + filename);
+		logger.info("Finished reading a QBF from " + filename);
 	}
 
 	/**
@@ -107,11 +104,20 @@ System.out.println("kein root!!!");
 			
 			tmp = new TransmissionQbf();
 			tmp.setId((new Integer(id * 1000 + i)).toString());
-			tmp.setEVars(eVars);
-			tmp.setAVars(aVars);
-			tmp.setVars(vars);	
+			tmp.setEVars(this.eVars);
+			tmp.setAVars(this.aVars);
+			tmp.setVars(this.vars);	
+			logger.info("adding root node (" + root.getClass().getName() + ") to temporary TransmissionQbf tmp");
 			tmp.setRootNode(root);
-			tmp.setTrueVars(h.decide(this));		
+			logger.info("root node in temporary TransmissionQbf tmp: " + root.getClass().getName());
+			Vector<Integer> tmpvars = new Vector<Integer>();
+			logger.info("running heuristics");
+			//tmpvars = h.decide(this);
+			tmpvars.add((Integer)2);
+			logger.info("chosen vars: " + tmpvars);
+			tmp.setTrueVars(tmpvars);
+//			tmp.setTrueVars(h.decide(this));		
+//			tmp.setFalseVars(h.decide(this));	
 			subQbfs.add(tmp);
 			
 		}

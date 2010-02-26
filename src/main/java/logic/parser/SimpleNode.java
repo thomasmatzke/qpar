@@ -6,7 +6,17 @@ import java.lang.String;
 import java.util.Arrays;
 import java.io.Serializable;
 
+
+
+
+import main.java.master.MasterDaemon;
+import org.apache.log4j.Logger;
+
+
+		 
 public class SimpleNode implements Node, Serializable {
+
+    static Logger logger = Logger.getLogger(MasterDaemon.class);
 	protected Object value;
 	protected Qbf_parser parser;
 	protected Node parent;
@@ -16,7 +26,6 @@ public class SimpleNode implements Node, Serializable {
 	public int var = -1;	
 	public String op = "";
 	public String truthValue = "";
-	
 	/**
 	* assign a truth value to a specific var
 	* @param v the var to assign a truth value to
@@ -25,7 +34,7 @@ public class SimpleNode implements Node, Serializable {
 	public void assignTruthValue(int v, boolean b) {
 		int i = 0;
 		int numChildren = this.jjtGetNumChildren();
-		 
+				 
 		// not in a leaf node, nothing to set
 		if (numChildren > 0) {
 			for (i = 0; i < numChildren; i++) {
@@ -56,26 +65,28 @@ public class SimpleNode implements Node, Serializable {
        	int numChildren = this.jjtGetNumChildren();
 					
 		if (numChildren > 0) { // we're not in a leaf node
-			if (op == "|") {
+					
+logger.info("aaaaa"+op+this.getOp());			
+			if (this.getOp().equals("|")) {
 				traversedTree += "d\n";
 				for (i = 0; i < numChildren; i++) {
-					if (jjtGetChild(i).getVar() > -1) {
-						partialTree += jjtGetChild(i).traverse();						
+					if (this.jjtGetChild(i).getVar() > -1) {
+						partialTree += this.jjtGetChild(i).traverse();						
 					}					
 					else {
-						enclosedPartialTree += jjtGetChild(i).traverse();	
+						enclosedPartialTree += this.jjtGetChild(i).traverse();	
 					}
 				}	
 				traversedTree += partialTree + "\n" + negatedPartialTree + "\n" + enclosedPartialTree + "/d\n";
 			}
-			else if (op == "&") {
+			else if (this.getOp().equals("&")) {
 				traversedTree += "c\n";
 				for (i = 0; i < numChildren; i++) {
-					if (jjtGetChild(i).getVar() > -1) {
-						partialTree += jjtGetChild(i).traverse();						
+					if (this.jjtGetChild(i).getVar() > -1) {
+						partialTree += this.jjtGetChild(i).traverse();						
 					}					
 					else {
-						enclosedPartialTree += jjtGetChild(i).traverse();	
+						enclosedPartialTree += this.jjtGetChild(i).traverse();	
 					}
 				}	
 				traversedTree += partialTree + "\n" + negatedPartialTree + "\n" + enclosedPartialTree + enclosedPartialTree + "/c\n";
@@ -94,36 +105,44 @@ public class SimpleNode implements Node, Serializable {
 	* reduces a tree containung truth-assigned variables to a tree without them
 	* @return true if tree is still traversable, false if not
 	*/
-	public boolean reduceTree() {
+	public boolean reduce() {
        	Node parentNode = null;
 		Node grandparentNode = null;
        	Node siblingNode = null;
 		int i = 0;	
        	int numChildren = this.jjtGetNumChildren();
        	boolean reducable = false;
-					
+			
+							logger.info("reducing tree from node: " + this.getClass().getName() +this.jjtGetNumChildren()+ " parent : " + this.jjtGetParent().getClass().getName()+ this.jjtGetParent().jjtGetNumChildren());
+
+			
 		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
 			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just traverse through all it's children
-				reducable = jjtGetChild(i).reduceTree();
+			logger.info("recursion" + this.jjtGetNumChildren() + " " + i);
+				reducable = this.jjtGetChild(i).reduce();
 			}
 		}
 		else { // we're in a leaf node...
-			if (truthValue != "") {
+			if (!truthValue.equals("")) {
+			logger.info("truth leaf");
 			// we're in a truth-assigned leaf node, let's see what to do
-				parentNode = jjtGetParent();
+				parentNode = this.jjtGetParent();
 				// if we're in the logical root node, then there's no more reducing
 				// even if it has a truth value assigned, else the tree might be
 				// even more reducable
-				if (parentNode.getClass().getName() == "main.java.logic.parser.ASTInput") {
+								
+				if (parentNode.getClass().getName().equals("main.java.logic.parser.ASTInput")) {
+					logger.info("nothing more to reduce");
 					return false;
 				} else {
 					reducable = true;
 				}
 
 				// not x, set the parent to not x
-				if (parentNode.getOp() == "!") {
+				if (parentNode.getOp().equals("!")) {
+					logger.info("NEGATION occured");
 					parentNode.setOp("");
-					if (truthValue == "FALSE") {
+					if (truthValue.equals("FALSE")) {
 						parentNode.setTruthValue("TRUE");
 					}
 					else {
@@ -134,7 +153,8 @@ public class SimpleNode implements Node, Serializable {
 				}
 
 				// false & x = false, so set parent to false and make it a leaf node
-				if ((parentNode.getOp() == "&") && (truthValue == "FALSE")) {
+				if ((parentNode.getOp().equals("&")) && (truthValue.equals("FALSE"))) {
+					logger.info("AND FALSE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("FALSE");
 					parentNode.deleteChildren();
@@ -143,7 +163,8 @@ public class SimpleNode implements Node, Serializable {
 
 				// true & x = x, so delete this node, replace the parent node with
 				// the sibling
-				if ((parentNode.getOp() == "&") && (truthValue == "TRUE")) {
+				if ((parentNode.getOp().equals("&")) && (truthValue.equals("TRUE"))) {
+					logger.info("AND TRUE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
 					// find sibling
@@ -165,7 +186,8 @@ public class SimpleNode implements Node, Serializable {
 
 				// false | x = x, so delete this node, replace the parent node with
 				// the sibling
-				if ((parentNode.getOp() == "|") && (truthValue == "FALSE")) {
+				if ((parentNode.getOp().equals("|")) && (truthValue.equals("FALSE"))) {
+					logger.info("OR FALSE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
 					// find sibling
@@ -186,7 +208,8 @@ public class SimpleNode implements Node, Serializable {
 				}
 
 				// true | x = true, so set the parent node to true and make it a leaf
-				if ((parentNode.getOp() == "|") && (truthValue == "TRUE")) {
+				if ((parentNode.getOp().equals("|")) && (truthValue.equals("TRUE"))) {
+					logger.info("OR TRUE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("TRUE");
 					parentNode.deleteChildren();

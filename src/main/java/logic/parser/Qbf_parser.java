@@ -14,19 +14,19 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
         private static SimpleNode root;
 
         public HashMap<Integer, Integer> getLiteralCount() {
-                return literalCount;
+                return this.literalCount;
         }
 
         public Vector<Integer> getEVars() {
-                return eVars;
+                return this.eVars;
         }
 
         public Vector<Integer> getAVars() {
-                return aVars;
+                return this.aVars;
         }
 
         public Vector<Integer> getVars() {
-                return vars;
+                return this.vars;
         }
 
         public SimpleNode getRootNode() {

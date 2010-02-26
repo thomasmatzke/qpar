@@ -101,27 +101,33 @@ public class QProSolver implements Solver {
 	}
 		
 	public static String toInputString(TransmissionQbf t) {
-	
-	t.checkQbf();
-		Vector<Integer> eVars = null; eVars = t.getEVars();
+		Vector<Integer> eVars = new Vector<Integer>();
+		eVars = t.getEVars();
 		Vector<Integer> aVars = null; aVars = t.getAVars();
 		Vector<Integer> vars = null; vars = t.getVars();
-	
 		String traversedTree = "";
-		SimpleNode root = t.getRootNode();
+	
+		t.checkQbf(); // just to make sure that there's really a tree
+	
+		// assign the truth values
 		t.assignTruthValues();
-		t.reduceTree();
 
+		// reduce the tree
+		t.reduceTree();
+		
+		// traverse the tree to get a string in qpro format
 		traversedTree += "\nQBF\n" + (vars.size()+1) + "\nq\n" + "a ";
 		for (int i=0; i < eVars.size(); i++)
 			traversedTree += eVars.get(i) + " ";
 		traversedTree += "\n" + "e ";
 		for (int i=0; i < aVars.size(); i++)
 			traversedTree += aVars.get(i) + " ";
-		traversedTree += root.traverse();
+		traversedTree += "\n";
+		traversedTree += t.traverseTree();
 		traversedTree += "/q\nQBF\n";	
-		System.out.println(traversedTree);
+
+		logger.info("traversing finished, tree:\n" + traversedTree);
 		return traversedTree;
+		
 	}
-	
 }
