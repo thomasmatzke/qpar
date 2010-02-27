@@ -8,11 +8,6 @@ import main.java.master.MasterDaemon;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
 
-		 
-
-
-
-
 public class TransmissionQbf implements Serializable {
 	private SimpleNode root = null;
 	private static int idCounter = 0;
@@ -20,41 +15,55 @@ public class TransmissionQbf implements Serializable {
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();
 	private Vector<Integer> vars = new Vector<Integer>();
-	private Vector<Integer> trueVars = new Vector<Integer>();
-	private Vector<Integer> falseVars = new Vector<Integer>();
+	private Vector<Integer> trueVars;
+	private Vector<Integer> falseVars;
 	static Logger logger = Logger.getLogger(TransmissionQbf.class);
 	{
 		logger.setLevel(Level.DEBUG);
 	}
 
-	// checks if there's a root node with a child
+//	TransmissionQbf(String id, SimpleNode root, Vector<Integer> vars, Vector<Integer> eVars, Vector<Integer> aVars, Vector<Integer> trueVars, Vector<Integer> falseVars) {
+//		this.vars = vars;
+//		this.aVars = aVars;
+//		this.eVars = eVars;
+//		this.falseVars = falseVars;
+//		this.trueVars = trueVars;
+//		this.root = root; 
+//		this.id = id;
+//	}
+
+	// some checks
 	public void checkQbf() {
-		logger.info("checkQBF root node is: " + root.getClass().getName() + " with " +
-		root.jjtGetNumChildren() + " direct children (should be 1. first one: " +
-		root.jjtGetChild(0).getClass().getName() + ")");
-		logger.info("checkQBF vars: " + vars + eVars + aVars + trueVars + falseVars);
+		logger.info("checkQBF id: "+this.id);
+//		logger.info("checkQBF root node: " + root.getClass().getName() + " with " +
+//		root.jjtGetNumChildren() + " children (should be 1. first one: " +
+//		root.jjtGetChild(0).getClass().getName() + ")");
+		logger.info("checkQBF vars: " + this.vars);
+		logger.info("checkQBF eVars: " + this.eVars);
+		logger.info("checkQBF aVars: " + this.aVars);
+		logger.info("checkQBF trueVars: " + this.trueVars);
+		logger.info("checkQBF falseVars: " + this.falseVars);
 	}
 
 	public void setTrueVars( Vector<Integer> v) {
 		this.trueVars = v;
-		logger.info("set true vars in transmissionqbf to: " + v + " " + trueVars);
+		logger.info("set true vars in transmissionqbf "+this.id+" to: " + v + " " + trueVars + " size " + trueVars.size());
 	}
 
 	public void setFalseVars( Vector<Integer> v) {
 		this.falseVars = v;
-		logger.info("set false vars in transmissionqbf to: " + v + " " + falseVars);
+		logger.info("set false vars in transmissionqbf "+this.id+" to: " + v + " " + falseVars + " size " + falseVars.size());
 	}
 
 	public Vector<Integer> getTrueVars() {
-		return this.trueVars;
+		return trueVars;
 	}
 
 	public Vector<Integer> getFalseVars() {
-		return this.falseVars;
+		return falseVars;
 	}
 
 	public Vector<Integer> getEVars() {
-		logger.info("request for eVars: " + eVars);
 		return this.eVars;
 	}
 
@@ -68,27 +77,27 @@ public class TransmissionQbf implements Serializable {
 
 	public void setEVars(Vector<Integer> v) {
 		this.eVars = v;
-		logger.info("set eVars in transmissionqbf to: " + v + " " + eVars);
+		logger.info("set eVars in transmissionqbf "+this.id+" to: " + v + " " + eVars);
 	}
 
 	public void setAVars(Vector<Integer> v) {
 		this.aVars = v;
-		logger.info("set aVars in transmissionqbf to: " + v + " " + aVars);
+		logger.info("set aVars in transmissionqbf "+this.id+" to: " + v + " " + aVars);
 	}
 
 	public void setVars(Vector<Integer> v) {
 		this.vars = v;
-		logger.info("set vars in transmissionqbf to: " + v + " " + vars);
+		logger.info("set vars in transmissionqbf "+this.id+" to: " + v + " " + vars);
 	}
 
 	public void assignTruthValues() {
 		logger.info("entering TransmissionQbf.assignTruthValues()" + this.trueVars.size() + this.falseVars.size());
-		int i = 0;
-		for (i = 0; i < trueVars.size(); i++) {
+		int i;
+		for (i = 0; i < this.trueVars.size(); i++) {
 			logger.info("assigning true to " + this.trueVars.get(i));
 			root.assignTruthValue(this.trueVars.get(i), true);
 		}
-		for (i = 0; i < falseVars.size(); i++) {
+		for (i = 0; i < this.falseVars.size(); i++) {
 			logger.info("assigning false to " + this.falseVars.get(i));
 			root.assignTruthValue(this.falseVars.get(i), false);
 		}
@@ -99,12 +108,15 @@ public class TransmissionQbf implements Serializable {
 		boolean continueReducing = true;
 		
 		logger.info("entering TransmissionQbf.reduceTree");
-		while (continueReducing) {
 		root.dump("");
+
+		while (continueReducing) {
 			logger.info("reducing tree step begin");		
 			continueReducing = root.jjtGetChild(0).reduce();	
 			logger.info("reducing tree step end");		
 		}
+		root.dump("");
+
 		logger.info("exiting TransmissionQbf.reduceTree");
 	}
 

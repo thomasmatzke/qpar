@@ -26,6 +26,7 @@ options {
 	             
 	                         
 	// VISITOR = true;
+	 STATIC = false;
 }
 
 PARSER_BEGIN(Qbf_parser)
@@ -37,7 +38,7 @@ import java.util.regex.Pattern;
 import java.io.*;
 
 public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants, /*@egen*/ Serializable {/*@bgen(jjtree)*/
-  protected static JJTQbf_parserState jjtree = new JJTQbf_parserState();
+  protected JJTQbf_parserState jjtree = new JJTQbf_parserState();
 
 /*@egen*/
 

@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import java.io.*;
 
 public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Serializable, Qbf_parserConstants {/*@bgen(jjtree)*/
-  protected static JJTQbf_parserState jjtree = new JJTQbf_parserState();
+  protected JJTQbf_parserState jjtree = new JJTQbf_parserState();
         private static Vector<Integer> eVars = new Vector<Integer>();
         private static Vector<Integer> aVars = new Vector<Integer>();
         private static Vector<Integer> vars  = new Vector<Integer>();
@@ -36,7 +36,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
 
 // non-terminals
 // *	<input>		::= <exp> EOF
-  static final public void Input() throws ParseException {
+  final public void Input() throws ParseException {
  /*@bgen(jjtree) Input */
   ASTInput jjtn000 = new ASTInput(JJTINPUT);
   boolean jjtc000 = true;
@@ -72,7 +72,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
 ////	|
 ////	Var()
 //}
-  static final public void And() throws ParseException {
+  final public void And() throws ParseException {
  /*@bgen(jjtree) And */
   ASTAnd jjtn000 = new ASTAnd(JJTAND);
   boolean jjtc000 = true;
@@ -89,7 +89,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
     }
   }
 
-  static final public void Or() throws ParseException {
+  final public void Or() throws ParseException {
  /*@bgen(jjtree) Or */
   ASTOr jjtn000 = new ASTOr(JJTOR);
   boolean jjtc000 = true;
@@ -106,19 +106,19 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
     }
   }
 
-  static final public void Not() throws ParseException {
+  final public void Not() throws ParseException {
     jj_consume_token(NOT);
   }
 
-  static final public void Exists() throws ParseException {
+  final public void Exists() throws ParseException {
     jj_consume_token(EXISTS);
   }
 
-  static final public void Forall() throws ParseException {
+  final public void Forall() throws ParseException {
     jj_consume_token(FORALL);
   }
 
-  static final public void Var() throws ParseException {
+  final public void Var() throws ParseException {
  /*@bgen(jjtree) Var */
         ASTVar jjtn000 = new ASTVar(JJTVAR);
         boolean jjtc000 = true;
@@ -161,7 +161,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
     }
   }
 
-  static final public void VarQ(String s) throws ParseException {
+  final public void VarQ(String s) throws ParseException {
         Token t;
     t = jj_consume_token(VAR);
                 // Stripping down the variable name to a number (e.g. "v123" -> 123 and
@@ -181,7 +181,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
 
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
 // *				| <LP> <exp> <RP> | <VAR>
-  static final public void Exp() throws ParseException {
+  final public void Exp() throws ParseException {
         String op = "";
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case NOT:
@@ -279,7 +279,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
   }
 
 // *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
-  static final public void Q_set() throws ParseException {
+  final public void Q_set() throws ParseException {
         String s;
     s = Quant();
     jj_consume_token(LSP);
@@ -288,7 +288,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
   }
 
 // *	<quant> 	::= <EXISTS> | <FORALL>
-  static final public String Quant() throws ParseException {
+  final public String Quant() throws ParseException {
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case EXISTS:
       Exists();
@@ -307,7 +307,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
   }
 
 // *	<op>		::= <OR> | <AND>
-  static final public void Op() throws ParseException {
+  final public void Op() throws ParseException {
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case OR:
       Or();
@@ -322,17 +322,16 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
     }
   }
 
-  static private boolean jj_initialized_once = false;
   /** Generated Token Manager. */
-  static public Qbf_parserTokenManager token_source;
-  static SimpleCharStream jj_input_stream;
+  public Qbf_parserTokenManager token_source;
+  SimpleCharStream jj_input_stream;
   /** Current token. */
-  static public Token token;
+  public Token token;
   /** Next token. */
-  static public Token jj_nt;
-  static private int jj_ntk;
-  static private int jj_gen;
-  static final private int[] jj_la1 = new int[5];
+  public Token jj_nt;
+  private int jj_ntk;
+  private int jj_gen;
+  final private int[] jj_la1 = new int[5];
   static private int[] jj_la1_0;
   static {
       jj_la1_init_0();
@@ -347,13 +346,6 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
   }
   /** Constructor with InputStream and supplied encoding */
   public Qbf_parser(java.io.InputStream stream, String encoding) {
-    if (jj_initialized_once) {
-      System.out.println("ERROR: Second call to constructor of static parser.  ");
-      System.out.println("       You must either use ReInit() or set the JavaCC option STATIC to false");
-      System.out.println("       during parser generation.");
-      throw new Error();
-    }
-    jj_initialized_once = true;
     try { jj_input_stream = new SimpleCharStream(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source = new Qbf_parserTokenManager(jj_input_stream);
     token = new Token();
@@ -363,11 +355,11 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
   }
 
   /** Reinitialise. */
-  static public void ReInit(java.io.InputStream stream) {
+  public void ReInit(java.io.InputStream stream) {
      ReInit(stream, null);
   }
   /** Reinitialise. */
-  static public void ReInit(java.io.InputStream stream, String encoding) {
+  public void ReInit(java.io.InputStream stream, String encoding) {
     try { jj_input_stream.ReInit(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source.ReInit(jj_input_stream);
     token = new Token();
@@ -379,13 +371,6 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
 
   /** Constructor. */
   public Qbf_parser(java.io.Reader stream) {
-    if (jj_initialized_once) {
-      System.out.println("ERROR: Second call to constructor of static parser. ");
-      System.out.println("       You must either use ReInit() or set the JavaCC option STATIC to false");
-      System.out.println("       during parser generation.");
-      throw new Error();
-    }
-    jj_initialized_once = true;
     jj_input_stream = new SimpleCharStream(stream, 1, 1);
     token_source = new Qbf_parserTokenManager(jj_input_stream);
     token = new Token();
@@ -395,7 +380,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
   }
 
   /** Reinitialise. */
-  static public void ReInit(java.io.Reader stream) {
+  public void ReInit(java.io.Reader stream) {
     jj_input_stream.ReInit(stream, 1, 1);
     token_source.ReInit(jj_input_stream);
     token = new Token();
@@ -407,13 +392,6 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
 
   /** Constructor with generated Token Manager. */
   public Qbf_parser(Qbf_parserTokenManager tm) {
-    if (jj_initialized_once) {
-      System.out.println("ERROR: Second call to constructor of static parser. ");
-      System.out.println("       You must either use ReInit() or set the JavaCC option STATIC to false");
-      System.out.println("       during parser generation.");
-      throw new Error();
-    }
-    jj_initialized_once = true;
     token_source = tm;
     token = new Token();
     jj_ntk = -1;
@@ -431,7 +409,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
     for (int i = 0; i < 5; i++) jj_la1[i] = -1;
   }
 
-  static private Token jj_consume_token(int kind) throws ParseException {
+  private Token jj_consume_token(int kind) throws ParseException {
     Token oldToken;
     if ((oldToken = token).next != null) token = token.next;
     else token = token.next = token_source.getNextToken();
@@ -447,7 +425,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
 
 
 /** Get the next Token. */
-  static final public Token getNextToken() {
+  final public Token getNextToken() {
     if (token.next != null) token = token.next;
     else token = token.next = token_source.getNextToken();
     jj_ntk = -1;
@@ -456,7 +434,7 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
   }
 
 /** Get the specific Token. */
-  static final public Token getToken(int index) {
+  final public Token getToken(int index) {
     Token t = token;
     for (int i = 0; i < index; i++) {
       if (t.next != null) t = t.next;
@@ -465,19 +443,19 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
     return t;
   }
 
-  static private int jj_ntk() {
+  private int jj_ntk() {
     if ((jj_nt=token.next) == null)
       return (jj_ntk = (token.next=token_source.getNextToken()).kind);
     else
       return (jj_ntk = jj_nt.kind);
   }
 
-  static private java.util.List jj_expentries = new java.util.ArrayList();
-  static private int[] jj_expentry;
-  static private int jj_kind = -1;
+  private java.util.List jj_expentries = new java.util.ArrayList();
+  private int[] jj_expentry;
+  private int jj_kind = -1;
 
   /** Generate ParseException. */
-  static public ParseException generateParseException() {
+  public ParseException generateParseException() {
     jj_expentries.clear();
     boolean[] la1tokens = new boolean[15];
     if (jj_kind >= 0) {
@@ -508,11 +486,11 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
   }
 
   /** Enable tracing. */
-  static final public void enable_tracing() {
+  final public void enable_tracing() {
   }
 
   /** Disable tracing. */
-  static final public void disable_tracing() {
+  final public void disable_tracing() {
   }
 
 }

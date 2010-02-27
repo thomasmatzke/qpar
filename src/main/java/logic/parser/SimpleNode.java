@@ -48,7 +48,12 @@ public class SimpleNode implements Node, Serializable {
 		// in a leaf node now
 		else {
 			if (var == v) {
-				if (b) truthValue = "TRUE"; else truthValue = "FALSE";
+				if (b) {
+					truthValue = "TRUE";
+				}
+				else {
+					truthValue = "FALSE";
+				}
 			}
 		}	
 	}
@@ -70,7 +75,6 @@ public class SimpleNode implements Node, Serializable {
 					
 		if (numChildren > 0) { // we're not in a leaf node
 					
-logger.info("aaaaa"+op+this.getOp());			
 			if (this.getOp().equals("|")) {
 				traversedTree += "d\n";
 				for (i = 0; i < numChildren; i++) {
@@ -117,18 +121,13 @@ logger.info("aaaaa"+op+this.getOp());
        	int numChildren = this.jjtGetNumChildren();
        	boolean reducable = false;
 			
-							logger.info("reducing tree from node: " + this.getClass().getName() +this.jjtGetNumChildren()+ " parent : " + this.jjtGetParent().getClass().getName()+ this.jjtGetParent().jjtGetNumChildren());
-
-			
 		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
 			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just traverse through all it's children
-			logger.info("recursion" + this.jjtGetNumChildren() + " " + i);
 				reducable = this.jjtGetChild(i).reduce();
 			}
 		}
 		else { // we're in a leaf node...
 			if (!truthValue.equals("")) {
-			logger.info("truth leaf");
 			// we're in a truth-assigned leaf node, let's see what to do
 				parentNode = this.jjtGetParent();
 				// if we're in the logical root node, then there's no more reducing
@@ -136,7 +135,6 @@ logger.info("aaaaa"+op+this.getOp());
 				// even more reducable
 								
 				if (parentNode.getClass().getName().equals("main.java.logic.parser.ASTInput")) {
-					logger.info("nothing more to reduce");
 					return false;
 				} else {
 					reducable = true;

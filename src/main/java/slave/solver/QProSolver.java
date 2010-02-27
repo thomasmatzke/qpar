@@ -127,7 +127,8 @@ public class QProSolver implements Solver {
 		traversedTree += "/q\nQBF\n";	
 
 		logger.info("traversing finished, tree:\n" + traversedTree);
-		return traversedTree;
+//		return traversedTree;
+		 return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";
 		
 	}
 }

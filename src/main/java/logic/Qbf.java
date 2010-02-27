@@ -28,14 +28,14 @@ public class Qbf {
 
 	Heuristic h = null;
 	File file;
-//	Tree solvingTree = new Tree(); // obsolete?
+	//	Tree solvingTree = new Tree(); // obsolete?
 	private String qbfString;
 	private String filename;
 	private static int id = 0;
 	private int receivedResults = 0;
 	private boolean satisfiable	= false;
 	private boolean solved		= false;
-	private List<TransmissionQbf> subQbfs		= new ArrayList<TransmissionQbf>();
+	private ArrayList<TransmissionQbf> subQbfs	= new ArrayList<TransmissionQbf>();
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
@@ -44,6 +44,7 @@ public class Qbf {
 	private static Vector<Integer> aVars = new Vector<Integer>();
 	public static Vector<Integer> vars  = new Vector<Integer>();
 	private SimpleNode root = null;
+
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
@@ -75,8 +76,6 @@ public class Qbf {
 			this.aVars = parser.getAVars();
 			this.vars = parser.getVars();
 			root = parser.getRootNode();
-		logger.info("VARS QBF:JAVA" +eVars + aVars + vars);
-			logger.info("We have now a root node: " + root.getClass().getName());
 		
 		}
 		catch (ParseException e) {
@@ -88,7 +87,7 @@ public class Qbf {
 			logger.error(e);
 			return;
 		}
-
+		
 		logger.info("Finished reading a QBF from " + filename);
 	}
 
@@ -99,34 +98,76 @@ public class Qbf {
 	* @return A list of n TransmissionQbfs, each a subformula of the whole QBF
 	*/
 	public List<TransmissionQbf> splitQbf(int n, Heuristic h) {
+		int i,j;
+		TransmissionQbf tmp;
+		Vector<Integer> tmpVars = new Vector<Integer>();
+		Vector<Integer> trueVars = new Vector<Integer>();
+		Vector<Integer> falseVars = new Vector<Integer>();
+		int numVarsToChoose = new Double(Math.log(n)/Math.log(2)).intValue();
+		boolean[][] decisionArray = new boolean[n][numVarsToChoose];		
+		
+		// running the selected heuristic						
+		tmpVars = h.decide(this);
 
-		TransmissionQbf tmp;		
-		for (int i = 0; i < n; i++) {
+		// throw away the vars that are too much
+		for(i = tmpVars.size()-1; i >= numVarsToChoose; i--) tmpVars.remove(i);
+
+		// generating a truth table
+		for (j = 0; j < numVarsToChoose; j++) decisionArray[0][j] = true;
+
+		for(i = 1; i < n; i++) {
+			for(j = 0; j < numVarsToChoose; j++) {
+				if(i % (Math.pow(2,j)) == 0) {
+					decisionArray[i][j] = !decisionArray[i-1][j];
+				} 
+				else {
+					decisionArray[i][j] = decisionArray[i-1][j];
+				}
+			}
+		}
+
+		// generating n TransmissionQBFs
+		for (i = 0; i < n; i++) {
+			tmp = new TransmissionQbf();
+			
 			qbfResults.add(i, false);
 			resultAvailable.add(i, false);
 			resultProcessed.add(i, false);
 			
-			tmp = new TransmissionQbf();
+			trueVars.clear();
+			falseVars.clear();
+			
+logger.info("TFVARS after removeAll() " + trueVars + " " +falseVars);
+
 			tmp.setId((new Integer(id * 1000 + i)).toString());
+			tmp.setRootNode(root);
+
 			tmp.setEVars(this.eVars);
 			tmp.setAVars(this.aVars);
 			tmp.setVars(this.vars);	
-			logger.info("adding root node (" + root.getClass().getName() + ") to temporary TransmissionQbf tmp");
-			tmp.setRootNode(root);
-			logger.info("root node in temporary TransmissionQbf tmp: " + root.getClass().getName());
-			Vector<Integer> tmpvars = new Vector<Integer>();
-			logger.info("running heuristics");
-			//tmpvars = h.decide(this);
-			tmpvars.add((Integer)2);
-			logger.info("chosen vars: " + tmpvars);
-			tmp.setTrueVars(tmpvars);
-//			tmp.setTrueVars(h.decide(this));		
-//			tmp.setFalseVars(h.decide(this));	
-			subQbfs.add(tmp);
+
+			for (j = 0; j < numVarsToChoose; j++) {
+				if (decisionArray[i][j]) {
+					trueVars.add(tmpVars.get(j));
+				}
+				else {
+					falseVars.add(tmpVars.get(j));
+				}
+			}
+	
+logger.info("TRUE/FALSE VARS: " + falseVars + " " + trueVars);	
 			
+			tmp.setTrueVars(trueVars);
+			tmp.setFalseVars(falseVars);
+
+			tmp.checkQbf();
+			subQbfs.add(tmp);
 		}
-		// do stuff
-		// TODO (returns empty TransmissionQbfs until this works)
+
+logger.info("checking subqbf list");
+for (TransmissionQbf foo : subQbfs) foo.checkQbf();
+logger.info("end");
+
 		return subQbfs;
 	}
 
@@ -138,7 +179,6 @@ public class Qbf {
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
 	public boolean mergeQbf(String id, boolean result) {
-
 //		resultAvailable.set(id, true);
 //		Node op1 = solvingTree.search(id);
 //		Node operand = solvingTree.getParentNode(op1);
