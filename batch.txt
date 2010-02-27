@@ -2,5 +2,8 @@ waitforslave 2 qpro
 newjob qbf.txt output.txt qpro simple
 startjob 1
 waitforresult 1
+newjob qbf.txt output2.txt qpro simple
+startjob 2
+waitforresult 2
 killallslaves
 quit
