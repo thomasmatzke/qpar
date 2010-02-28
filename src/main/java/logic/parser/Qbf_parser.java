@@ -172,10 +172,14 @@ System.out.println("request for root node " + jjtree.rootNode().getClass().getNa
                 int varNumber = Integer.valueOf(varName).intValue();
                 varNumber++;
                 if (s == "e") {
-                        eVars.add(varNumber);
+                        if (!vars.contains(varNumber)) {
+                                eVars.add(varNumber);
+                        }
                 }
                 if (s == "f") {
-                        aVars.add(varNumber);
+                        if (!vars.contains(varNumber)) {
+                                aVars.add(varNumber);
+                        }
                 }
   }
 

@@ -100,13 +100,16 @@ public class QProSolver implements Solver {
 		SlaveDaemon.getThreads().remove(formula.getId());
 	}
 		
-	public static String toInputString(TransmissionQbf t) {
+	public static synchronized String toInputString(TransmissionQbf t) {
 		Vector<Integer> eVars = new Vector<Integer>();
-		eVars = t.getEVars();
-		Vector<Integer> aVars = null; aVars = t.getAVars();
-		Vector<Integer> vars = null; vars = t.getVars();
+		Vector<Integer> aVars = new Vector<Integer>();
+		Vector<Integer> vars = new Vector<Integer>();
 		String traversedTree = "";
-	
+
+		vars = t.getVars();
+		eVars = t.getEVars();
+		aVars = t.getAVars();
+			logger.info("WTF " + eVars + " " + aVars + " " + vars);
 		t.checkQbf(); // just to make sure that there's really a tree
 	
 		// assign the truth values
@@ -127,8 +130,13 @@ public class QProSolver implements Solver {
 		traversedTree += "/q\nQBF\n";	
 
 		logger.info("traversing finished, tree:\n" + traversedTree);
-//		return traversedTree;
-		 return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";
+
+		if(t.isValid()) {
+			return traversedTree;
+		}
+		
+		logger.info("sending fake formula");
+		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";
 		
 	}
 }

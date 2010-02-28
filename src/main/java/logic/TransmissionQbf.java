@@ -1,6 +1,7 @@
 package main.java.logic;
 
 import java.util.Vector;
+import java.util.ArrayList;
 import main.java.logic.parser.SimpleNode;
 import java.io.Serializable;
 
@@ -15,24 +16,52 @@ public class TransmissionQbf implements Serializable {
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();
 	private Vector<Integer> vars = new Vector<Integer>();
-	private Vector<Integer> trueVars;
-	private Vector<Integer> falseVars;
+	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
+	private ArrayList<Integer> falseVars = new ArrayList<Integer>();
 	static Logger logger = Logger.getLogger(TransmissionQbf.class);
 	{
 		logger.setLevel(Level.DEBUG);
 	}
 
-//	TransmissionQbf(String id, SimpleNode root, Vector<Integer> vars, Vector<Integer> eVars, Vector<Integer> aVars, Vector<Integer> trueVars, Vector<Integer> falseVars) {
-//		this.vars = vars;
-//		this.aVars = aVars;
-//		this.eVars = eVars;
-//		this.falseVars = falseVars;
-//		this.trueVars = trueVars;
-//		this.root = root; 
-//		this.id = id;
-//	}
+	public boolean isValid() {
+		return (root.findNodes(eVars) || root.findNodes(aVars));
+	}
 
-	// some checks
+	/**
+	 * setter for the trueVars ArrayList
+	 * @param v the variable number to add
+	 */
+	public void addToTrueVars(int v) {
+		trueVars.add(v);
+	}
+
+	/**
+	 * setter for the falseVars ArrayList
+	 * @param v the variable number to add
+	 */
+	public void addToFalseVars(int v) {
+		falseVars.add(v);
+	}
+
+	/**
+	 * getter for the trueVars ArrayList
+	 * @return the ArrayList of true-assigned vars
+	 */
+	public ArrayList<Integer> getTrueVars() {
+		return trueVars;
+	}
+
+	/**
+	 * getter for the falseVars ArrayList
+	 * @return the ArrayList of false-assigned vars
+	 */
+	public ArrayList<Integer> getFalseVars() {
+		return falseVars;
+	}
+
+	/**
+	 * debug method that logs the content of a transmissionQbf
+	 */
 	public void checkQbf() {
 		logger.info("checkQBF id: "+this.id);
 //		logger.info("checkQBF root node: " + root.getClass().getName() + " with " +
@@ -45,51 +74,57 @@ public class TransmissionQbf implements Serializable {
 		logger.info("checkQBF falseVars: " + this.falseVars);
 	}
 
-	public void setTrueVars( Vector<Integer> v) {
-		this.trueVars = v;
-		logger.info("set true vars in transmissionqbf "+this.id+" to: " + v + " " + trueVars + " size " + trueVars.size());
-	}
-
-	public void setFalseVars( Vector<Integer> v) {
-		this.falseVars = v;
-		logger.info("set false vars in transmissionqbf "+this.id+" to: " + v + " " + falseVars + " size " + falseVars.size());
-	}
-
-	public Vector<Integer> getTrueVars() {
-		return trueVars;
-	}
-
-	public Vector<Integer> getFalseVars() {
-		return falseVars;
-	}
-
+	/**
+	 * getter for the eVars Vector
+	 * @return the Vector of exist-quantified vars
+	 */
 	public Vector<Integer> getEVars() {
 		return this.eVars;
 	}
 
+	/**
+	 * getter for the aVars Vector
+	 * @return the Vector of all-quantified vars
+	 */
 	public Vector<Integer> getAVars() {
 		return this.aVars;
 	}
 
+	/**
+	 * getter for the vars Vector
+	 * @return the Vector of all variables that appear in a formula
+	 */
 	public Vector<Integer> getVars() {
 		return this.vars;
 	}
 
+	/**
+	 * setter for the exist-quantified vars
+	 * @param v vector of exist-quantified vars
+	 */
 	public void setEVars(Vector<Integer> v) {
 		this.eVars = v;
-		logger.info("set eVars in transmissionqbf "+this.id+" to: " + v + " " + eVars);
 	}
 
+	/**
+	 * setter for the all-quantified vars
+	 * @param v vector of all-quantified vars
+	 */
 	public void setAVars(Vector<Integer> v) {
 		this.aVars = v;
-		logger.info("set aVars in transmissionqbf "+this.id+" to: " + v + " " + aVars);
 	}
 
+	/**
+	 * setter for the vars
+	 * @param v vector of all vars
+	 */
 	public void setVars(Vector<Integer> v) {
 		this.vars = v;
-		logger.info("set vars in transmissionqbf "+this.id+" to: " + v + " " + vars);
 	}
 
+	/**
+	 * assigns the transmissionQbf-specific truth values to the tree.
+	 */
 	public void assignTruthValues() {
 		logger.info("entering TransmissionQbf.assignTruthValues()" + this.trueVars.size() + this.falseVars.size());
 		int i;
@@ -104,6 +139,9 @@ public class TransmissionQbf implements Serializable {
 		logger.info("exiting TransmissionQbf.assignTruthValues()");
 	}
 
+	/**
+	 * calls the reduce() method of the tree as long as there's something to reduce
+	 */
 	public void reduceTree() {
 		boolean continueReducing = true;
 		
@@ -116,19 +154,22 @@ public class TransmissionQbf implements Serializable {
 			logger.info("reducing tree step end");		
 		}
 		root.dump("");
-
 		logger.info("exiting TransmissionQbf.reduceTree");
 	}
 
+	/**
+	 * calls the traverse() method of the tree.
+	 * @return The formula (without header and footer) in QPro format.
+	 */
 	public String traverseTree() {
 		logger.info("entering TransmissionQbf.traverseTree");
 		return root.jjtGetChild(0).traverse();
 	}
 
-	public static String allocateId() {
-		idCounter++;
-		return new Integer(idCounter).toString();
-	}
+//	public static String allocateId() {
+//		idCounter++;
+//		return new Integer(idCounter).toString();
+//	}
 
 	// getter/setter
 	public String getId() {

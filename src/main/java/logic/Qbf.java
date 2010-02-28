@@ -39,10 +39,10 @@ public class Qbf {
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
-	private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
-	private static Vector<Integer> eVars = new Vector<Integer>();
-	private static Vector<Integer> aVars = new Vector<Integer>();
-	public static Vector<Integer> vars  = new Vector<Integer>();
+	private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
+	public Vector<Integer> eVars = new Vector<Integer>();
+	public Vector<Integer> aVars = new Vector<Integer>();
+	public Vector<Integer> vars  = new Vector<Integer>();
 	private SimpleNode root = null;
 
 	/**
@@ -66,10 +66,11 @@ public class Qbf {
 			logger.error("File not found: " + filename);
 			return;
 		}
+		parser.ReInit(new FileInputStream(filename), null);
 
 		// parse the formula, get various vectors of vars
 		try {
-			parser.Input();
+			parser.Input();	
 			logger.info("Succesful parse");
 			literalCount = parser.getLiteralCount();
 			this.eVars = parser.getEVars();
@@ -87,7 +88,6 @@ public class Qbf {
 			logger.error(e);
 			return;
 		}
-		
 		logger.info("Finished reading a QBF from " + filename);
 	}
 
@@ -100,17 +100,20 @@ public class Qbf {
 	public List<TransmissionQbf> splitQbf(int n, Heuristic h) {
 		int i,j;
 		TransmissionQbf tmp;
-		Vector<Integer> tmpVars = new Vector<Integer>();
+		Vector<Integer> tempVars = new Vector<Integer>();
+		Vector<Integer> decisionVars = new Vector<Integer>();
 		Vector<Integer> trueVars = new Vector<Integer>();
 		Vector<Integer> falseVars = new Vector<Integer>();
 		int numVarsToChoose = new Double(Math.log(n)/Math.log(2)).intValue();
 		boolean[][] decisionArray = new boolean[n][numVarsToChoose];		
-		
+
 		// running the selected heuristic						
-		tmpVars = h.decide(this);
+		tempVars = h.decide(this);
 
 		// throw away the vars that are too much
-		for(i = tmpVars.size()-1; i >= numVarsToChoose; i--) tmpVars.remove(i);
+		for(i = 0; i < numVarsToChoose; i++) {
+			decisionVars.add(tempVars.get(i));
+		}
 
 		// generating a truth table
 		for (j = 0; j < numVarsToChoose; j++) decisionArray[0][j] = true;
@@ -133,32 +136,22 @@ public class Qbf {
 			qbfResults.add(i, false);
 			resultAvailable.add(i, false);
 			resultProcessed.add(i, false);
-			
-			trueVars.clear();
-			falseVars.clear();
-			
-logger.info("TFVARS after removeAll() " + trueVars + " " +falseVars);
-
+						
 			tmp.setId((new Integer(id * 1000 + i)).toString());
 			tmp.setRootNode(root);
 
 			tmp.setEVars(this.eVars);
 			tmp.setAVars(this.aVars);
 			tmp.setVars(this.vars);	
-
+			
 			for (j = 0; j < numVarsToChoose; j++) {
 				if (decisionArray[i][j]) {
-					trueVars.add(tmpVars.get(j));
+					tmp.addToTrueVars(decisionVars.get(j));
 				}
 				else {
-					falseVars.add(tmpVars.get(j));
+					tmp.addToFalseVars(decisionVars.get(j));
 				}
 			}
-	
-logger.info("TRUE/FALSE VARS: " + falseVars + " " + trueVars);	
-			
-			tmp.setTrueVars(trueVars);
-			tmp.setFalseVars(falseVars);
 
 			tmp.checkQbf();
 			subQbfs.add(tmp);

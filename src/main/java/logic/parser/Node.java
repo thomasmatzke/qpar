@@ -6,6 +6,8 @@ package main.java.logic.parser;
    machinery for constructing the parent and child relationships
    between nodes. */
 
+import java.util.Vector;
+
 public interface Node {
 
 	// custom stuff begin
@@ -16,6 +18,7 @@ public interface Node {
 	public boolean reducable = false;
 	public String traverse();
 	public boolean reduce();
+	public boolean findNodes(Vector<Integer> v);
 	public void assignTruthValue(int v, boolean b);
 	public void dump(String prefix);
 	public void deleteChildren();

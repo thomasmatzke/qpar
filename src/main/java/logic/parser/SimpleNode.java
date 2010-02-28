@@ -4,6 +4,7 @@ package main.java.logic.parser;
 
 import java.lang.String;
 import java.util.Arrays;
+import java.util.Vector;
 import java.io.Serializable;
 
 
@@ -97,11 +98,11 @@ public class SimpleNode implements Node, Serializable {
 						enclosedPartialTree += this.jjtGetChild(i).traverse();	
 					}
 				}	
-				traversedTree += partialTree + "\n" + negatedPartialTree + "\n" + enclosedPartialTree + enclosedPartialTree + "/c\n";
+				traversedTree += partialTree + "\n" + negatedPartialTree + "\n" + enclosedPartialTree + "/c\n";
 			}
 		}
 		else { // we're in a leaf node...
-			if (truthValue == "") {
+			if (truthValue.equals("")) {
 				// ...but not a truth-assigned one
 				traversedTree += var + " ";
 			}
@@ -123,36 +124,42 @@ public class SimpleNode implements Node, Serializable {
 			
 		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
 			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just traverse through all it's children
-				reducable = this.jjtGetChild(i).reduce();
+				reducable = reducable || this.jjtGetChild(i).reduce();
 			}
 		}
 		else { // we're in a leaf node...
-			if (!truthValue.equals("")) {
+
+			parentNode = this.jjtGetParent();
+
+			if (truthValue.equals("TRUE") || truthValue.equals("FALSE")) {
 			// we're in a truth-assigned leaf node, let's see what to do
-				parentNode = this.jjtGetParent();
 				// if we're in the logical root node, then there's no more reducing
 				// even if it has a truth value assigned, else the tree might be
 				// even more reducable
+
+					logger.info("TRUTH VALUE: " + truthValue);
 								
 				if (parentNode.getClass().getName().equals("main.java.logic.parser.ASTInput")) {
+					logger.info("RETURNING FALSE");
 					return false;
 				} else {
 					reducable = true;
 				}
 
-				// not x, set the parent to not x
-				if (parentNode.getOp().equals("!")) {
-					logger.info("NEGATION occured");
-					parentNode.setOp("");
-					if (truthValue.equals("FALSE")) {
-						parentNode.setTruthValue("TRUE");
-					}
-					else {
-						parentNode.setTruthValue("FALSE");
-					}
-					parentNode.deleteChildren();
-					jjtSetParent(null);
-				}
+//				// not x, set the parent to not x
+//				if (parentNode.getOp().equals("!")) {
+//					logger.info("NEGATION occured");
+//					parentNode.setOp("");
+//					if (truthValue.equals("FALSE")) {
+//						parentNode.setTruthValue("TRUE");
+//					}
+//					else {
+//						parentNode.setTruthValue("FALSE");
+//					}
+//					parentNode.deleteChildren();
+//					jjtSetParent(null);
+//					return reducable;
+//				}
 
 				// false & x = false, so set parent to false and make it a leaf node
 				if ((parentNode.getOp().equals("&")) && (truthValue.equals("FALSE"))) {
@@ -161,6 +168,7 @@ public class SimpleNode implements Node, Serializable {
 					parentNode.setTruthValue("FALSE");
 					parentNode.deleteChildren();
 					jjtSetParent(null);
+					return reducable;
 				}
 
 				// true & x = x, so delete this node, replace the parent node with
@@ -184,6 +192,7 @@ public class SimpleNode implements Node, Serializable {
 					parentNode.jjtSetParent(null);
 					// remove current nodes parent
 					jjtSetParent(null);
+					return reducable;
 				}
 
 				// false | x = x, so delete this node, replace the parent node with
@@ -207,6 +216,7 @@ public class SimpleNode implements Node, Serializable {
 					parentNode.jjtSetParent(null);
 					// remove current nodes parent
 					jjtSetParent(null);					
+					return reducable;
 				}
 
 				// true | x = true, so set the parent node to true and make it a leaf
@@ -216,6 +226,7 @@ public class SimpleNode implements Node, Serializable {
 					parentNode.setTruthValue("TRUE");
 					parentNode.deleteChildren();
 					jjtSetParent(null);				
+					return reducable;
 				}
 			}
 		}
@@ -249,6 +260,25 @@ public class SimpleNode implements Node, Serializable {
 		}
 		return false;
 	}
+
+	public boolean findNodes(Vector<Integer> v) {
+		int i;
+		boolean found = false;
+		
+		for (int x : v) {
+			if (this.jjtGetNumChildren() > 0) {
+				for (i = 0; i < this.jjtGetNumChildren(); i++) {
+					found = found || this.jjtGetChild(i).findNodes(v);
+				}
+			}
+			else {
+				if (this.var == x)
+					return true;
+			}
+		}
+		return found;
+	}
+
 
 	// mostly auto-generated stuff from here plus some simple getter/setter methods
 	// one doesn't really need because all vars are public anyway :)
