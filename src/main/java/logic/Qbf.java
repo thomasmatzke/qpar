@@ -40,8 +40,8 @@ public class Qbf {
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
 	private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
-	public Vector<Integer> eVars = new Vector<Integer>();
-	public Vector<Integer> aVars = new Vector<Integer>();
+	private Vector<Integer> eVars = new Vector<Integer>();
+	private Vector<Integer> aVars = new Vector<Integer>();
 	public Vector<Integer> vars  = new Vector<Integer>();
 	private SimpleNode root = null;
 
