@@ -6,20 +6,22 @@ import java.lang.String;
 import java.util.Arrays;
 import java.util.Vector;
 import java.io.Serializable;
-
-
-
+import main.java.QPar;
 
 import main.java.master.MasterDaemon;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
 
-		 
+// All nodes in the formula tree are derived from SimpleNode.
 public class SimpleNode implements Node, Serializable {
 
     static Logger logger = Logger.getLogger(SimpleNode.class);
-    {
-		logger.setLevel(Level.DEBUG);
+
+	/**
+	 * constructor
+	 */
+	public SimpleNode() {
+		logger.setLevel(QPar.logLevel);
 	}
 
 	protected Object value;
@@ -121,34 +123,32 @@ public class SimpleNode implements Node, Serializable {
 		int i = 0;	
        	int numChildren = this.jjtGetNumChildren();
        	boolean reducable = false;
-			
+
 		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
 			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just traverse through all it's children
-				reducable = reducable || this.jjtGetChild(i).reduce();
+				reducable = jjtGetChild(i).reduce() || reducable;
 			}
 		}
 		else { // we're in a leaf node...
 
 			parentNode = this.jjtGetParent();
 
-			if (truthValue.equals("TRUE") || truthValue.equals("FALSE")) {
+			if ((this.truthValue.equals("TRUE")) || (this.truthValue.equals("FALSE"))) {
 			// we're in a truth-assigned leaf node, let's see what to do
+
 				// if we're in the logical root node, then there's no more reducing
 				// even if it has a truth value assigned, else the tree might be
 				// even more reducable
-
-					logger.info("TRUTH VALUE: " + truthValue);
-								
 				if (parentNode.getClass().getName().equals("main.java.logic.parser.ASTInput")) {
-					logger.info("RETURNING FALSE");
+					logger.debug("RETURNING FALSE");
 					return false;
 				} else {
 					reducable = true;
 				}
-
+		
 //				// not x, set the parent to not x
 //				if (parentNode.getOp().equals("!")) {
-//					logger.info("NEGATION occured");
+//					logger.debug("NEGATION occured");
 //					parentNode.setOp("");
 //					if (truthValue.equals("FALSE")) {
 //						parentNode.setTruthValue("TRUE");
@@ -163,18 +163,19 @@ public class SimpleNode implements Node, Serializable {
 
 				// false & x = false, so set parent to false and make it a leaf node
 				if ((parentNode.getOp().equals("&")) && (truthValue.equals("FALSE"))) {
-					logger.info("AND FALSE occured");
+					logger.debug("AND FALSE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("FALSE");
 					parentNode.deleteChildren();
 					jjtSetParent(null);
+					logger.debug("AND FALSE occured end");
 					return reducable;
 				}
 
 				// true & x = x, so delete this node, replace the parent node with
 				// the sibling
 				if ((parentNode.getOp().equals("&")) && (truthValue.equals("TRUE"))) {
-					logger.info("AND TRUE occured");
+					logger.debug("AND TRUE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
 					// find sibling
@@ -192,13 +193,14 @@ public class SimpleNode implements Node, Serializable {
 					parentNode.jjtSetParent(null);
 					// remove current nodes parent
 					jjtSetParent(null);
+					logger.debug("AND TRUE occured end");
 					return reducable;
 				}
 
 				// false | x = x, so delete this node, replace the parent node with
 				// the sibling
 				if ((parentNode.getOp().equals("|")) && (truthValue.equals("FALSE"))) {
-					logger.info("OR FALSE occured");
+					logger.debug("OR FALSE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
 					// find sibling
@@ -216,16 +218,18 @@ public class SimpleNode implements Node, Serializable {
 					parentNode.jjtSetParent(null);
 					// remove current nodes parent
 					jjtSetParent(null);					
+					logger.debug("OR FALSE occured end");
 					return reducable;
 				}
 
 				// true | x = true, so set the parent node to true and make it a leaf
 				if ((parentNode.getOp().equals("|")) && (truthValue.equals("TRUE"))) {
-					logger.info("OR TRUE occured");
+					logger.debug("OR TRUE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("TRUE");
 					parentNode.deleteChildren();
 					jjtSetParent(null);				
+					logger.debug("OR TRUE occured end");
 					return reducable;
 				}
 			}
@@ -261,6 +265,12 @@ public class SimpleNode implements Node, Serializable {
 		return false;
 	}
 
+	/**
+	 * search for the occurance of at least one node with a var from vector v in
+	 * the tree
+	 * @param v a vector of integers representing var numbers
+	 * @return true if at least one occurance, false otherwise
+	 */
 	public boolean findNodes(Vector<Integer> v) {
 		int i;
 		boolean found = false;
@@ -279,10 +289,8 @@ public class SimpleNode implements Node, Serializable {
 		return found;
 	}
 
-
 	// mostly auto-generated stuff from here plus some simple getter/setter methods
 	// one doesn't really need because all vars are public anyway :)
-
 	public void setTruthValue(String t) {
 		this.truthValue = t;
 	}

@@ -3,6 +3,7 @@ package main.java.slave.solver;
 import main.java.logic.parser.SimpleNode;
 
 import java.util.Vector;
+import java.util.ArrayList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -103,26 +104,38 @@ public class QProSolver implements Solver {
 		}
 		SlaveDaemon.getThreads().remove(formula.getId());
 	}
-		
-	public static synchronized String toInputString(TransmissionQbf t) {
+	
+	/**
+	 * make a formula in qpro format from the transmission QBF
+	 * @param t the QBF	the slave gets from the master
+	 * @return a string representation of the tree in QPRO format
+	 */
+	public static String toInputString(TransmissionQbf t) {
 		Vector<Integer> eVars = new Vector<Integer>();
 		Vector<Integer> aVars = new Vector<Integer>();
 		Vector<Integer> vars = new Vector<Integer>();
-		String traversedTree = "";
 
+		String traversedTree = "";
+		
 		vars = t.getVars();
 		eVars = t.getEVars();
 		aVars = t.getAVars();
-			logger.info("WTF " + eVars + " " + aVars + " " + vars);
-		t.checkQbf(); // just to make sure that there's really a tree
-	
+
+		// just to make sure that there's really a tree TODO delete one day
+		t.checkQbf();
+
 		// assign the truth values
+		logger.debug("assigning truth values started");
 		t.assignTruthValues();
+		logger.debug("assigning truth values finished");
 
 		// reduce the tree
+		logger.debug("reducing started");
 		t.reduceTree();
+		logger.debug("reducing finished");
 		
 		// traverse the tree to get a string in qpro format
+		logger.debug("traversing started");
 		traversedTree += "\nQBF\n" + (vars.size()+1) + "\nq\n" + "a ";
 		for (int i=0; i < eVars.size(); i++)
 			traversedTree += eVars.get(i) + " ";
@@ -130,17 +143,19 @@ public class QProSolver implements Solver {
 		for (int i=0; i < aVars.size(); i++)
 			traversedTree += aVars.get(i) + " ";
 		traversedTree += "\n";
-		traversedTree += t.traverseTree();
+		traversedTree += t.traverseTree(); // <- actual traversion happens here
 		traversedTree += "/q\nQBF\n";	
+		logger.debug("traversing finished, tree: " + traversedTree);
 
-		logger.info("traversing finished, tree:\n" + traversedTree);
-
+		// check if quantified vars still occur in formula since qpro is no
+		// friend of such formulas
+		logger.debug("check if traversed formula is solvable by qpro");
 		if(t.isValid()) {
+			logger.debug("check ok, returning formula to qpro");
 			return traversedTree;
 		}
 		
-		logger.info("sending fake formula");
-		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";
-		
-	}
+		logger.debug("check failed, sending fake formula to avoid qpro crash");
+		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";		
+	}	
 }

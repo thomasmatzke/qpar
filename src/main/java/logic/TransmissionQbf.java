@@ -4,11 +4,16 @@ import java.util.Vector;
 import java.util.ArrayList;
 import main.java.logic.parser.SimpleNode;
 import java.io.Serializable;
+import main.java.QPar;
 
 import main.java.master.MasterDaemon;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
 
+// A TransmissionQbf contains a QBF as a tree as well as vectors and lists of
+// all vars/exist-quantified vars/all-quantified vars/vars to assign true and
+// vars to assign false. They are created in the Qbf class and sent to the
+// slaves to be solved there.
 public class TransmissionQbf implements Serializable {
 	private SimpleNode root = null;
 	private static int idCounter = 0;
@@ -19,10 +24,18 @@ public class TransmissionQbf implements Serializable {
 	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
 	private ArrayList<Integer> falseVars = new ArrayList<Integer>();
 	static Logger logger = Logger.getLogger(TransmissionQbf.class);
-	{
-		logger.setLevel(Level.DEBUG);
+
+	/**
+	 * constructor
+	 */
+	public TransmissionQbf() {
+		logger.setLevel(QPar.logLevel);
 	}
 
+	/**
+	 * checks if quantified vars still occur in the tree
+	 * @return true if they're still there, false otherwise
+	 */	
 	public boolean isValid() {
 		return (root.findNodes(eVars) || root.findNodes(aVars));
 	}
@@ -63,15 +76,15 @@ public class TransmissionQbf implements Serializable {
 	 * debug method that logs the content of a transmissionQbf
 	 */
 	public void checkQbf() {
-		logger.info("checkQBF id: "+this.id);
-//		logger.info("checkQBF root node: " + root.getClass().getName() + " with " +
+		logger.debug("checkQBF id: "+this.id);
+//		logger.debug("checkQBF root node: " + root.getClass().getName() + " with " +
 //		root.jjtGetNumChildren() + " children (should be 1. first one: " +
 //		root.jjtGetChild(0).getClass().getName() + ")");
-		logger.info("checkQBF vars: " + this.vars);
-		logger.info("checkQBF eVars: " + this.eVars);
-		logger.info("checkQBF aVars: " + this.aVars);
-		logger.info("checkQBF trueVars: " + this.trueVars);
-		logger.info("checkQBF falseVars: " + this.falseVars);
+		logger.debug("checkQBF vars: " + this.vars);
+		logger.debug("checkQBF eVars: " + this.eVars);
+		logger.debug("checkQBF aVars: " + this.aVars);
+		logger.debug("checkQBF trueVars: " + this.trueVars);
+		logger.debug("checkQBF falseVars: " + this.falseVars);
 	}
 
 	/**
@@ -126,35 +139,24 @@ public class TransmissionQbf implements Serializable {
 	 * assigns the transmissionQbf-specific truth values to the tree.
 	 */
 	public void assignTruthValues() {
-		logger.info("entering TransmissionQbf.assignTruthValues()" + this.trueVars.size() + this.falseVars.size());
 		int i;
 		for (i = 0; i < this.trueVars.size(); i++) {
-			logger.info("assigning true to " + this.trueVars.get(i));
 			root.assignTruthValue(this.trueVars.get(i), true);
 		}
 		for (i = 0; i < this.falseVars.size(); i++) {
-			logger.info("assigning false to " + this.falseVars.get(i));
 			root.assignTruthValue(this.falseVars.get(i), false);
 		}
-		logger.info("exiting TransmissionQbf.assignTruthValues()");
 	}
 
 	/**
 	 * calls the reduce() method of the tree as long as there's something to reduce
 	 */
 	public void reduceTree() {
-		boolean continueReducing = true;
-		
-		logger.info("entering TransmissionQbf.reduceTree");
-		root.dump("");
+		boolean continueReducing = true;		
 
 		while (continueReducing) {
-			logger.info("reducing tree step begin");		
-			continueReducing = root.jjtGetChild(0).reduce();	
-			logger.info("reducing tree step end");		
+			continueReducing = root.jjtGetChild(0).reduce();
 		}
-		root.dump("");
-		logger.info("exiting TransmissionQbf.reduceTree");
 	}
 
 	/**
@@ -162,16 +164,16 @@ public class TransmissionQbf implements Serializable {
 	 * @return The formula (without header and footer) in QPro format.
 	 */
 	public String traverseTree() {
-		logger.info("entering TransmissionQbf.traverseTree");
 		return root.jjtGetChild(0).traverse();
 	}
 
-//	public static String allocateId() {
-//		idCounter++;
-//		return new Integer(idCounter).toString();
-//	}
+	// not needed anywhere
+	//	public static String allocateId() {
+	//		idCounter++;
+	//		return new Integer(idCounter).toString();
+	//	}
 
-	// getter/setter
+	// getter/setter, too self-explanatory for javadoc :)
 	public String getId() {
 		return id;
 	}

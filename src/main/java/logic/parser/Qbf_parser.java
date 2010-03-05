@@ -30,7 +30,6 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
         }
 
         public SimpleNode getRootNode() {
-System.out.println("request for root node " + jjtree.rootNode().getClass().getName());
                 return (SimpleNode)this.jjtree.rootNode();
         }
 

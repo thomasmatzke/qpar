@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 import java.util.HashMap;
+import main.java.QPar;
 
 import main.java.master.MasterDaemon;
 import main.java.logic.parser.*;
@@ -21,10 +22,8 @@ import org.apache.log4j.Level;
 *
 */
 public class Qbf {
+
     static Logger logger = Logger.getLogger(Qbf.class);
-    {
-		logger.setLevel(Level.DEBUG);
-	}
 
 	Heuristic h = null;
 	File file;
@@ -51,6 +50,8 @@ public class Qbf {
 	* @throws IOException 
 	*/
 	public Qbf(String filename) throws IOException {
+		logger.setLevel(QPar.logLevel);
+
 		Qbf_parser parser;
 
 		id++;
@@ -71,7 +72,7 @@ public class Qbf {
 		// parse the formula, get various vectors of vars
 		try {
 			parser.Input();	
-			logger.info("Succesful parse");
+			logger.debug("Succesful parse");
 			literalCount = parser.getLiteralCount();
 			this.eVars = parser.getEVars();
 			this.aVars = parser.getAVars();
@@ -88,7 +89,7 @@ public class Qbf {
 			logger.error(e);
 			return;
 		}
-		logger.info("Finished reading a QBF from " + filename);
+		logger.debug("Finished reading a QBF from " + filename);
 	}
 
 	/**
@@ -139,12 +140,10 @@ public class Qbf {
 						
 			tmp.setId((new Integer(id * 1000 + i)).toString());
 			tmp.setRootNode(root);
-
-			tmp.setEVars(this.eVars);
-			tmp.setAVars(this.aVars);
-			tmp.setVars(this.vars);	
 			
 			for (j = 0; j < numVarsToChoose; j++) {
+				this.eVars.remove(decisionVars.get(j));
+				this.aVars.remove(decisionVars.get(j));
 				if (decisionArray[i][j]) {
 					tmp.addToTrueVars(decisionVars.get(j));
 				}
@@ -153,14 +152,13 @@ public class Qbf {
 				}
 			}
 
+			tmp.setEVars(this.eVars);
+			tmp.setAVars(this.aVars);
+			tmp.setVars(this.vars);	
+
 			tmp.checkQbf();
 			subQbfs.add(tmp);
 		}
-
-logger.info("checking subqbf list");
-for (TransmissionQbf foo : subQbfs) foo.checkQbf();
-logger.info("end");
-
 		return subQbfs;
 	}
 

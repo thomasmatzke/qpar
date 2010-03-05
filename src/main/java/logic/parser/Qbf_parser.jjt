@@ -61,7 +61,6 @@ public class Qbf_parser implements Serializable {
 	}
 
 	public SimpleNode getRootNode() {
-System.out.println("request for root node " + jjtree.rootNode().getClass().getName());
 		return (SimpleNode)this.jjtree.rootNode();
 	}
 }
