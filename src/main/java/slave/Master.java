@@ -16,6 +16,7 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
+import main.java.master.MasterDaemon;
 import main.java.messages.AbortMessage;
 import main.java.messages.ErrorMessage;
 import main.java.messages.FormulaAbortedMessage;
@@ -45,10 +46,7 @@ import org.apache.activemq.util.IndentPrinter;
 public class Master {
 
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
-	{
-		logger.setLevel(Level.INFO);
-	}
-
+	
 	private Connection connection;
 
 	private MessageConsumer consumer_rcv;
@@ -71,6 +69,10 @@ public class Master {
 
 	private String user = ActiveMQConnection.DEFAULT_USER;
 
+	public Master() {
+		logger.setLevel(MasterDaemon.logLevel);
+	}
+	
 	/**
 	 * Connects to the JMX Messagebroker.
 	 * Creates the queues/consumer for communication with the master

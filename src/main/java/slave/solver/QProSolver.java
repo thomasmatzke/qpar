@@ -12,6 +12,7 @@ import java.io.StringWriter;
 
 import main.java.StreamGobbler;
 import main.java.logic.TransmissionQbf;
+import main.java.master.MasterDaemon;
 import main.java.slave.Master;
 import main.java.slave.SlaveDaemon;
 
@@ -27,13 +28,15 @@ import org.apache.log4j.Logger;
 public class QProSolver implements Solver {
 
 	static Logger logger = Logger.getLogger(QProSolver.class);
-	{
-		logger.setLevel(Level.DEBUG);
-	}
+	
 	public static final String toolId = "qpro";
 	private Process qpro_process;
 	private TransmissionQbf formula;
 	private Master master;
+	
+	public QProSolver() {
+		logger.setLevel(MasterDaemon.logLevel);
+	}
 	
 	public Master getMaster() {
 		return master;

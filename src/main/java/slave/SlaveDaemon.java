@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.Vector;
 
 import main.java.ArgumentParser;
+import main.java.master.MasterDaemon;
 import main.java.slave.solver.Solver;
 
 import org.apache.log4j.BasicConfigurator;
@@ -26,23 +27,31 @@ public class SlaveDaemon {
 	public static Master master;
 	private static Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	static Logger logger = Logger.getLogger(SlaveDaemon.class);
-	{
-		logger.setLevel(Level.INFO);
-	}
+	public static Level logLevel = Level.WARN;
 	
 	/**
 	 * Program execution entry point
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		ArgumentParser ap = new ArgumentParser(args);
 		// Basic console logging
 		BasicConfigurator.configure();
+		if(ap.hasOption("log")) {
+			String lvl = ap.getOption("log");
+			if(lvl.equals("debug"))
+					MasterDaemon.logLevel = Level.DEBUG;
+			else if(lvl.equals("info"))
+				MasterDaemon.logLevel = Level.INFO;
+			else
+				usage();
+		}
 		logger.info("Starting Slave...");
 		SignalHandler handler = new SignalHandler();
 		Signal.handle(new Signal("INT"), handler);
 		Signal.handle(new Signal("TERM"), handler);
 		//Signal.handle(new Signal("HUP"), handler);
-		ArgumentParser ap = new ArgumentParser(args);
+		
 		master_str = ap.nextParam();
 		String solversString = ap.getOption("solvers");
 		if(solversString != null) {

@@ -50,9 +50,7 @@ public class MasterDaemon {
 
 	private static Connection connection;
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
-	{
-		logger.setLevel(Level.INFO);
-	}
+	public static Level logLevel = Level.WARN;
 	private static String password = ActiveMQConnection.DEFAULT_PASSWORD;
 	private static ProgramWindow programWindow;
 	private static Thread shellthread;
@@ -128,6 +126,16 @@ public class MasterDaemon {
 	public NewSlaveListener newSlaveListener;
 
 	public MasterDaemon() {
+		if(ap.hasOption("log")) {
+			String lvl = ap.getOption("log");
+			if(lvl.equals("debug"))
+					MasterDaemon.logLevel = Level.DEBUG;
+			else if(lvl.equals("info"))
+				MasterDaemon.logLevel = Level.INFO;
+			else
+				usage();
+		}
+		logger.setLevel(logLevel);
 		startMessageBroker();
 		hook = new ShutdownHook();
 		Runtime.getRuntime().addShutdownHook(hook);
@@ -155,6 +163,13 @@ public class MasterDaemon {
 			shellthread = new Thread(shell);
 			shellthread.start();
 		}
+	}
+
+	private static void usage() {
+		System.out.println(	"Arguments: \"-gui\"               toggles graphical user interface" +
+							"           \"-i=INPUTFILE\"       specifies a batch-file" +
+							"           \"-log=(debug|info)\"  specifies log-lvl");
+		System.exit(-1);
 	}
 
 	public static Shell getShell() {

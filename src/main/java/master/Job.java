@@ -28,12 +28,13 @@ public class Job {
 	private static Map<String, Job> jobs = new HashMap<String, Job>();
 	private static AbstractTableModel tableModel;
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
-	{
-		logger.setLevel(Level.INFO);
-	}
-
+	
 	private boolean result;
 
+	public Job() {
+		logger.setLevel(MasterDaemon.logLevel);
+	}
+	
 	private static void addJob(Job job) {
 		jobs.put(job.id, job);
 		if (tableModel != null) {

@@ -21,10 +21,11 @@ public class NewSlaveListener implements MessageListener {
 	private Session session;
 	
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
-	{
-		logger.setLevel(Level.INFO);
+	
+	public NewSlaveListener() {
+		logger.setLevel(MasterDaemon.logLevel);
 	}
-
+	
 	public void handleInformationMessage(InformationMessage i) {
 		logger.info("Handling InformationMessage...");
 		Slave.create(i.getHostName(), i.getCores(), i.getToolIds());

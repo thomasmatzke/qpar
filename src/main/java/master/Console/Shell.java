@@ -19,16 +19,14 @@ import main.java.master.Slave;
 public class Shell implements Runnable{
 
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
-	{
-		logger.setLevel(Level.INFO);
-	}
-	
+		
 	private String prompt 	= ">";
 	BufferedReader in;
 	boolean run				= true;
 	
 	
 	public Shell() {
+		logger.setLevel(MasterDaemon.logLevel);
 		in 	= new BufferedReader(new InputStreamReader(System.in));
 	}
 	

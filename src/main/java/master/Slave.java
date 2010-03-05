@@ -50,14 +50,16 @@ public class Slave implements MessageListener, Runnable {
 	public static final long KEEPALIVE_TIMEOUT = 10 * 1000; // In Millis
 
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
-	{
-		logger.setLevel(Level.INFO);
-	}
+	
 	private static Map<String, Slave> slaves = new HashMap<String, Slave>();
 	private static AbstractTableModel tableModel;
 	private long lastPingMillis = 0;
 	private long lastPongMillis = System.currentTimeMillis();
 
+	public Slave() {
+		logger.setLevel(MasterDaemon.logLevel);
+	}
+	
 	private static void addSlave(Slave slave) {
 		slaves.put(slave.hostName, slave);
 		logger.debug("Adding Slave: " + slave);
