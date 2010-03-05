@@ -20,6 +20,7 @@ import javax.jms.Session;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
+import main.java.QPar;
 import main.java.Util;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
@@ -57,7 +58,7 @@ public class Slave implements MessageListener, Runnable {
 	private long lastPongMillis = System.currentTimeMillis();
 
 	public Slave() {
-		logger.setLevel(MasterDaemon.logLevel);
+		logger.setLevel(QPar.logLevel);
 	}
 	
 	private static void addSlave(Slave slave) {

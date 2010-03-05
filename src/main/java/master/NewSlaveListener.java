@@ -11,6 +11,7 @@ import javax.jms.Session;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import main.java.QPar;
 import main.java.messages.InformationMessage;
 
 public class NewSlaveListener implements MessageListener {
@@ -23,7 +24,7 @@ public class NewSlaveListener implements MessageListener {
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
 	
 	public NewSlaveListener() {
-		logger.setLevel(MasterDaemon.logLevel);
+		logger.setLevel(QPar.logLevel);
 	}
 	
 	public void handleInformationMessage(InformationMessage i) {

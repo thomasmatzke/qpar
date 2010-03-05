@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import main.java.QPar;
 import main.java.StreamGobbler;
 import main.java.logic.TransmissionQbf;
 import main.java.master.MasterDaemon;
@@ -35,7 +36,7 @@ public class QProSolver implements Solver {
 	private Master master;
 	
 	public QProSolver() {
-		logger.setLevel(MasterDaemon.logLevel);
+		logger.setLevel(QPar.logLevel);
 	}
 	
 	public Master getMaster() {

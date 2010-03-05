@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import main.java.QPar;
 import main.java.Util;
 import main.java.master.Job;
 import main.java.master.MasterDaemon;
@@ -26,7 +27,7 @@ public class Shell implements Runnable{
 	
 	
 	public Shell() {
-		logger.setLevel(MasterDaemon.logLevel);
+		logger.setLevel(QPar.logLevel);
 		in 	= new BufferedReader(new InputStreamReader(System.in));
 	}
 	

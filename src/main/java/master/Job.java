@@ -12,6 +12,7 @@ import javax.swing.table.AbstractTableModel;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import main.java.QPar;
 import main.java.logic.HeuristicFactory;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
@@ -32,7 +33,7 @@ public class Job {
 	private boolean result;
 
 	public Job() {
-		logger.setLevel(MasterDaemon.logLevel);
+		logger.setLevel(QPar.logLevel);
 	}
 	
 	private static void addJob(Job job) {

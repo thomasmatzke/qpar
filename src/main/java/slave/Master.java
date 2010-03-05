@@ -16,6 +16,7 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
+import main.java.QPar;
 import main.java.master.MasterDaemon;
 import main.java.messages.AbortMessage;
 import main.java.messages.ErrorMessage;
@@ -70,7 +71,7 @@ public class Master {
 	private String user = ActiveMQConnection.DEFAULT_USER;
 
 	public Master() {
-		logger.setLevel(MasterDaemon.logLevel);
+		logger.setLevel(QPar.logLevel);
 	}
 	
 	/**

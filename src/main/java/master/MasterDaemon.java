@@ -9,6 +9,7 @@ import javax.jms.JMSException;
 import javax.jms.Session;
 
 import main.java.ArgumentParser;
+import main.java.QPar;
 import main.java.master.Console.Shell;
 import main.java.master.gui.ProgramWindow;
 
@@ -50,7 +51,6 @@ public class MasterDaemon {
 
 	private static Connection connection;
 	static Logger logger = Logger.getLogger(MasterDaemon.class);
-	public static Level logLevel = Level.WARN;
 	private static String password = ActiveMQConnection.DEFAULT_PASSWORD;
 	private static ProgramWindow programWindow;
 	private static Thread shellthread;
@@ -129,13 +129,13 @@ public class MasterDaemon {
 		if(ap.hasOption("log")) {
 			String lvl = ap.getOption("log");
 			if(lvl.equals("debug"))
-					MasterDaemon.logLevel = Level.DEBUG;
+					QPar.logLevel = Level.DEBUG;
 			else if(lvl.equals("info"))
-				MasterDaemon.logLevel = Level.INFO;
+				QPar.logLevel = Level.INFO;
 			else
 				usage();
 		}
-		logger.setLevel(logLevel);
+		logger.setLevel(QPar.logLevel);
 		startMessageBroker();
 		hook = new ShutdownHook();
 		Runtime.getRuntime().addShutdownHook(hook);

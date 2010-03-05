@@ -5,6 +5,7 @@ import java.util.Scanner;
 import java.util.Vector;
 
 import main.java.ArgumentParser;
+import main.java.QPar;
 import main.java.master.MasterDaemon;
 import main.java.slave.solver.Solver;
 
@@ -40,12 +41,13 @@ public class SlaveDaemon {
 		if(ap.hasOption("log")) {
 			String lvl = ap.getOption("log");
 			if(lvl.equals("debug"))
-					MasterDaemon.logLevel = Level.DEBUG;
+				QPar.logLevel = Level.DEBUG;
 			else if(lvl.equals("info"))
-				MasterDaemon.logLevel = Level.INFO;
+				QPar.logLevel = Level.INFO;
 			else
 				usage();
 		}
+		logger.setLevel(QPar.logLevel);
 		logger.info("Starting Slave...");
 		SignalHandler handler = new SignalHandler();
 		Signal.handle(new Signal("INT"), handler);
