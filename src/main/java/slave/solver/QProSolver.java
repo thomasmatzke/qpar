@@ -145,13 +145,14 @@ public class QProSolver implements Solver {
 		traversedTree += "\n";
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
 		traversedTree += "/q\nQBF\n";	
-		logger.debug("traversing finished, tree: " + traversedTree);
+//		logger.debug("traversing finished, tree: " + traversedTree);
 
 		// check if quantified vars still occur in formula since qpro is no
 		// friend of such formulas
 		logger.debug("check if traversed formula is solvable by qpro");
 		if(t.isValid()) {
 			logger.debug("check ok, returning formula to qpro");
+			logger.debug(traversedTree);
 			return traversedTree;
 		}
 		

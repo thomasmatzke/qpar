@@ -1,1 +1,15 @@
-(forall [v1] (exists [v2] ((v1 | v2) & (v3 | v4))))
+(exists [v2] (forall [v1] (exists [v3] (forall [v4](
+
+(
+
+(!(v1) | !(v2))
+
+&
+
+
+(v3 | v4)
+
+
+)
+
+)))))

@@ -33,6 +33,7 @@ public class SimpleNode implements Node, Serializable {
 	public int var = -1;	
 	public String op = "";
 	public String truthValue = "";
+	
 	/**
 	* assign a truth value to a specific var
 	* @param v the var to assign a truth value to
@@ -84,6 +85,9 @@ public class SimpleNode implements Node, Serializable {
 					if (this.jjtGetChild(i).getVar() > -1) {
 						partialTree += this.jjtGetChild(i).traverse();						
 					}					
+					else if (this.jjtGetChild(i).getOp().equals("!")) {
+						negatedPartialTree += this.jjtGetChild(i).jjtGetChild(0).traverse();						
+					}					
 					else {
 						enclosedPartialTree += this.jjtGetChild(i).traverse();	
 					}
@@ -96,6 +100,9 @@ public class SimpleNode implements Node, Serializable {
 					if (this.jjtGetChild(i).getVar() > -1) {
 						partialTree += this.jjtGetChild(i).traverse();						
 					}					
+					else if (this.jjtGetChild(i).getOp().equals("!")) {
+						negatedPartialTree += this.jjtGetChild(i).jjtGetChild(0).traverse();						
+					}
 					else {
 						enclosedPartialTree += this.jjtGetChild(i).traverse();	
 					}
@@ -112,25 +119,35 @@ public class SimpleNode implements Node, Serializable {
 		return traversedTree;
 	}
 
+	public boolean checkConnectionToRoot() {
+		if (this.getClass().getName().equals("main.java.logic.parser.ASTInput"))
+			return true;
+
+		if (this.jjtGetParent() == null)
+			return false;
+
+		return this.jjtGetParent().checkConnectionToRoot();
+	}
+
 	/** 
 	* reduces a tree containung truth-assigned variables to a tree without them
 	* @return true if tree is still traversable, false if not
 	*/
 	public boolean reduce() {
-       	Node parentNode = null;
+		Node parentNode = null;
 		Node grandparentNode = null;
-       	Node siblingNode = null;
+		Node siblingNode = null;
 		int i = 0;	
-       	int numChildren = this.jjtGetNumChildren();
-       	boolean reducable = false;
+		int numChildren = this.jjtGetNumChildren();
+		boolean reducable = false;
 
 		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
 			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just traverse through all it's children
-				reducable = jjtGetChild(i).reduce() || reducable;
+				if (jjtGetChild(i).checkConnectionToRoot())
+					reducable = jjtGetChild(i).reduce() || reducable;
 			}
 		}
 		else { // we're in a leaf node...
-
 			parentNode = this.jjtGetParent();
 
 			if ((this.truthValue.equals("TRUE")) || (this.truthValue.equals("FALSE"))) {
@@ -146,20 +163,20 @@ public class SimpleNode implements Node, Serializable {
 					reducable = true;
 				}
 		
-//				// not x, set the parent to not x
-//				if (parentNode.getOp().equals("!")) {
-//					logger.debug("NEGATION occured");
-//					parentNode.setOp("");
-//					if (truthValue.equals("FALSE")) {
-//						parentNode.setTruthValue("TRUE");
-//					}
-//					else {
-//						parentNode.setTruthValue("FALSE");
-//					}
-//					parentNode.deleteChildren();
-//					jjtSetParent(null);
-//					return reducable;
-//				}
+				// not x, set the parent to not x
+				if (parentNode.getOp().equals("!")) {
+					logger.debug("NEGATION occured");
+					parentNode.setOp("");
+					if (truthValue.equals("FALSE")) {
+						parentNode.setTruthValue("TRUE");
+					}
+					else {
+						parentNode.setTruthValue("FALSE");
+					}
+					parentNode.deleteChildren();
+					jjtSetParent(null);
+					return reducable;
+				}
 
 				// false & x = false, so set parent to false and make it a leaf node
 				if ((parentNode.getOp().equals("&")) && (truthValue.equals("FALSE"))) {
@@ -247,6 +264,17 @@ public class SimpleNode implements Node, Serializable {
 			jjtGetChild(i).jjtSetParent(null);
 		}
 		children = null;
+	}
+
+	/**
+	* removes a child
+	*/
+	public void deleteChild(Node n) {
+//		Node[] tmp = children;
+//		
+//		for (int i = 0; i < jjtGetNumChildren(); i++) {
+//			if (children[i] != n)
+//		}
 	}
 	
 	/**

@@ -22,6 +22,7 @@ public interface Node {
 	public void assignTruthValue(int v, boolean b);
 	public void dump(String prefix);
 	public void deleteChildren();
+	public boolean checkConnectionToRoot();
 	public String getOp();
 	public void setOp(String o);
 	public void setTruthValue(String t);
