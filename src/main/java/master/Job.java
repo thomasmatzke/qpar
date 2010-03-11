@@ -273,7 +273,8 @@ public class Job {
 				"Stopped at: " + this.getStoppedAt() + "\n" +
 				"Total secs: " + diff / 1000 + "\n" + 
 				"Solver: " + this.getSolver() + "\n" + 
-				"Heuristic: " + this.getHeuristic();
+				"Heuristic: " + this.getHeuristic()+ "\n" +
+				"Result: " + (this.getResult() ? "Solvable" : "Not Solvable");
 				
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
