@@ -70,7 +70,7 @@
     </target>
     <target name="Slave">
         <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
-            <arg line="tcp://localhost:61616 -log=debug"/>
+            <arg line="tcp://localhost:61616 -log=debug -Xss=1024m"/>
             <classpath refid="QPar.classpath"/>
         </java>
     </target>

@@ -38,11 +38,14 @@ public class Qbf {
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
+	private Vector<Integer> decisionVars = new Vector<Integer>();
 	private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();
 	public Vector<Integer> vars  = new Vector<Integer>();
 	private SimpleNode root = null;
+
+	private String op;
 
 	/**
 	* constructor
@@ -102,7 +105,6 @@ public class Qbf {
 		int i,j;
 		TransmissionQbf tmp;
 		Vector<Integer> tempVars = new Vector<Integer>();
-		Vector<Integer> decisionVars = new Vector<Integer>();
 		Vector<Integer> trueVars = new Vector<Integer>();
 		Vector<Integer> falseVars = new Vector<Integer>();
 		int numVarsToChoose = new Double(Math.log(n)/Math.log(2)).intValue();
@@ -114,8 +116,16 @@ public class Qbf {
 		// throw away the vars that are too much
 		for(i = 0; i < numVarsToChoose; i++) {
 			decisionVars.add(tempVars.get(i));
+		
+		
+			if (aVars.contains(tempVars.get(i))) {
+				op = "F";
+			}
+			else {
+				op = "E";
+			}
+		
 		}
-
 		// generating a truth table
 		for (j = 0; j < numVarsToChoose; j++) decisionArray[0][j] = true;
 
@@ -169,7 +179,7 @@ public class Qbf {
 	* @param result The result of the evaluated subformula
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
-	public boolean mergeQbf(String id, boolean result) {
+	public synchronized boolean mergeQbf(String id, boolean result) {
 //		resultAvailable.set(id, true);
 //		Node op1 = solvingTree.search(id);
 //		Node operand = solvingTree.getParentNode(op1);
@@ -204,11 +214,27 @@ public class Qbf {
 		// to TRUE and qbfResult(id) to result
 	
 		// for testing
+		
+		qbfResults.add(result);
+		
 		receivedResults++;
 		if (receivedResults < subQbfs.size())
 			return false;	
+
+
+
 		solved = true;
-		satisfiable = result;
+
+
+		if (op.equals("E")){
+		logger.debug("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+			satisfiable = qbfResults.get(0) || qbfResults.get(1);
+		}
+		else {
+		logger.debug("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+			satisfiable = qbfResults.get(0) && qbfResults.get(1);	
+		}
+
 		return true;
 	}
 

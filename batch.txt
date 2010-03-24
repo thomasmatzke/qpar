@@ -1,9 +1,90 @@
 waitforslave 2 qpro
-newjob qbf.txt output.txt qpro simple
+newjob testing/boole/assertion1_0_3-bin.qbf testing/assertion1_0_3-bin.out qpro simple
 startjob 1
 waitforresult 1
-newjob qbf.txt output2.txt qpro simple
+newjob testing/boole/008-020-03-04-028.ncf-bin.qbf testing/008-020-03-04-028.ncf-bin.out qpro simple
 startjob 2
 waitforresult 2
+newjob testing/boole/008-020-03-04-039.ncf-bin.qbf testing/008-020-03-04-039.ncf-bin.out qpro simple
+startjob 3
+waitforresult 3
+newjob testing/boole/008-020-03-04-045.ncf-bin.qbf testing/008-020-03-04-045.ncf-bin.out qpro simple
+startjob 4
+waitforresult 4
+newjob testing/boole/008-020-03-05-002.ncf-bin.qbf testing/008-020-03-05-002.ncf-bin.out qpro simple
+startjob 5
+waitforresult 5
+newjob testing/boole/008-020-03-05-015.ncf-bin.qbf testing/008-020-03-05-015.ncf-bin.out qpro simple
+startjob 6
+waitforresult 6
+newjob testing/boole/008-020-03-05-036.ncf-bin.qbf testing/008-020-03-05-036.ncf-bin.out qpro simple
+startjob 7
+waitforresult 7
+newjob testing/boole/008-020-03-06-002.ncf-bin.qbf testing/008-020-03-06-002.ncf-bin.out qpro simple
+startjob 8
+waitforresult 8
+newjob testing/boole/008-020-03-06-006.ncf-bin.qbf testing/008-020-03-06-006.ncf-bin.out qpro simple
+startjob 9
+waitforresult 9
+newjob testing/boole/counter6_4-bin.qbf testing/counter6_4-bin.out qpro simple
+startjob 10
+waitforresult 10
+newjob testing/boole/assertion1_0_5-bin.qbf testing/assertion1_0_5-bin.out qpro simple
+startjob 11
+waitforresult 11
+newjob testing/boole/semaphore5_3-bin.qbf testing/semaphore5_3-bin.out qpro simple
+startjob 12
+waitforresult 12
+newjob testing/boole/semaphore6_4-bin.qbf testing/semaphore6_4-bin.out qpro simple
+startjob 13
+waitforresult 13
+newjob testing/boole/assertion3_0_1-bin.qbf testing/assertion3_0_1-bin.out qpro simple
+startjob 14
+waitforresult 14
+newjob testing/boole/assertion4_0_8-bin.qbf testing/assertion4_0_8-bin.out qpro simple
+startjob 15
+waitforresult 15
+newjob testing/boole/assertion9_0_7-bin.qbf testing/assertion9_0_7-bin.out qpro simple
+startjob 16
+waitforresult 16
+newjob testing/boole/counter4_10-bin.qbf testing/counter4_10-bin.out qpro simple
+startjob 17
+waitforresult 17
+newjob testing/boole/counter4_13-bin.qbf testing/counter4_13-bin.out qpro simple
+startjob 18
+waitforresult 18
+newjob testing/boole/counter4_2-bin.qbf testing/counter4_2-bin.out qpro simple
+startjob 19
+waitforresult 19
+newjob testing/boole/counter4_3-bin.qbf testing/counter4_3-bin.out qpro simple
+startjob 20
+waitforresult 20
+newjob testing/boole/008-020-03-04-024.ncf-bin.qbf testing/008-020-03-04-024.ncf-bin.out qpro simple
+startjob 21
+waitforresult 21
+newjob testing/boole/counter6_64-bin.qbf testing/counter6_64-bin.out qpro simple
+startjob 22
+waitforresult 22
+newjob testing/boole/dmeSmall_4-bin.qbf testing/dmeSmall_4-bin.out qpro simple
+startjob 23
+waitforresult 23
+newjob testing/boole/possibility12_0_2-bin.qbf testing/possibility12_0_2-bin.out qpro simple
+startjob 24
+waitforresult 24
+newjob testing/boole/possibility5_0_1-bin.qbf testing/possibility5_0_1-bin.out qpro simple
+startjob 25
+waitforresult 25
+newjob testing/boole/ring4_6-bin.qbf testing/ring4_6-bin.out qpro simple
+startjob 26
+waitforresult 26
+newjob testing/boole/semaphore_2-bin.qbf testing/semaphore_2-bin.out qpro simple
+startjob 27
+waitforresult 27
+newjob testing/boole/assertion1_0_6-bin.qbf testing/assertion1_0_6-bin.out qpro simple
+startjob 28
+waitforresult 28
+newjob testing/boole/assertion2_0_7-bin.qbf testing/assertion2_0_7-bin.out qpro simple
+startjob 29
+waitforresult 29
 killallslaves
 quit

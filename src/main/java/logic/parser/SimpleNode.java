@@ -15,7 +15,17 @@ import org.apache.log4j.Level;
 // All nodes in the formula tree are derived from SimpleNode.
 public class SimpleNode implements Node, Serializable {
 
-    static Logger logger = Logger.getLogger(SimpleNode.class);
+	static Logger logger = Logger.getLogger(SimpleNode.class);
+
+	protected Object value;
+	protected Qbf_parser parser;
+	protected Node parent;
+	protected Node[] children;
+
+	public int id; // TODO check if needed
+	public int var = -1; // -1 = not a var node
+	public String op = ""; // "" = not an operator node
+	public String truthValue = ""; // "" = not truth assigned
 
 	/**
 	 * constructor
@@ -24,28 +34,17 @@ public class SimpleNode implements Node, Serializable {
 		logger.setLevel(QPar.logLevel);
 	}
 
-	protected Object value;
-	protected Qbf_parser parser;
-	protected Node parent;
-	protected Node[] children;
-
-	public int id;
-	public int var = -1;	
-	public String op = "";
-	public String truthValue = "";
-	
 	/**
 	* assign a truth value to a specific var
 	* @param v the var to assign a truth value to
 	* @param b the truth value to assign
 	*/
 	public void assignTruthValue(int v, boolean b) {
-		int i = 0;
 		int numChildren = this.jjtGetNumChildren();
 				 
 		// not in a leaf node, nothing to set
 		if (numChildren > 0) {
-			for (i = 0; i < numChildren; i++) {
+			for (int i = 0; i < numChildren; i++) {
 				jjtGetChild(i).assignTruthValue(v, b);
 			}
 		}
@@ -61,35 +60,68 @@ public class SimpleNode implements Node, Serializable {
 			}
 		}	
 	}
-	
+
+	/**
+	 * Checks if a node is somehow connected to the root node.
+	 * @return True if there's a path from this node to the root, false otherwise
+	 */
+	public boolean checkConnectionToRoot() {
+		// this might be the root node itself, so obviously there's a connection
+		if (this.getClass().getName().equals("main.java.logic.parser.ASTInput"))
+			return true;
+			
+		// the node may also be an orphan, so no connection to root
+		if (this.jjtGetParent() == null)
+			return false;
+			
+		// or, if the node is neither root itself nor orphaned, check the parent
+		return this.jjtGetParent().checkConnectionToRoot();
+	}
+
 	/**
 	* traverse tree goes through all children of a node and builds a String
 	* in .qpro format
 	* @return A String in qpro format
 	*/	
 	public String traverse() {	
-       	Node child;
+		Node child;
 		String tmp = "";
+		String[] tmpList;
 		String traversedTree = "";
 		String partialTree = "";
 		String negatedPartialTree = "";
 		String enclosedPartialTree = "";
 		int i = 0;	
-       	int numChildren = this.jjtGetNumChildren();
+		int numChildren = this.jjtGetNumChildren();
 					
-		if (numChildren > 0) { // we're not in a leaf node
-					
+		if (numChildren > 0) { // we're not in a leaf node		
 			if (this.getOp().equals("|")) {
 				traversedTree += "d\n";
 				for (i = 0; i < numChildren; i++) {
-					if (this.jjtGetChild(i).getVar() > -1) {
+					if (this.jjtGetChild(i).getVar() > -1) {	
 						partialTree += this.jjtGetChild(i).traverse();						
 					}					
 					else if (this.jjtGetChild(i).getOp().equals("!")) {
 						negatedPartialTree += this.jjtGetChild(i).jjtGetChild(0).traverse();						
 					}					
-					else {
-						enclosedPartialTree += this.jjtGetChild(i).traverse();	
+					else { // the child node is another op node
+						if (this.jjtGetChild(i).getOp().equals("|")) {	
+							// if we have two consequent OR nodes we have to
+							// do some voodoo
+							tmp += this.jjtGetChild(i).traverse();	
+							tmpList = tmp.split("\n");
+							partialTree += tmpList[1];
+							negatedPartialTree += tmpList[2];
+//							System.out.println("TMPLIST" + tmpList.length);
+//							System.out.println(tmpList[0]);
+//							System.out.println(tmpList[1]);
+//							System.out.println(tmpList[2]);
+//							System.out.println(tmpList[3]);
+//							enclosedPartialTree += tmp;
+						}
+						else {
+							enclosedPartialTree += this.jjtGetChild(i).traverse();							
+						}
 					}
 				}	
 				traversedTree += partialTree + "\n" + negatedPartialTree + "\n" + enclosedPartialTree + "/d\n";
@@ -103,8 +135,24 @@ public class SimpleNode implements Node, Serializable {
 					else if (this.jjtGetChild(i).getOp().equals("!")) {
 						negatedPartialTree += this.jjtGetChild(i).jjtGetChild(0).traverse();						
 					}
-					else {
-						enclosedPartialTree += this.jjtGetChild(i).traverse();	
+					else { // the child node is another op node
+						if (this.jjtGetChild(i).getOp().equals("&")) {	
+							// if we have two consequent OR nodes we have to
+							// do some voodoo
+							tmp += this.jjtGetChild(i).traverse();	
+							tmpList = tmp.split("\n");
+							partialTree += tmpList[1];
+							negatedPartialTree += tmpList[2];
+//							System.out.println("TMPLIST" + tmpList.length);
+//							System.out.println(tmpList[0]);
+//							System.out.println(tmpList[1]);
+//							System.out.println(tmpList[2]);
+//							System.out.println(tmpList[3]);
+//							enclosedPartialTree += tmp;
+						}
+						else {
+							enclosedPartialTree += this.jjtGetChild(i).traverse();							
+						}
 					}
 				}	
 				traversedTree += partialTree + "\n" + negatedPartialTree + "\n" + enclosedPartialTree + "/c\n";
@@ -112,21 +160,11 @@ public class SimpleNode implements Node, Serializable {
 		}
 		else { // we're in a leaf node...
 			if (truthValue.equals("")) {
-				// ...but not a truth-assigned one
+				// ...but not a truth-assigned one, so just let's add and return the var number 
 				traversedTree += var + " ";
 			}
 		}
 		return traversedTree;
-	}
-
-	public boolean checkConnectionToRoot() {
-		if (this.getClass().getName().equals("main.java.logic.parser.ASTInput"))
-			return true;
-
-		if (this.jjtGetParent() == null)
-			return false;
-
-		return this.jjtGetParent().checkConnectionToRoot();
 	}
 
 	/** 
@@ -266,17 +304,6 @@ public class SimpleNode implements Node, Serializable {
 		children = null;
 	}
 
-	/**
-	* removes a child
-	*/
-	public void deleteChild(Node n) {
-//		Node[] tmp = children;
-//		
-//		for (int i = 0; i < jjtGetNumChildren(); i++) {
-//			if (children[i] != n)
-//		}
-	}
-	
 	/**
 	* replaces node old with node new in the parent list of a node
 	* @param oldNode the node to be replaced

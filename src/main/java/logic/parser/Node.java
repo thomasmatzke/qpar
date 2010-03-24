@@ -9,29 +9,28 @@ package main.java.logic.parser;
 import java.util.Vector;
 
 public interface Node {
+	public String 	op = "";
+	public String	truthValue = "";
+	public int		var = -1;	
+	public int		id = 0;
+	public boolean	reducable = false;
 
-	// custom stuff begin
-	public String op = "";
-	public String truthValue = "";
-	public int var = -1;	
-	public int id = 0;
-	public boolean reducable = false;
-	public String traverse();
-	public boolean reduce();
-	public boolean findNodes(Vector<Integer> v);
-	public void assignTruthValue(int v, boolean b);
-	public void dump(String prefix);
-	public void deleteChildren();
-	public boolean checkConnectionToRoot();
-	public String getOp();
-	public void setOp(String o);
-	public void setTruthValue(String t);
-	public String getTruthValue();
-	public void setVar(int v);
-	public int getVar();
-	public boolean replaceChild(Node oldNode, Node newNode);
-	public int getId();
-	// custon stuff end
+	// custom(ized) methods
+	public void		assignTruthValue(int v, boolean b);
+	public boolean	checkConnectionToRoot();
+	public void		deleteChildren();
+	public void		dump(String prefix);
+	public boolean	findNodes(Vector<Integer> v);
+	public int		getId();
+	public String	getOp();
+	public String	getTruthValue();
+	public int		getVar();
+	public boolean	reduce();
+	public boolean	replaceChild(Node oldNode, Node newNode);
+	public void		setOp(String o);
+	public void		setTruthValue(String t);
+	public void		setVar(int v);
+	public String	traverse();
 
   /** This method is called after the node has been made the current
     node.  It indicates that child nodes can now be added to it. */

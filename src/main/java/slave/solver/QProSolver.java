@@ -147,6 +147,8 @@ public class QProSolver implements Solver {
 		traversedTree += "/q\nQBF\n";	
 //		logger.debug("traversing finished, tree: " + traversedTree);
 
+
+
 		// check if quantified vars still occur in formula since qpro is no
 		// friend of such formulas
 		logger.debug("check if traversed formula is solvable by qpro");

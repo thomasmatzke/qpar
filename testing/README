@@ -1,0 +1,19 @@
+Here's a nice place to store test formulas. The convert.sh script will take
+*.qbf files in boole format from the boole directory and convert them (using
+boole2qpro) to .qpro files stored in the qpro directory.
+
+The solve.sh script will run all the files in the qpro directory through qpro
+(outputting the results to stdout).
+
+There are already 29 random formulas from the NPNCNF2008 qbflib collection
+(http://www.qbflib.org/NPNCNF2008.tar.gz ~500MB) in the boole directory,
+although they need to be unzipped before running the convert.sh script, as well
+as the corresponding .qpro files in the qpro directory (zipped as well).
+
+Solving this 29 formulas with qpro took 
+
+
+
+on a Intel Core 2 Duo CPU T9550 @ 2.66GHz with 4GB of RAM (throttled to 2.13GHz
+after 11 formulas due to heat issues). Solving also had to be paused occasionaly
+to cool down the CPU.
