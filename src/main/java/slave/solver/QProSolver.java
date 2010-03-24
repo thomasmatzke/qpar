@@ -121,8 +121,8 @@ public class QProSolver implements Solver {
 		eVars = t.getEVars();
 		aVars = t.getAVars();
 
-		// just to make sure that there's really a tree TODO delete one day
-		t.checkQbf();
+		// can be used to check if there's really some formula in t
+		// t.checkQbf();
 
 		// assign the truth values
 		logger.debug("assigning truth values started");
@@ -136,14 +136,18 @@ public class QProSolver implements Solver {
 
 		// maybe reducing the tree left us with a truth node only, then we have
 		// to give qpro a formula evaluating to that truth value
+		logger.debug("check if reduced to death");
 		if (t.rootIsTruthNode()) {
 			if (t.rootGetTruthValue()) {
 				// a formula evaluating to true
+				logger.debug("reduced to death, sending fake true formula");
 				return "QBF\n3\nq\ne 2\na 3\nd\n2\n3\n/d\n/q\nQBF\n";
 			}
 			// a formula evaluating to false
+				logger.debug("reduced to death, sending fake false formula");
 			return "QBF\n3\nq\ne 2\na 3\nc\n2\n3\n/c\n/q\nQBF\n";
 		}
+		logger.debug("check if reduced to death finnished");
 		
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
@@ -156,22 +160,21 @@ public class QProSolver implements Solver {
 		traversedTree += "\n";
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
 		traversedTree += "/q\nQBF\n";	
-//		logger.debug("traversing finished, tree: " + traversedTree);
+		logger.debug("traversing finished");
 
-
-
-
-
-		// check if quantified vars still occur in formula since qpro is no
+	// TODO kick that vars out of eVars/vVars before building the traversed tree
+		// check if quantified vars stil occur in formula since qpro is no
 		// friend of such formulas
 		logger.debug("check if traversed formula is solvable by qpro");
 		if(t.isValid()) {
 			logger.debug("check ok, returning formula to qpro");
 			logger.debug(traversedTree);
 			return traversedTree;
-		}
-		
+		}		
 		logger.debug("check failed, sending fake formula to avoid qpro crash");
 		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";		
+	// TODO END
+
+
 	}	
 }

@@ -1,5 +1,5 @@
 waitforslave 2 qpro
-newjob testing/boole/assertion1_0_3-bin.qbf testing/assertion1_0_3-bin.out qpro simple
+newjob testing/boole/assertion2_0_7-bin.qbf testing/assertion2_0_7-bin.out qpro simple
 startjob 1
 waitforresult 1
 newjob testing/boole/008-020-03-04-028.ncf-bin.qbf testing/008-020-03-04-028.ncf-bin.out qpro simple
@@ -83,7 +83,7 @@ waitforresult 27
 newjob testing/boole/assertion1_0_6-bin.qbf testing/assertion1_0_6-bin.out qpro simple
 startjob 28
 waitforresult 28
-newjob testing/boole/assertion2_0_7-bin.qbf testing/assertion2_0_7-bin.out qpro simple
+newjob testing/boole/assertion1_0_3-bin.qbf testing/assertion1_0_3-bin.out qpro simple
 startjob 29
 waitforresult 29
 killallslaves
