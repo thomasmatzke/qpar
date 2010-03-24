@@ -319,26 +319,24 @@ public class SimpleNode implements Node, Serializable {
 		}
 		return false;
 	}
-
+	
 	/**
-	 * search for the occurance of at least one node with a var from vector v in
-	 * the tree
-	 * @param v a vector of integers representing var numbers
+	 * search for at least one occurance of car v in the tree
+	 * @param v the var to search for
 	 * @return true if at least one occurance, false otherwise
 	 */
-	public boolean findNodes(Vector<Integer> v) {
+	public boolean findVar(int v) {
 		int i;
 		boolean found = false;
 		
-		for (int x : v) {
-			if (this.jjtGetNumChildren() > 0) {
-				for (i = 0; i < this.jjtGetNumChildren(); i++) {
-					found = found || this.jjtGetChild(i).findNodes(v);
-				}
+		if (this.jjtGetNumChildren() > 0) {
+			for (i = 0; i < this.jjtGetNumChildren(); i++) {
+				found = found || this.jjtGetChild(i).findVar(v);
 			}
-			else {
-				if (this.var == x)
-					return true;
+		}
+		else {
+			if (this.var == v) {
+				found = true;
 			}
 		}
 		return found;
@@ -437,6 +435,31 @@ public class SimpleNode implements Node, Serializable {
       }
     }
   }
+  
+	// replaced by per-var search findVar(v)
+	//	/**
+	//	 * search for the occurance of at least one node with a var from vector v in
+	//	 * the tree
+	//	 * @param v a vector of integers representing var numbers
+	//	 * @return true if at least one occurance, false otherwise
+	//	 */
+	//	public boolean findNodes(Vector<Integer> v) {
+	//		int i;
+	//		boolean found = false;
+	//		
+	//		for (int x : v) {
+	//			if (this.jjtGetNumChildren() > 0) {
+	//				for (i = 0; i < this.jjtGetNumChildren(); i++) {
+	//					found = found || this.jjtGetChild(i).findNodes(v);
+	//				}
+	//			}
+	//			else {
+	//				if (this.var == x)
+	//					return true;
+	//			}
+	//		}
+	//		return found;
+	//	}  
 }
 
 /* JavaCC - OriginalChecksum=cd6460b90c70fa000dbb49fc278adf1f (do not edit this line) */

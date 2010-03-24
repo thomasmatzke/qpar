@@ -20,7 +20,7 @@ public interface Node {
 	public boolean	checkConnectionToRoot();
 	public void		deleteChildren();
 	public void		dump(String prefix);
-	public boolean	findNodes(Vector<Integer> v);
+	// public boolean	findNodes(Vector<Integer> v); // replaced by findVar(int v)
 	public int		getId();
 	public String	getOp();
 	public String	getTruthValue();
@@ -31,7 +31,8 @@ public interface Node {
 	public void		setTruthValue(String t);
 	public void		setVar(int v);
 	public String	traverse();
-
+	public boolean	findVar(int v);
+	
   /** This method is called after the node has been made the current
     node.  It indicates that child nodes can now be added to it. */
   public void jjtOpen();

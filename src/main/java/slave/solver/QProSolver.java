@@ -114,7 +114,8 @@ public class QProSolver implements Solver {
 		Vector<Integer> eVars = new Vector<Integer>();
 		Vector<Integer> aVars = new Vector<Integer>();
 		Vector<Integer> vars = new Vector<Integer>();
-
+		Vector<Integer> orphanedVars = new Vector<Integer>();
+		int i = 0;
 		String traversedTree = "";
 		
 		vars = t.getVars();
@@ -136,7 +137,7 @@ public class QProSolver implements Solver {
 
 		// maybe reducing the tree left us with a truth node only, then we have
 		// to give qpro a formula evaluating to that truth value
-		logger.debug("check if reduced to death");
+		logger.debug("check if reduced to a single truth value");
 		if (t.rootIsTruthNode()) {
 			if (t.rootGetTruthValue()) {
 				// a formula evaluating to true
@@ -147,34 +148,44 @@ public class QProSolver implements Solver {
 				logger.debug("reduced to death, sending fake false formula");
 			return "QBF\n3\nq\ne 2\na 3\nc\n2\n3\n/c\n/q\nQBF\n";
 		}
-		logger.debug("check if reduced to death finnished");
+		logger.debug("check finnished");
+		
+		// check if there are still occurences of all- and exist-quantified vars
+		// left in the tree after reducing. if not, remove them from aVars and eVars
+		logger.debug("check for orphaned quantified vars");
+		orphanedVars = t.getOrphanedVars();
+		for (i = 0; i < orphanedVars.size(); i++) {
+			if (aVars.contains(orphanedVars.get(i)))
+				aVars.remove(orphanedVars.get(i));
+			if (eVars.contains(orphanedVars.get(i)))
+				eVars.remove(orphanedVars.get(i));
+		}
+		logger.debug("check for orphaned quantified vars finished");		
 		
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
 		traversedTree += "\nQBF\n" + (vars.size()+1) + "\nq\n" + "a ";
-		for (int i=0; i < eVars.size(); i++)
+		for (i=0; i < eVars.size(); i++)
 			traversedTree += eVars.get(i) + " ";
 		traversedTree += "\n" + "e ";
-		for (int i=0; i < aVars.size(); i++)
+		for (i=0; i < aVars.size(); i++)
 			traversedTree += aVars.get(i) + " ";
 		traversedTree += "\n";
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
 		traversedTree += "/q\nQBF\n";	
-		logger.debug("traversing finished");
+		logger.debug("traversing finished, tree:" + traversedTree);
 
-	// TODO kick that vars out of eVars/vVars before building the traversed tree
-		// check if quantified vars stil occur in formula since qpro is no
-		// friend of such formulas
-		logger.debug("check if traversed formula is solvable by qpro");
-		if(t.isValid()) {
-			logger.debug("check ok, returning formula to qpro");
-			logger.debug(traversedTree);
-			return traversedTree;
-		}		
-		logger.debug("check failed, sending fake formula to avoid qpro crash");
-		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";		
-	// TODO END
+		return traversedTree;
 
-
+		// replaced by getOrphanedVars() since this was quite an ugly and error-prone hack
+		//		// check if quantified vars stil occur in formula since qpro is no
+		//		// friend of such formulas
+		//		logger.debug("check if traversed formula is solvable by qpro");
+		//		if(t.isValid()) {
+		//			logger.debug("check ok, returning formula to qpro");
+		//			logger.debug(traversedTree);
+		//		}		
+		//		logger.debug("check failed, sending fake formula to avoid qpro crash");
+		//		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";		
 	}	
 }

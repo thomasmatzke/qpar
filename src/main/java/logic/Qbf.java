@@ -44,8 +44,7 @@ public class Qbf {
 	private Vector<Integer> aVars = new Vector<Integer>();
 	public Vector<Integer> vars  = new Vector<Integer>();
 	private SimpleNode root = null;
-
-	private String op;
+	private String op; // TODO
 
 	/**
 	* constructor
@@ -266,15 +265,6 @@ public class Qbf {
 	public HashMap<Integer, Integer> getLiteralCount() {
 		return literalCount;
 	}
-
-// should be in the parser now
-//	/**
-//	* Syntax check for a QBF string. Always true for now.
-//	* @param filename Filename of the boole file
-//	*/
-//	public boolean checkQbfSyntax(String qbfString) {
-//		return true;
-//	}		
 
 	public void setHeuristic(Heuristic h) {
 		this.h = h;
