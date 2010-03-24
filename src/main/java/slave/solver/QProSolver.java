@@ -133,6 +133,17 @@ public class QProSolver implements Solver {
 		logger.debug("reducing started");
 		t.reduceTree();
 		logger.debug("reducing finished");
+
+		// maybe reducing the tree left us with a truth node only, then we have
+		// to give qpro a formula evaluating to that truth value
+		if (t.rootIsTruthNode()) {
+			if (t.rootGetTruthValue()) {
+				// a formula evaluating to true
+				return "QBF\n3\nq\ne 2\na 3\nd\n2\n3\n/d\n/q\nQBF\n";
+			}
+			// a formula evaluating to false
+			return "QBF\n3\nq\ne 2\na 3\nc\n2\n3\n/c\n/q\nQBF\n";
+		}
 		
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
@@ -146,6 +157,8 @@ public class QProSolver implements Solver {
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
 		traversedTree += "/q\nQBF\n";	
 //		logger.debug("traversing finished, tree: " + traversedTree);
+
+
 
 
 

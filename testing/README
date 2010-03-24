@@ -10,10 +10,3 @@ There are already 29 random formulas from the NPNCNF2008 qbflib collection
 although they need to be unzipped before running the convert.sh script, as well
 as the corresponding .qpro files in the qpro directory (zipped as well).
 
-Solving this 29 formulas with qpro took 
-
-
-
-on a Intel Core 2 Duo CPU T9550 @ 2.66GHz with 4GB of RAM (throttled to 2.13GHz
-after 11 formulas due to heat issues). Solving also had to be paused occasionaly
-to cool down the CPU.

@@ -167,6 +167,26 @@ public class TransmissionQbf implements Serializable {
 		return root.jjtGetChild(0).traverse();
 	}
 
+	/**
+	 * checks if the first node after the input node has a truth value assigned
+	 * @return true if the first node after input has a truth value, false otherwise
+	 */
+	public boolean rootIsTruthNode() {
+		if (root.jjtGetChild(0).getTruthValue().equals(""))
+			return false;
+		return true;
+	}
+
+	/**
+	 * returns the truth value of the formulas root node
+	 * @return a truth value
+	 */
+	public boolean rootGetTruthValue() {
+		if (root.jjtGetChild(0).getTruthValue().equals("TRUE"))
+			return true;
+		return false;	
+	}
+
 	// not needed anywhere
 	//	public static String allocateId() {
 	//		idCounter++;
