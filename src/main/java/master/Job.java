@@ -274,7 +274,7 @@ public class Job {
 				"Total secs: " + diff / 1000 + "\n" + 
 				"Solver: " + this.getSolver() + "\n" + 
 				"Heuristic: " + this.getHeuristic()+ "\n" +
-				"Result: " + (this.getResult() ? "Solvable" : "Not Solvable");
+				"Result: " + (this.getResult() ? "Solvable" : "Not Solvable") + "\n";
 				
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
