@@ -165,27 +165,17 @@ public class QProSolver implements Solver {
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
 		traversedTree += "\nQBF\n" + (vars.size()+1) + "\nq\n" + "a ";
-		for (i=0; i < eVars.size(); i++)
-			traversedTree += eVars.get(i) + " ";
-		traversedTree += "\n" + "e ";
 		for (i=0; i < aVars.size(); i++)
 			traversedTree += aVars.get(i) + " ";
+		traversedTree += "\n" + "e ";
+		for (i=0; i < eVars.size(); i++)
+			traversedTree += eVars.get(i) + " ";
 		traversedTree += "\n";
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
+
 		traversedTree += "/q\nQBF\n";	
 		logger.debug("traversing finished, tree:" + traversedTree);
 
 		return traversedTree;
-
-		// replaced by getOrphanedVars() since this was quite an ugly and error-prone hack
-		//		// check if quantified vars stil occur in formula since qpro is no
-		//		// friend of such formulas
-		//		logger.debug("check if traversed formula is solvable by qpro");
-		//		if(t.isValid()) {
-		//			logger.debug("check ok, returning formula to qpro");
-		//			logger.debug(traversedTree);
-		//		}		
-		//		logger.debug("check failed, sending fake formula to avoid qpro crash");
-		//		return "QBF\n4\nq\ne 2\na 3 4\nd\n 2 3 4\n\n/d\n/q\nQBF\n";		
 	}	
 }
