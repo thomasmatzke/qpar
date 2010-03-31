@@ -157,7 +157,7 @@ public class Shell implements Runnable{
 	}
 
 	/**
-	 * Syntax: WAITFORSALVE number_of_cores solverid
+	 * Syntax: WAITFORSLAVE number_of_cores solverid
 	 * @param token
 	 */
 	private void waitforslave(StringTokenizer token) {

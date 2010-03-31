@@ -1,15 +1,93 @@
 QPar - Distributed QBF-Solving
 
 Description
+QPar is a system for the distribution of the computation of quantified boolean 
+formulas (qbf) to multiple machines. QPar was initially designed to receive a 
+qbf in boole-format and distribute it to remote multicore hosts for 
+satisfiability-checking with qpro (http://big.tuwien.ac.at/staff/seidl/qpro/). 
+It can however be easily expanded to use other solvers and branching 
+heuristics.
 
-Usage
+Quickstart:
+1.	Master Setup
+Choose a control-host, which is reachable from all slave-hosts
+1.1	Edit a batch-file, like below
 
-	GUI
-		BROKEN :-(
-		
-	Interactive Shell
+-- my_batch_file.txt
+waitforslave 2 qpro
+newjob PATH_TO_YOUR_QBF PATH_TO_RESULT_SUMMARY qpro {simple|rand|litcount}
+startjob 1
+waitforresult 1
+killallslaves
+quit
+--
 
-	Batch files
+This will tell the master daemon to
+- Wait until 2 cores come available which provide the qpro solver
+- Create a new job with parameters. You have to choose a heuristic (simple, etc)
+- Start the job created above. Ids start at 1, and are incremented by 1
+- Wait until we have a result for the job with Id 1
+- Shutdown all registered remote slave hosts (the daemons not the machines)
+- Shutdown the master daemon
+
+1.2 Start the master daemon
+./qpar_master.sh -i=PATH_TO_MY_BATCH_FILE [-log={debug|info}]
+Its waiting for the slaves to register now
+
+2. Slave Setup
+2.1 Connect to the waiting master
+./qpar_slave.sh tcp://MASTERS_IP_ADDRESS:61616 [-log={debugg|info}]
+
+3. Result
+The result should be in your specified file, together with some stats
+
+GUI
+	The master can be started with the "-gui" option. The gui gives some 
+	basic functionality as starting, stopping and creation of jobs. There 
+	is also an overview of registered slaves.
+	 	
+Interactive Shell & Batch files
+	Batch files specified by the "-i"- parameter use the same interpreter as the 
+	interactive shell. The interactive shell is started by default, if no "-gui" 
+	or "-i" parameter was given. Available commands include (case insensitive):
+	NEWJOB path_to_formula path_to_outputfile solverid heuristic
+	Creates a new job.
+	
+	STARTJOB
+	Starts the job with the specified id.
+	
+	ABORTJOB jobid
+	Aborts the job with the specified id.
+	
+	VIEWJOBS
+	Shows a list of Jobs.
+	
+	KILLSLAVE hostname
+	Kills the slavedaemon on the specified host.
+	
+	VIEWSLAVES
+	Shows a list of registered slaves.
+	
+	WAITFORSLAVE number_of_cores solverid
+	Halts execution until at least the specified number of cores providing the 
+	solver are registered.
+	
+	KILLALLSLAVES
+	Kills the slavedaemon on all registered hosts.
+	
+	HELP
+	Show a help message.
+	
+	QUIT
+	Terminates the masterdaemon.
+	
+	SOURCE path_to_file
+	Sources a specified file (batchfile)
+	
+	WAITFORRESULT jobid
+	Pauses execution until a result for the specified job is available
+	
+	
 	
 Testing
 
