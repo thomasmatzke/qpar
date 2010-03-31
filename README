@@ -1,7 +1,7 @@
 QPar - Distributed QBF-Solving
 
 Description
-QPar is a system for the distribution of the computation of quantified boolean 
+QPar is a system for the distributed computation of quantified boolean 
 formulas (qbf) to multiple machines. QPar was initially designed to receive a 
 qbf in boole-format and distribute it to remote multicore hosts for 
 satisfiability-checking with qpro (http://big.tuwien.ac.at/staff/seidl/qpro/). 
@@ -11,6 +11,7 @@ heuristics.
 Quickstart:
 1.	Master Setup
 Choose a control-host, which is reachable from all slave-hosts
+
 1.1	Edit a batch-file, like below
 
 -- my_batch_file.txt
@@ -87,8 +88,31 @@ Interactive Shell & Batch files
 	WAITFORRESULT jobid
 	Pauses execution until a result for the specified job is available
 	
-	
-	
 Testing
+	For testing purposes, there are already a couple of formulas in boole format
+	available in the "testing/boole" directory. For convenience, these are
+	accompanied by three shell scripts, described below. The scripts require the
+	tools "boole2qpro" in "testing" as well as "qpro" somewhere in $PATH (both
+	tools are available at http://big.tuwien.ac.at/staff/seidl/qpro/dl.html).
+	
+	The scripts are quite straightforward and can be easily adapted to future
+	versions of QPar, supporting more in- and output formats.
 
+	The scripts are:
+
+	* convert_boole_to_qpro.sh
+	This script takes the .qbf formulas in boole format from the testing/boole"
+	directory and converts them to formulas in the qpro input format. After
+	conversion, they are stored in the qpro directory. The filenames are changed
+	accordingly (e.g.: a_formula.qbf -> a_formula.qpro).
+
+	* solve_qpro.sh
+	This script takes every formula from the "testing/qpro" directory and runs
+	them through qpro. Results are printed on stdout.
+
+	* createbatch_boole.sh
+	This script creates a batchfile for all formulas in "testing/boole" which
+	will place result files in "testing" (e.g. testing/boole/formula.qbf ->
+	testing/formula.out). The script prints to stdout as well, so redirecting
+	the output to a file may be necessary.
 
