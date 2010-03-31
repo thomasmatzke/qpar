@@ -76,7 +76,7 @@
     </target>
     <target name="Master_batch">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
-            <arg line="-i=batch.txt -log=debug"/>
+            <arg line="-i=batch.txt -log=debug -Xss=1024m"/>
             <classpath refid="QPar.classpath"/>
         </java>
     </target>

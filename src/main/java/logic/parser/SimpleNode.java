@@ -22,10 +22,10 @@ public class SimpleNode implements Node, Serializable {
 	protected Node parent;
 	protected Node[] children;
 
-	public int id; // TODO check if needed
-	public int var = -1; // -1 = not a var node
-	public String op = ""; // "" = not an operator node
-	public String truthValue = ""; // "" = not truth assigned
+	public int id; 					// TODO check if needed
+	public int var = -1; 			// -1 = not a var node
+	public String op = "";			// "" = not an operator node
+	public String truthValue = "";	// "" = not truth assigned
 
 	/**
 	 * constructor
@@ -79,6 +79,68 @@ public class SimpleNode implements Node, Serializable {
 	}
 
 	/**
+	 * Collects negative literals as long as they're children of nodes with the given
+	 * && or || operator
+	 * @return A vector of negative literals
+	 * @param op The operator the negative literals should be children of
+	 * @param v  A vector of all already collected negative literals
+	 */
+	public Vector<Integer> getPositiveLiterals(String op, Vector<Integer> v) {
+		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
+			// if the child is a var node, just add the var number
+			if (this.jjtGetChild(i).getVar() > -1) {
+				v.add(this.jjtGetChild(i).getVar());
+			}
+
+			// nested con/disjunction, go deeper in the tree and collect literals there
+			if (this.jjtGetChild(i).getOp().equals(op)) {
+ 				v = (this.jjtGetChild(i).getPositiveLiterals(op, v));
+			}
+		}
+		return v;
+	}
+
+	/**
+	 * Collects positive literals as long as they're children of nodes with the given
+	 * && or || operator
+	 * @return A vector of positive literals
+	 * @param op The operator the positive literals should be children of
+	 * @param v  A vector of all already collected positive literals
+	 */
+	public Vector<Integer> getNegativeLiterals(String op, Vector<Integer> v) {
+		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
+			// if the child is a var node, just add the var number
+			if (this.jjtGetChild(i).getOp().equals("!")) {
+				v.add(this.jjtGetChild(i).jjtGetChild(0).getVar());
+			}
+
+			// nested con/disjunction, go deeper in the tree and collect literals there
+			if (this.jjtGetChild(i).getOp().equals(op)) {
+ 				v = (this.jjtGetChild(i).getNegativeLiterals(op, v));
+			}
+		}
+		return v;
+	}
+
+	/**
+	 * This gets enclosed formulas
+	 * @return A qpro formatted subformula
+	 * @param op ICH KENN MICH GRAD SELBST NICHT MEHR AUS :) TODO
+	 */
+	public String getEnclosedFormula(String op) {
+		String tmp = "";
+		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
+			if (this.jjtGetChild(i).getOp().equals(op)) {
+				tmp += this.jjtGetChild(i).traverse();
+			}
+			else {
+				tmp += this.jjtGetChild(i).getEnclosedFormula(op);
+			}
+		}
+		return tmp;
+	}
+
+	/**
 	* traverse tree goes through all children of a node and builds a String
 	* in .qpro format
 	* @return A String in qpro format
@@ -92,78 +154,46 @@ public class SimpleNode implements Node, Serializable {
 		String negatedPartialTree = "";
 		String enclosedPartialTree = "";
 		int i = 0;	
+		Vector<Integer> posLiterals = new Vector<Integer>();
+		Vector<Integer> negLiterals = new Vector<Integer>();
 		int numChildren = this.jjtGetNumChildren();
-					
-		if (numChildren > 0) { // we're not in a leaf node		
-			if (this.getOp().equals("|")) {
-				traversedTree += "d\n";
-				for (i = 0; i < numChildren; i++) {
-					if (this.jjtGetChild(i).getVar() > -1) {	
-						partialTree += this.jjtGetChild(i).traverse();						
-					}					
-					else if (this.jjtGetChild(i).getOp().equals("!")) {
-						negatedPartialTree += this.jjtGetChild(i).jjtGetChild(0).traverse();						
-					}					
-					else { // the child node is another op node
-						if (this.jjtGetChild(i).getOp().equals("|")) {	
-							// if we have two consequent OR nodes we have to
-							// do some voodoo
-							tmp += this.jjtGetChild(i).traverse();	
-							tmpList = tmp.split("\n");
-							partialTree += tmpList[1];
-							negatedPartialTree += tmpList[2];
-//							System.out.println("TMPLIST" + tmpList.length);
-//							System.out.println(tmpList[0]);
-//							System.out.println(tmpList[1]);
-//							System.out.println(tmpList[2]);
-//							System.out.println(tmpList[3]);
-//							enclosedPartialTree += tmp;
-						}
-						else {
-							enclosedPartialTree += this.jjtGetChild(i).traverse();							
-						}
-					}
-				}	
-				traversedTree += partialTree + "\n" + negatedPartialTree + "\n" + enclosedPartialTree + "/d\n";
-			}
-			else if (this.getOp().equals("&")) {
-				traversedTree += "c\n";
-				for (i = 0; i < numChildren; i++) {
-					if (this.jjtGetChild(i).getVar() > -1) {
-						partialTree += this.jjtGetChild(i).traverse();						
-					}					
-					else if (this.jjtGetChild(i).getOp().equals("!")) {
-						negatedPartialTree += this.jjtGetChild(i).jjtGetChild(0).traverse();						
-					}
-					else { // the child node is another op node
-						if (this.jjtGetChild(i).getOp().equals("&")) {	
-							// if we have two consequent OR nodes we have to
-							// do some voodoo
-							tmp += this.jjtGetChild(i).traverse();	
-							tmpList = tmp.split("\n");
-							partialTree += tmpList[1];
-							negatedPartialTree += tmpList[2];
-//							System.out.println("TMPLIST" + tmpList.length);
-//							System.out.println(tmpList[0]);
-//							System.out.println(tmpList[1]);
-//							System.out.println(tmpList[2]);
-//							System.out.println(tmpList[3]);
-//							enclosedPartialTree += tmp;
-						}
-						else {
-							enclosedPartialTree += this.jjtGetChild(i).traverse();							
-						}
-					}
-				}	
-				traversedTree += partialTree + "\n" + negatedPartialTree + "\n" + enclosedPartialTree + "/c\n";
-			}
-		}
-		else { // we're in a leaf node...
-			if (truthValue.equals("")) {
-				// ...but not a truth-assigned one, so just let's add and return the var number 
+
+		if (this.getOp().equals("&")) {
+			traversedTree += "c\n";
+			posLiterals = (this.getPositiveLiterals("&", posLiterals));
+			negLiterals = (this.getNegativeLiterals("&", negLiterals));
+
+			for (int var : posLiterals)
 				traversedTree += var + " ";
-			}
+			traversedTree += "\n";
+			
+			for (int var : negLiterals)
+				traversedTree += var + " ";
+			traversedTree += "\n";
+
+			traversedTree += this.getEnclosedFormula("|");
+			
+			traversedTree += "/c\n";
 		}
+		
+		if (this.getOp().equals("|")) {
+			traversedTree += "d\n";
+			posLiterals = (this.getPositiveLiterals("|", posLiterals));
+			negLiterals = (this.getNegativeLiterals("|", negLiterals));
+			
+			for (int var : posLiterals)
+				traversedTree += var + " ";
+			traversedTree += "\n";
+			
+			for (int var : negLiterals)
+				traversedTree += var + " ";
+			traversedTree += "\n";
+
+			traversedTree += this.getEnclosedFormula("&");
+
+			traversedTree += "/d\n";		
+		}
+		
 		return traversedTree;
 	}
 
@@ -435,31 +465,6 @@ public class SimpleNode implements Node, Serializable {
       }
     }
   }
-  
-	// replaced by per-var search findVar(v)
-	//	/**
-	//	 * search for the occurance of at least one node with a var from vector v in
-	//	 * the tree
-	//	 * @param v a vector of integers representing var numbers
-	//	 * @return true if at least one occurance, false otherwise
-	//	 */
-	//	public boolean findNodes(Vector<Integer> v) {
-	//		int i;
-	//		boolean found = false;
-	//		
-	//		for (int x : v) {
-	//			if (this.jjtGetNumChildren() > 0) {
-	//				for (i = 0; i < this.jjtGetNumChildren(); i++) {
-	//					found = found || this.jjtGetChild(i).findNodes(v);
-	//				}
-	//			}
-	//			else {
-	//				if (this.var == x)
-	//					return true;
-	//			}
-	//		}
-	//		return found;
-	//	}  
 }
 
 /* JavaCC - OriginalChecksum=cd6460b90c70fa000dbb49fc278adf1f (do not edit this line) */

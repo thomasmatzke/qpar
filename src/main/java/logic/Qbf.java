@@ -39,13 +39,13 @@ public class Qbf {
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
 	private Vector<Integer> decisionVars = new Vector<Integer>();
-	private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();	
+	private HashMap<Integer, Integer> literalCount = new HashMap<Integer, Integer>();	
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();
 	public Vector<Integer> vars  = new Vector<Integer>();
 	private SimpleNode root = null;
 	private String op; // TODO
-
+	private DTNode dtroot = null;
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
@@ -100,7 +100,7 @@ public class Qbf {
 	* @param n Number of subformulas to return
 	* @return A list of n TransmissionQbfs, each a subformula of the whole QBF
 	*/
-	public List<TransmissionQbf> splitQbf(int n, Heuristic h) {
+	public synchronized List<TransmissionQbf> splitQbf(int n, Heuristic h) {
 		int i,j;
 		TransmissionQbf tmp;
 		Vector<Integer> tempVars = new Vector<Integer>();
@@ -116,7 +116,6 @@ public class Qbf {
 		for(i = 0; i < numVarsToChoose; i++) {
 			decisionVars.add(tempVars.get(i));
 		
-		
 			if (aVars.contains(tempVars.get(i))) {
 				op = "F";
 			}
@@ -125,8 +124,13 @@ public class Qbf {
 			}
 		
 		}
+
 		// generating a truth table
-		for (j = 0; j < numVarsToChoose; j++) decisionArray[0][j] = true;
+		logger.debug("generating truth table");
+		for (j = 0; j < numVarsToChoose; j++) {
+			decisionArray[0][j] = true;
+			logger.debug(decisionArray[0][j]);
+		}
 
 		for(i = 1; i < n; i++) {
 			for(j = 0; j < numVarsToChoose; j++) {
@@ -136,7 +140,16 @@ public class Qbf {
 				else {
 					decisionArray[i][j] = decisionArray[i-1][j];
 				}
+				logger.debug(decisionArray[i][j]);
 			}
+			logger.debug("------");
+		}
+
+		// generating an en empty decision tree
+		dtroot = new DTNode();
+		DTNode[] leafNodes = new DTNode[n];
+		for (i = 0; i < n; i++) {
+			leafNodes[i] = new DTNode((id * 1000 + i));												
 		}
 
 		// generating n TransmissionQBFs
@@ -179,7 +192,9 @@ public class Qbf {
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
 	public synchronized boolean mergeQbf(String id, boolean result) {
-//		resultAvailable.set(id, true);
+		resultAvailable.set((Integer.valueOf(id) - (this.id * 1000)), true);
+		qbfResults.set((Integer.valueOf(id) - (this.id * 1000)),result);
+
 //		Node op1 = solvingTree.search(id);
 //		Node operand = solvingTree.getParentNode(op1);
 //		Node op2 = solvingTree.getSibling(op1);
@@ -213,24 +228,18 @@ public class Qbf {
 		// to TRUE and qbfResult(id) to result
 	
 		// for testing
-		
-		qbfResults.add(result);
+		logger.debug("incoming result, id: " + id + ", value: " + result + " saved at " +(Integer.valueOf(id) - (this.id * 1000)));
 		
 		receivedResults++;
 		if (receivedResults < subQbfs.size())
 			return false;	
 
-
-
 		solved = true;
 
-
 		if (op.equals("E")){
-		logger.debug("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
 			satisfiable = qbfResults.get(0) || qbfResults.get(1);
 		}
 		else {
-		logger.debug("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 			satisfiable = qbfResults.get(0) && qbfResults.get(1);	
 		}
 
@@ -241,7 +250,7 @@ public class Qbf {
 	* getter method for solved
 	* @return TRUE if there's a result, FALSE otherwise
 	*/
-	public boolean isSolved() {
+	public synchronized boolean isSolved() {
 		// if solved = FALSE, go through the list of unused results and, if
 		// there are any, merge them. Then check again for solved and return it.
 		if (solved == false) {
@@ -258,7 +267,7 @@ public class Qbf {
 	* getter method for satisfiable
 	* @return TRUE the QBF is satisfiable, FALSE if not
 	*/
-	public boolean getResult() {
+	public synchronized  boolean getResult() {
 		return satisfiable;
 	}
 

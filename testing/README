@@ -5,8 +5,8 @@ boole2qpro) to .qpro files stored in the qpro directory.
 The solve.sh script will run all the files in the qpro directory through qpro
 (outputting the results to stdout).
 
-There are already 29 random formulas from the NPNCNF2008 qbflib collection
-(http://www.qbflib.org/NPNCNF2008.tar.gz ~500MB) in the boole directory,
-although they need to be unzipped before running the convert.sh script, as well
-as the corresponding .qpro files in the qpro directory (zipped as well).
+The createbatch.sh creates a batch.txt file (output on stdout, so it shoud be
+redirected to batch.txt in the parent directory).
 
+There are already some random formulas from the NPNCNF2008 qbflib collection
+(http://www.qbflib.org/NPNCNF2008.tar.gz) in the boole directory.

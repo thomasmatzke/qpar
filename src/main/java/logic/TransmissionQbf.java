@@ -135,11 +135,7 @@ public class TransmissionQbf implements Serializable {
 		for (i = 0; i < this.trueVars.size(); i++) {
 			root.assignTruthValue(this.trueVars.get(i), true);
 		}
-		for (i = 0; i <	/**
-	 * returns the truth value of the formulas root node
-	 * @return a truth value
-	 */
- this.falseVars.size(); i++) {
+		for (i = 0; i < this.falseVars.size(); i++) {
 			root.assignTruthValue(this.falseVars.get(i), false);
 		}
 	}
@@ -218,21 +214,6 @@ public class TransmissionQbf implements Serializable {
 	public void setRootNode(SimpleNode n) {
 		this.root = n;
 	}
-	
-	// not needed anywhere
-	//	public static String allocateId() {
-	//		idCounter++;
-	//		return new Integer(idCounter).toString();
-	//	}
-
-	// probably useless now, since orphaned vars get removed from aVars & eVars
-	//	/**
-	//	 * checks if quantified vars still occur in the tree
-	//	 * @return true if they're still there, false otherwise
-	//	 */	
-	//	public boolean isValid() {
-	//		return (root.findNodes(eVars) || root.findNodes(aVars));
-	//	}
 }	
 
 

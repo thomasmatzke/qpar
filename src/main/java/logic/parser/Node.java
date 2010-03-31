@@ -32,7 +32,9 @@ public interface Node {
 	public void		setVar(int v);
 	public String	traverse();
 	public boolean	findVar(int v);
-	
+	public String getEnclosedFormula(String op);
+	public Vector<Integer> getPositiveLiterals(String op, Vector<Integer> v);
+	public Vector<Integer> getNegativeLiterals(String op, Vector<Integer> v);
   /** This method is called after the node has been made the current
     node.  It indicates that child nodes can now be added to it. */
   public void jjtOpen();
