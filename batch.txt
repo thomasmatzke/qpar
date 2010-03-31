@@ -1,5 +1,5 @@
 waitforslave 2 qpro
-newjob testing/boole/semaphore_2-bin.qbf testing/semaphore_2-bin.out qpro simple
+newjob testing/boole/ring4_4-bin.qbf testing/ring4_4-bin.out qpro simple
 startjob 1
 waitforresult 1
 killallslaves

@@ -172,7 +172,6 @@ public class QProSolver implements Solver {
 			traversedTree += eVars.get(i) + " ";
 		traversedTree += "\n";
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
-
 		traversedTree += "/q\nQBF\n";	
 		logger.debug("traversing finished, tree:" + traversedTree);
 

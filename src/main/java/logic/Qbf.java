@@ -45,7 +45,7 @@ public class Qbf {
 	public Vector<Integer> vars  = new Vector<Integer>();
 	private SimpleNode root = null;
 	private String op; // TODO
-
+	private DTNode dtroot = null;
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
@@ -124,8 +124,13 @@ public class Qbf {
 			}
 		
 		}
+
 		// generating a truth table
-		for (j = 0; j < numVarsToChoose; j++) decisionArray[0][j] = true;
+		logger.debug("generating truth table");
+		for (j = 0; j < numVarsToChoose; j++) {
+			decisionArray[0][j] = true;
+			logger.debug(decisionArray[0][j]);
+		}
 
 		for(i = 1; i < n; i++) {
 			for(j = 0; j < numVarsToChoose; j++) {
@@ -135,7 +140,16 @@ public class Qbf {
 				else {
 					decisionArray[i][j] = decisionArray[i-1][j];
 				}
+				logger.debug(decisionArray[i][j]);
 			}
+			logger.debug("------");
+		}
+
+		// generating an en empty decision tree
+		dtroot = new DTNode();
+		DTNode[] leafNodes = new DTNode[n];
+		for (i = 0; i < n; i++) {
+			leafNodes[i] = new DTNode((id * 1000 + i));												
 		}
 
 		// generating n TransmissionQBFs

@@ -24,6 +24,34 @@ public class DTNode {
 		this.id = id;
 	}
 
+	public DTNode() {
+	}
+
+	public DTNode getNode(int id) {
+		if (this.id == id) {
+			return this;
+		}
+		else {
+			DTNode tmp;
+			tmp = this.leftChild.getNode(id);
+			if (tmp.getId() == id)
+				return tmp;
+			tmp = this.rightChild.getNode(id);
+			if (tmp.getId() == id)
+				return tmp;
+			return null;
+		}
+	}
+	
+	public void addChild(DTNode n) {
+		if (this.leftChild == null) {
+			this.leftChild = n;
+		}
+		else if (this.rightChild == null) {
+			this.rightChild = n;
+		}
+	}
+
 	// getter & setter
 	public int getId() {
 		return this.id;
