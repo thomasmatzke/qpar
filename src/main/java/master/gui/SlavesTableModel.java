@@ -31,7 +31,7 @@ public class SlavesTableModel extends AbstractTableModel {
 
 	
 	public Object getValueAt(int row, int col) {
-		Slave slave = Slave.getSlaves().get(row);
+		Slave slave = new Vector<Slave>(Slave.getSlaves().values()).get(row);
 		switch (col) {
 		case 0:
 			return slave.getHostName();

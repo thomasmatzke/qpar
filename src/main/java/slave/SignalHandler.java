@@ -29,11 +29,13 @@ public class SignalHandler implements sun.misc.SignalHandler {
 		for(Solver t : threads.values()) {
 			t.kill();
 		}
-		logger.info("Informing MasterDaemon...");
-				
-		SlaveDaemon.master.sendShutdownMessage("Cought Signal " + sig.getName());
-		logger.info("Shutting down...");
-		SlaveDaemon.master.disconnect();
+		if(SlaveDaemon.master.isConnected()) {
+			logger.info("Informing MasterDaemon...");
+			SlaveDaemon.master.sendShutdownMessage("Cought Signal " + sig.getName());
+			logger.info("Shutting down...");
+			SlaveDaemon.master.disconnect();
+		}
+		System.exit(0);
 	}
 
 }

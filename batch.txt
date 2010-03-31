@@ -1,6 +1,12 @@
 waitforslave 2 qpro
-newjob testing/boole/ring4_4-bin.qbf testing/ring4_4-bin.out qpro simple
+newjob testing/boole/ring4_4-bin.qbf testing/ring4_4-bin.simple.out qpro simple
 startjob 1
 waitforresult 1
+newjob testing/boole/ring4_4-bin.qbf testing/ring4_4-bin.rand.out qpro rand
+startjob 2
+waitforresult 2
+newjob testing/boole/ring4_4-bin.qbf testing/ring4_4-bin.litcount.out qpro litcount
+startjob 3
+waitforresult 3
 killallslaves
 quit

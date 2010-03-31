@@ -36,6 +36,21 @@ public class Job {
 		logger.setLevel(QPar.logLevel);
 	}
 	
+	public static String getStatusDescription(int status) {
+		switch(status) {
+			case READY:
+				return "Ready";
+			case RUNNING:
+				return "Running";
+			case COMPLETE:
+				return "Complete";
+			case ERROR:
+				return "Error";
+			default:
+				return "undefined";
+		}
+	}
+	
 	private static void addJob(Job job) {
 		jobs.put(job.id, job);
 		if (tableModel != null) {
@@ -271,7 +286,8 @@ public class Job {
 		txt = 	"Job Id: " + this.getId() + "\n" +
 				"Started at: " + this.getStartedAt() + "\n" +
 				"Stopped at: " + this.getStoppedAt() + "\n" +
-				"Total secs: " + diff / 1000 + "\n" + 
+				"Total secs: " + diff / 1000 + "\n" +
+				"In millis: " + diff + "\n" +
 				"Solver: " + this.getSolver() + "\n" + 
 				"Heuristic: " + this.getHeuristic()+ "\n" +
 				"Result: " + (this.getResult() ? "Solvable" : "Not Solvable") + "\n";

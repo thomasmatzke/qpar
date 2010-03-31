@@ -44,7 +44,6 @@ public class ProgramWindow extends JFrame {
 	private JButton killSlaveButton = null;
 	private JButton newJobButton = null;
 	private JMenuItem quitMenuItem = null;
-	private JButton showSlaveInfoButton = null;
 	private JPanel slavesActionPanel = null;
 	private JPanel slavesPanel = null;
 	private JScrollPane slavesScrollPane = null;
@@ -281,19 +280,6 @@ public class ProgramWindow extends JFrame {
 	}
 
 	/**
-	 * This method initializes showSlaveInfoButton
-	 * 
-	 * @return javax.swing.JButton
-	 */
-	private JButton getShowSlaveInfoButton() {
-		if (showSlaveInfoButton == null) {
-			showSlaveInfoButton = new JButton();
-			showSlaveInfoButton.setText("Show Slave Info");
-		}
-		return showSlaveInfoButton;
-	}
-
-	/**
 	 * This method initializes slavesActionPanel
 	 * 
 	 * @return javax.swing.JPanel
@@ -303,8 +289,6 @@ public class ProgramWindow extends JFrame {
 			slavesActionPanel = new JPanel();
 			slavesActionPanel.setLayout(new GridBagLayout());
 			slavesActionPanel.add(getKillSlaveButton(),
-					new GridBagConstraints());
-			slavesActionPanel.add(getShowSlaveInfoButton(),
 					new GridBagConstraints());
 		}
 		return slavesActionPanel;
@@ -392,25 +376,7 @@ public class ProgramWindow extends JFrame {
 			}
 		}
 	}	
-
-	/**
-	 * This method initializes viewJobButton
-	 * 
-	 * @return javax.swing.JButton
-	 */
-	private JButton getViewJobButton() {
-		if (viewJobButton == null) {
-			viewJobButton = new JButton();
-			viewJobButton.setText("View Job");
-			viewJobButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent e) {
-					
-				}
-			});
-		}
-		return viewJobButton;
-	}
-
+	
 	/**
 	 * This method initializes this
 	 * 

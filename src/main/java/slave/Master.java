@@ -64,7 +64,7 @@ public class Master {
 
 	private MessageProducer producer_snd;
 
-	private boolean run;
+	private boolean run, connected;
 
 	private Session session;
 
@@ -72,6 +72,10 @@ public class Master {
 
 	public Master() {
 		logger.setLevel(QPar.logLevel);
+	}
+	
+	public boolean isConnected() {
+		return connected;
 	}
 	
 	/**
@@ -84,7 +88,6 @@ public class Master {
 		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(
 				user, password, url);
 		try {
-			boolean connected  = false;
 			while(!connected) {
 				try {
 					connection = connectionFactory.createConnection();
