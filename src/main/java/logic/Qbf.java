@@ -243,13 +243,6 @@ public class Qbf {
 			satisfiable = qbfResults.get(0) && qbfResults.get(1);	
 		}
 
-logger.debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-logger.debug(satisfiable);
-logger.debug(qbfResults.get(0));
-logger.debug(qbfResults.get(1));
-logger.debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
-
 		return true;
 	}
 
