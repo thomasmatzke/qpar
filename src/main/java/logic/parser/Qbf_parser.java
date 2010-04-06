@@ -7,11 +7,16 @@ import java.io.*;
 
 public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Serializable, Qbf_parserConstants {/*@bgen(jjtree)*/
   protected JJTQbf_parserState jjtree = new JJTQbf_parserState();
-        private static Vector<Integer> eVars = new Vector<Integer>();
-        private static Vector<Integer> aVars = new Vector<Integer>();
-        private static Vector<Integer> vars  = new Vector<Integer>();
-        private static HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
-        private static SimpleNode root;
+        private Vector<Integer> eVars = new Vector<Integer>();
+        private Vector<Integer> aVars = new Vector<Integer>();
+        private Vector<Integer> vars  = new Vector<Integer>();
+        private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
+        private SimpleNode root;
+
+        public Qbf_parser() {
+                jjtree.reset();
+        }
+
 
         public HashMap<Integer, Integer> getLiteralCount() {
                 return this.literalCount;
@@ -129,7 +134,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                 // Stripping down the variable name to a number (e.g. "v123" -> 123 and
                 // adding it to a vector containing all variable numbers as well as to a
                 // vector with all exist- or allquantified variables (that's the reason
-                // for the funny String s fallthrough)
+                // for the funny String s fallthrough) TODO comment
                 String varName = t.image.replaceAll("[a-z]*","");
                 int varNumber = Integer.valueOf(varName).intValue();
                 varNumber++;
@@ -166,7 +171,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                 // Stripping down the variable name to a number (e.g. "v123" -> 123 and
                 // adding it to a vector containing all variable numbers as well as to a
                 // vector with all exist- or allquantified variables (that's the reason
-                // for the funny String s fallthrough)
+                // for the funny String s fallthrough) TODO comment
                 String varName = t.image.replaceAll("[a-z]*","");
                 int varNumber = Integer.valueOf(varName).intValue();
                 varNumber++;
