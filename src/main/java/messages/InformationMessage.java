@@ -15,27 +15,33 @@ public class InformationMessage implements Serializable {
 	private Vector<String> toolIds;
 	private String hostName;
 
+	public InformationMessage(int cores, Vector<String> toolIds, String hostName) {
+		this.cores 		= cores;
+		this.toolIds 	= toolIds;
+		this.hostName 	= hostName;
+	}
+	
 	public String getHostName() {
 		return hostName;
 	}
 
-	public void setHostName(String hostName) {
-		this.hostName = hostName;
-	}
+//	public void setHostName(String hostName) {
+//		this.hostName = hostName;
+//	}
 
 	public int getCores() {
 		return cores;
 	}
 
-	public void setCores(int cores) {
-		this.cores = cores;
-	}
+//	public void setCores(int cores) {
+//		this.cores = cores;
+//	}
 
 	public Vector<String> getToolIds() {
 		return toolIds;
 	}
 
-	public void setToolIds(Vector<String> toolIds) {
-		this.toolIds = toolIds;
-	}
+//	public void setToolIds(Vector<String> toolIds) {
+//		this.toolIds = toolIds;
+//	}
 }

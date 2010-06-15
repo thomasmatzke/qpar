@@ -11,19 +11,24 @@ public class ResultMessage implements Serializable {
 	private String tqbfId;
 	private boolean result;
 
+	public ResultMessage(String tqbfId, boolean result) {
+		this.tqbfId = tqbfId;
+		this.result = result;
+	}
+	
 	public String getTqbfId() {
 		return tqbfId;
 	}
 
-	public void setTqbfId(String tqbfId) {
-		this.tqbfId = tqbfId;
-	}
+//	public void setTqbfId(String tqbfId) {
+//		this.tqbfId = tqbfId;
+//	}
 
 	public boolean getResult() {
 		return result;
 	}
 
-	public void setResult(boolean result) {
-		this.result = result;
-	}
+//	public void setResult(boolean result) {
+//		this.result = result;
+//	}
 }

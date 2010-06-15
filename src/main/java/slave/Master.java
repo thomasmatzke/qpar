@@ -117,7 +117,12 @@ public class Master {
 					+ e);
 			System.exit(-1);
 		}
-		sendInformationMessage(producer_reg);
+		try {
+			sendInformationMessage(producer_reg);
+		} catch (UnknownHostException e) {
+			logger.error("Error while getting hostname: \n"	+ e);
+			disconnect();
+		}
 		logger.info("Connection extablished. Queues, Consumers, Producers created.");
 	}
 
@@ -145,10 +150,11 @@ public class Master {
 	 * @param m
 	 */
 	private void handleAbortMessage(AbortMessage m) {
+		logger.info("Received AbortMessage. TQbfId: " + m.getQbfId());
 		Solver thread = SlaveDaemon.getThreads().get(m.getQbfId());
-		thread.kill();
+		if(thread != null)
+			thread.kill();
 		SlaveDaemon.getThreads().remove(m.getQbfId());
-		this.sendFormulaAbortedMessage(m.getQbfId());
 	}
 
 	/**
@@ -156,7 +162,7 @@ public class Master {
 	 * @param m
 	 */
 	private void handleFormulaMessage(FormulaMessage m) {
-		
+		logger.info("Received FormulaMessage. TQbfId: " + m.getFormula().getId());
 		Solver solver = SolverFactory.getSolver(m.getSolver());
 		solver.setTransmissionQbf(m.getFormula());
 		solver.setMaster(this);
@@ -169,9 +175,21 @@ public class Master {
 	 * Sends basic information of the slave to the master. Currently only 
 	 * the number of available cores
 	 * @param m
+	 * @throws UnknownHostException 
 	 */
 	private void handleInformationRequestMessage(InformationRequestMessage m) {
-		this.sendInformationMessage();
+		logger.info("Received InformationRequestMessage.");
+		try {
+			this.sendInformationMessage();
+		} catch (UnknownHostException e) {
+			// Being here means at startup the Host was known, but now it isnt
+			// Probably best to panic and get outta here...
+			logger.error("Shutting down; Error while getting hostname: \n"	+ e);
+			for (Solver t : SlaveDaemon.getThreads().values()) {
+				t.kill();
+			}
+			this.run = false;
+		}
 	}
 
 	/**
@@ -181,8 +199,8 @@ public class Master {
 	 */
 	private void handleKillMessage(KillMessage m) {
 		logger.info("Received KillMessage. Killing Workerthreads...");
-		Hashtable<String, Solver> threads = SlaveDaemon.getThreads();
-		for (Solver t : threads.values()) {
+		
+		for (Solver t : SlaveDaemon.getThreads().values()) {
 			t.kill();
 		}
 		this.sendShutdownMessage("Kill requested by Masterserver");
@@ -228,8 +246,7 @@ public class Master {
 	 */
 	public void sendFormulaAbortedMessage(String tqbfId) {
 		logger.info("Sending AbortConfirmMessage... tqbfID: " + tqbfId);
-		FormulaAbortedMessage msg = new FormulaAbortedMessage();
-		msg.setTqbfId(tqbfId);
+		FormulaAbortedMessage msg = new FormulaAbortedMessage(tqbfId);
 		sendObject(msg, producer_snd);
 		logger.info("AbortConfirmMessage sent.");
 	}
@@ -237,25 +254,25 @@ public class Master {
 	/**
 	 * Sends basic information of the slave to the master. Currently only 
 	 * the number of available cores
+	 * @throws UnknownHostException 
 	 */
-	public void sendInformationMessage() {
+	public void sendInformationMessage() throws UnknownHostException {
 		sendInformationMessage(producer_snd);
 	}
 
 	/**
 	 * Sends an InformationMessage to the queue specified by the producer
 	 * @param p The message producer to send the message to
+	 * @throws UnknownHostException 
 	 */
-	public void sendInformationMessage(MessageProducer p) {
+	public void sendInformationMessage(MessageProducer p) throws UnknownHostException {
 		logger.info("Sending InformationMessage...");
-		InformationMessage msg = new InformationMessage();
-		msg.setCores(Runtime.getRuntime().availableProcessors());
-		msg.setToolIds(SlaveDaemon.availableSolvers);
-		try {
-			msg.setHostName(InetAddress.getLocalHost().getHostName());
-		} catch (UnknownHostException e) {
-			logger.error("Error while getting hostname: \n"	+ e);
-		}
+		String hostname = InetAddress.getLocalHost().getHostName();
+		InformationMessage msg = 
+			new InformationMessage(	Runtime.getRuntime().availableProcessors(), 
+									SlaveDaemon.availableSolvers, 
+									hostname);
+			
 		sendObject(msg, p);
 	}
 
@@ -281,9 +298,7 @@ public class Master {
 	public void sendResultMessage(String tqbfId, boolean result) {
 		logger.info("Sending ResultMessage... tqbfId: " + tqbfId + ", Result: "
 				+ result);
-		ResultMessage msg = new ResultMessage();
-		msg.setTqbfId(tqbfId);
-		msg.setResult(result);
+		ResultMessage msg = new ResultMessage(tqbfId, result);
 		sendObject(msg, producer_snd);
 	}
 
@@ -291,12 +306,10 @@ public class Master {
 	 * Tells the master that the slave is going to shutdown; transmitting 
 	 * a list of open jobs and the reason for shutdown in the process
 	 * @param reason
-	 * @param open_jobs
 	 */
 	public void sendShutdownMessage(String reason) {
 		logger.info("Sending ShutdownMessage");
-		ShutdownMessage msg = new ShutdownMessage();
-		msg.setReason(reason);
+		ShutdownMessage msg = new ShutdownMessage(reason);
 		this.sendObject(msg, producer_snd);
 	}
 	

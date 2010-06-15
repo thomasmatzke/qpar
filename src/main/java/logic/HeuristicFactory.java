@@ -12,6 +12,7 @@ public class HeuristicFactory {
 			heuristics.add("simple");
 			heuristics.add("rand");
 			heuristics.add("litcount");
+			heuristics.add("probnet");
 		}
 		return heuristics;
 	}
@@ -23,6 +24,8 @@ public class HeuristicFactory {
 			return new RandHeuristic();
 		if (id.equals("litcount"))
 			return new LCHeuristic();
+		if (id.equals("probnet"))
+			return new SimpleProbNetHeuristic();
 		return null;
 	}
 }

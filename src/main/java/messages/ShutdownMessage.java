@@ -11,21 +11,13 @@ import java.util.Vector;
 public class ShutdownMessage implements Serializable {
 	
 	private String reason;
-	private String hostAddress;
 
-	public String getHostAddress() {
-		return hostAddress;
+	public ShutdownMessage(String reason){
+		this.reason 		= reason;
 	}
-
-	public void setHostAddress(String hostAddress) {
-		this.hostAddress = hostAddress;
-	}
-
+	
 	public String getReason() {
 		return reason;
 	}
 
-	public void setReason(String reason) {
-		this.reason = reason;
-	}
 }

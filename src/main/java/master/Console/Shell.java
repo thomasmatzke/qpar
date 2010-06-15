@@ -1,30 +1,39 @@
 package main.java.master.Console;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
+import java.util.Vector;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import main.java.QPar;
 import main.java.Util;
+import main.java.logic.Heuristic;
+import main.java.logic.HeuristicFactory;
+import main.java.master.Evaluation;
 import main.java.master.Job;
 import main.java.master.MasterDaemon;
 import main.java.master.Slave;
 
 public class Shell implements Runnable{
 
-	static Logger logger = Logger.getLogger(MasterDaemon.class);
-		
-	private String prompt 	= ">";
-	BufferedReader in;
-	boolean run				= true;
-	
+	private static Logger 	logger = Logger.getLogger(MasterDaemon.class);	
+	private String 			prompt 			= ">";
+	private BufferedReader 	in;
+	private boolean 		run				= true;
+	private static int 		waitfor_count 	= 0; 		// Is increased by Slave if a Slave has the right solver
+	private static int 		waitfor_cores;				// We want that many cores before proceeding
+	private static String 	waitfor_solver 	= null; 	// We are waiting for Slaves with this kind of solver
+	private static String 	waitfor_jobid 	= "";
 	
 	public Shell() {
 		logger.setLevel(QPar.logLevel);
@@ -33,16 +42,20 @@ public class Shell implements Runnable{
 	
 	public Shell(BufferedReader in) {
 		this.in = in;
+		prompt = "";
 	}
 		
-	// Is increased by Slave if a Slave has the right solver
-	private static int waitfor_count = 0;
-	// We want that many cores before proceeding
-	private static int waitfor_cores;
-	// We are waiting for Slaves with this kind of solver
-	private static String waitfor_solver = null;
+	public static int getWaitfor_cores() {
+		return waitfor_cores;
+	}
+
+	public static void setWaitfor_cores(int waitfor_cores) {
+		Shell.waitfor_cores = waitfor_cores;
+	}
 	
-	private static String waitfor_jobid = "";
+	public static void setWaitfor_jobid(String waitfor_jobid) {
+		Shell.waitfor_jobid = waitfor_jobid;
+	}
 	
 	public static String getWaitfor_jobid() {
 		return waitfor_jobid;
@@ -69,9 +82,12 @@ public class Shell implements Runnable{
 		while(run) {
 			put(prompt);
 			line = read();
+			if(prompt.equals(""))
+				puts(line);
 			if(line == null)
 				return;
 			if(line.length() < 1) continue;
+			if(line.startsWith("#")) continue;
 			parseLine(line);
 
 		}
@@ -81,6 +97,9 @@ public class Shell implements Runnable{
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase()))
 		{
+			case EVALUATE:
+				evaluate(token);
+				break;
 			case NEWJOB:
 				newjob(token);
 				break;
@@ -127,6 +146,68 @@ public class Shell implements Runnable{
 	}
 
 	/**
+	 * Syntax: EVALUATE directory_path_to_formulas cores solverId timeout
+	 */
+	private void evaluate(StringTokenizer token) {
+		File	directory	= null;
+		int 	cores		= 2;
+		long 	timeout		= 60000;
+		String 	solverId	= "qpro";
+		Vector<String>	heuristics	= HeuristicFactory.getAvailableHeuristics();
+		
+		try{
+			directory 	= new File(token.nextToken());
+			cores		= Integer.parseInt(token.nextToken());
+			solverId	= token.nextToken();
+			timeout		= Integer.parseInt(token.nextToken()) * 1000;
+		} catch(NoSuchElementException e) {
+			puts("Syntax: EVALUATE directory_path_to_formulas cores solverId timeout");
+		}
+		String report = "Evaluation Report\n" +
+						"Solver: \t" + solverId + "\n" +
+						"Timeout: \t" + timeout + "\n" +
+						"Cores: \t" + cores + "\n" +
+						"Directory: \t" + directory + "\n\n" +
+						"cores\t";
+	
+		for(String h : HeuristicFactory.getAvailableHeuristics()) {
+			report += String.format("%s_total\t%s_timeouts\t%s_errors\t", h, h, h);
+		}
+		report = report.trim() + "\n";
+				
+		Evaluation[][]	result	= new Evaluation[cores][heuristics.size()];
+		
+		// Wait for #cores
+		waitforslaves(cores, solverId);
+
+		for(int c = 2; c <= cores; c++) {
+			String line = "" + c + "\t";
+			for(String h : HeuristicFactory.getAvailableHeuristics()) {
+				Evaluation e = new Evaluation(directory, h, solverId, timeout, c);
+				result[c-2][heuristics.indexOf(h)] = e;
+				e.evaluate();
+				line += e.toString() + "\t";
+			}
+			line = line.trim();
+			line += "\n";
+			report += line;
+		}
+		
+		String evalPath = directory.getAbsolutePath() + File.separator + "evaluation.txt";
+		
+		report = report.replaceAll("\n", System.getProperty("line.separator"));
+		
+		try {
+			BufferedWriter out = new BufferedWriter(new FileWriter(evalPath));
+			out.write(report);
+			out.flush();
+		} catch (IOException e) {
+			logger.error(e);
+		}
+		
+	}
+	
+	/**
 	 * Syntax: KILLALLSLAVES
 	 */
 	private void killallslaves() {
@@ -142,7 +223,7 @@ public class Shell implements Runnable{
 	private void waitforresult(StringTokenizer token) {
 		
 		try{
-			this.waitfor_jobid = token.nextToken();
+			waitfor_jobid = token.nextToken();
 		} catch(NoSuchElementException e) {
 			puts("Syntax: WAITFORRESULT jobid");
 			return;
@@ -161,14 +242,24 @@ public class Shell implements Runnable{
 	 * @param token
 	 */
 	private void waitforslave(StringTokenizer token) {
-		
 		try{
-			waitfor_cores = new Integer(token.nextToken()).intValue();
-			setWaitfor_solver(token.nextToken());
+			waitforslaves(	Integer.parseInt(token.nextToken()),
+							token.nextToken());
 		} catch(NoSuchElementException e) {
 			puts("Syntax: WAITFORSALVE number_of_cores solverid");
 			return;
 		}
+	}
+	
+	/**
+	 * Procedure to be used internally to wait for slaves (without the
+	 * shell-parsing part)
+	 * @param cores
+	 * @param solverId
+	 */
+	private void waitforslaves(int cores, String solverId) {
+		setWaitfor_solver(solverId);
+		setWaitfor_cores(cores);
 		
 		while(true) {
 			if(waitfor_count > 0 && waitfor_cores <= waitfor_count) {
@@ -275,19 +366,21 @@ public class Shell implements Runnable{
 	}
 
 	/**
-	 * Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic
+	 * Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic timeout
 	 * @param token
 	 */
 	private void newjob(StringTokenizer token) {
 		try{
-			String input_path = token.nextToken();
-			String output_path = token.nextToken();
-			String solverid = token.nextToken();
-			String heuristic = token.nextToken();
-			Job.createJob(input_path, output_path, solverid, heuristic);
+			String 	input_path 	= token.nextToken();
+			String 	output_path = token.nextToken();
+			String 	solverid 	= token.nextToken();
+			String 	heuristic 	= token.nextToken();
+			long 	timeout 	= Integer.parseInt(token.nextToken()) * 1000;
+			int		maxCores	= Integer.parseInt(token.nextToken());
+			Job.createJob(input_path, output_path, solverid, heuristic, timeout, maxCores);
 			
 		} catch(NoSuchElementException e) {
-			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic");
+			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic timeout max_cores");
 		}
 	}
 

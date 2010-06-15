@@ -11,12 +11,14 @@ import java.io.Serializable;
 public class FormulaAbortedMessage implements Serializable {
 	private String tQbfId;
 
+	public FormulaAbortedMessage(String tqbfId) {
+		this.tQbfId = tqbfId;
+	}
+	
 	public String getTqbfId() {
 		return tQbfId;
 	}
 
-	public void setTqbfId(String tqbfId) {
-		this.tQbfId = tqbfId;
-	}
+	
 
 }

@@ -212,8 +212,7 @@ public class Slave implements MessageListener, Runnable {
 		}
 		logger.info("Slave information updated.");
 	}
-
-	// TODO: move nearly everything in this method to job class
+	
 	private void handleResultMessage(ResultMessage m) {
 		logger.info("Receiving ResultMessage from " + this.getHostName());
 		Job job = this.runningComputations.get(m.getTqbfId());
@@ -229,8 +228,6 @@ public class Slave implements MessageListener, Runnable {
 		Slave.removeSlave(this);
 		logger.info("Slave " + this.getHostName() + " removed");
 	}
-
-	
 	
 	public void kill(String reason) {
 		logger.info("Killing Slave " + this.getHostName() + " ...");
@@ -268,21 +265,16 @@ public class Slave implements MessageListener, Runnable {
 		}
 	}
 
-	
-
 	public void sendAbortMessage(String tqbfId) {
 		logger.info("Sending AbortMessage to Slave " + this.getHostName());
-		AbortMessage msg = new AbortMessage();
-		msg.setQbfId(tqbfId);
+		AbortMessage msg = new AbortMessage(tqbfId);
 		sendObject(msg);
 		logger.info("AbortMessage sent");
 	}
 
 	public void sendFormulaMessage(TransmissionQbf tqbf, String solver) {
 		logger.info("Sending FormulaMessage to Slave " + this.getHostName());
-		FormulaMessage msg = new FormulaMessage();
-		msg.setFormula(tqbf);
-		msg.setSolver(solver);
+		FormulaMessage msg = new FormulaMessage(tqbf, solver);
 		sendObject(msg);
 		logger.info("FormulaMessage sent");
 	}
@@ -296,8 +288,7 @@ public class Slave implements MessageListener, Runnable {
 
 	public void sendKillMessage(String reason) {
 		logger.info("Sending KillMessage to Slave " + this.getHostName());
-		KillMessage msg = new KillMessage();
-		msg.setReason(reason);
+		KillMessage msg = new KillMessage(reason);
 		sendObject(msg);
 	}
 

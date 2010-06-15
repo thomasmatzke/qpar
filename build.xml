@@ -70,13 +70,13 @@
     </target>
     <target name="Slave">
         <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
-            <arg line="tcp://localhost:61616 -log=debug -Xss=1024m"/>
+            <arg line="tcp://localhost:61616 -Xss=1024m"/>
             <classpath refid="QPar.classpath"/>
         </java>
     </target>
     <target name="Master_batch">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
-            <arg line="-i=batch.txt -log=debug -Xss=1024m"/>
+            <arg line="-i=batch.txt -Xss=1024m"/>
             <classpath refid="QPar.classpath"/>
         </java>
     </target>

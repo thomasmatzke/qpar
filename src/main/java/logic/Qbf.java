@@ -40,10 +40,10 @@ public class Qbf {
 	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
 	private Vector<Integer> decisionVars = new Vector<Integer>();
 	private HashMap<Integer, Integer> literalCount = new HashMap<Integer, Integer>();	
-	private Vector<Integer> eVars = new Vector<Integer>();
-	private Vector<Integer> aVars = new Vector<Integer>();
+	public Vector<Integer> eVars = new Vector<Integer>();
+	public Vector<Integer> aVars = new Vector<Integer>();
 	public Vector<Integer> vars  = new Vector<Integer>();
-	private SimpleNode root = null;
+	public SimpleNode root = null;
 	private String op; // TODO
 	private DTNode dtroot = null;
 	/**

@@ -35,6 +35,8 @@ public class QProSolver implements Solver {
 	private Process qpro_process;
 	private TransmissionQbf formula;
 	private Master master;
+	private String inputString = null;
+	private boolean killed = false;
 	
 	public QProSolver() {
 		logger.setLevel(QPar.logLevel);
@@ -55,7 +57,9 @@ public class QProSolver implements Solver {
 	 * Kills the qpro-process
 	 */
 	public void kill() {
-		qpro_process.destroy();
+		this.killed = true;
+		if(qpro_process != null)
+			qpro_process.destroy();
 	}
 
 	
@@ -73,7 +77,8 @@ public class QProSolver implements Solver {
 			qpro_process = pb.start();
 			logger.debug("qpro started");
 			PrintWriter stdin = new PrintWriter(qpro_process.getOutputStream());
-			stdin.print(toInputString(this.formula));
+			this.inputString = toInputString(this.formula);
+			stdin.print(inputString);
 			stdin.flush();
 			//StreamGobbler gobbler = new StreamGobbler(qpro_process.getInputStream());
 			//gobbler.start();
@@ -84,17 +89,25 @@ public class QProSolver implements Solver {
 			int return_val = qpro_process.waitFor();
 			// If qpro returns 1 the subformula is satisfiable
 			if(readString.startsWith("1")) {
-				master.sendResultMessage(formula.getId(), new Boolean(true));
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(true) );
+				master.sendResultMessage(formula.getId(), new Boolean(true));				
 
 			// IF qpro returns 0 the subformula is unsatisfiable
 			} else if (readString.startsWith("0")) {
 				master.sendResultMessage(formula.getId(), new Boolean(false));
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(false) );
-			// anything else is an error
+			
+			// We have been executed by the master
+			} else if (this.killed == true) {
+				master.sendFormulaAbortedMessage(formula.getId());
+				
+			// anything else is an error 
 			} else {
-				logger.error("Got non-expected result from solver(" + readString + "). Aborting Formula.");
-				master.sendErrorMessage(formula.getId(), "Got non-expected result from solver(" + readString + "). Aborting Formula.");
+				logger.error(	"Unexpected result from solver.\n" +
+								"	Return String: " + readString + "\n" +
+								"	TQbfId:		 : " + formula.getId() + "\n" +
+								"	Formulastring: " + this.inputString);
+				master.sendErrorMessage(formula.getId(), "Unexpected result from solver(" + readString + "). Aborting Formula.");
 			}
 		} catch (IOException e) {
 			logger.error("IO Error while getting result from solver: " + e);
@@ -164,10 +177,14 @@ public class QProSolver implements Solver {
 		
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
-		traversedTree += "\nQBF\n" + (vars.size()+1) + "\nq\n" + "a ";
+		traversedTree += "\nQBF\n" + (vars.size()+1) + "\n" +
+				"q";
+		if(aVars.size() > 0)
+			traversedTree += "\na ";
 		for (i=0; i < aVars.size(); i++)
 			traversedTree += aVars.get(i) + " ";
-		traversedTree += "\n" + "e ";
+		if(eVars.size() > 0)
+			traversedTree += "\ne ";
 		for (i=0; i < eVars.size(); i++)
 			traversedTree += eVars.get(i) + " ";
 		traversedTree += "\n";

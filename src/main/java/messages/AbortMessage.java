@@ -14,12 +14,14 @@ public class AbortMessage implements Serializable {
 	 */
 	private String qbfId;
 
+	public AbortMessage(String qbfId) {
+		this.qbfId = qbfId;
+	}
+	
 	public String getQbfId() {
 		return qbfId;
 	}
 
-	public void setQbfId(String qbfId) {
-		this.qbfId = qbfId;
-	}
+	
 
 }

@@ -10,11 +10,12 @@ import java.io.Serializable;
 public class KillMessage implements Serializable {
 	private String reason;
 
+	public KillMessage(String reason) {
+		this.reason = reason;
+	}
+	
 	public String getReason() {
 		return reason;
 	}
 
-	public void setReason(String reason) {
-		this.reason = reason;
-	}
 }

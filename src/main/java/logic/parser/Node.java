@@ -16,6 +16,7 @@ public interface Node {
 	public boolean	reducable = false;
 
 	// custom(ized) methods
+	public double getTruthProbability();
 	public void		assignTruthValue(int v, boolean b);
 	public boolean	checkConnectionToRoot();
 	public void		deleteChildren();
