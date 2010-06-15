@@ -34,7 +34,9 @@ public class Job {
 	private boolean result;
 	private long timeout = 0;
 	private Qbf formula;
-	private Map<String, Slave> formulaDesignations = new HashMap<String, Slave>(); // Maps
+	
+	private Object formulaDesignations_lock = new Object();
+	private volatile Map<String, Slave> formulaDesignations = new HashMap<String, Slave>(); // Maps
 																					// tqbfids
 																					// to
 																					// the
@@ -103,11 +105,13 @@ public class Job {
 	}
 
 	private void abortComputations() {
-		for (Map.Entry<String, Slave> entry : this.formulaDesignations
-				.entrySet()) {
-			Slave s = entry.getValue();
-			String tqbfId = entry.getKey();
-			s.abortFormulaComputation(tqbfId);
+		synchronized(formulaDesignations_lock) {
+			for (Map.Entry<String, Slave> entry : this.formulaDesignations
+					.entrySet()) {
+				Slave s = entry.getValue();
+				String tqbfId = entry.getKey();
+				s.abortFormulaComputation(tqbfId);
+			}
 		}
 	}
 
@@ -154,14 +158,16 @@ public class Job {
 		
 		
 		int j = 0;
-		outerLoop: for (Slave slave : slaves) {
-			for (int i = 0; i < slave.getCores(); i++) {
-				slave.computeFormula(subformulas.get(j), this);
-				formulaDesignations.put(subformulas.get(j).getId(), slave);
-				j++;
-				// TODO: Race condition here, formulaDesignations is beeing modified
-				if (formulaDesignations.size() == subformulas.size())
-					break outerLoop;
+		synchronized(formulaDesignations_lock) {
+			outerLoop: for (Slave slave : slaves) {
+				for (int i = 0; i < slave.getCores(); i++) {
+					slave.computeFormula(subformulas.get(j), this);
+					formulaDesignations.put(subformulas.get(j).getId(), slave);
+					j++;
+					// TODO: Race condition here, formulaDesignations is beeing modified
+					if (formulaDesignations.size() == subformulas.size())
+						break outerLoop;
+				}
 			}
 		}
 		
@@ -237,7 +243,9 @@ public class Job {
 		boolean solved = formula.mergeQbf(tqbfId, result);
 		logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
 				+ getId());
-		this.formulaDesignations.remove(tqbfId);
+		synchronized(formulaDesignations_lock) {
+			this.formulaDesignations.remove(tqbfId);
+		}
 		if (solved)
 			fireJobCompleted(formula.getResult());
 	}
@@ -350,10 +358,14 @@ public class Job {
 	}
 
 	public Map<String, Slave> getFormulaDesignations() {
-		return formulaDesignations;
+		synchronized(formulaDesignations_lock) {
+			return formulaDesignations;
+		}
 	}
 
 	public void setFormulaDesignations(Map<String, Slave> formulaDesignations) {
-		this.formulaDesignations = formulaDesignations;
+		synchronized(formulaDesignations_lock){
+			this.formulaDesignations = formulaDesignations;
+		}
 	}
 }

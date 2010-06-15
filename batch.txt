@@ -1,4 +1,4 @@
-EVALUATE testing/boole 2 qpro 60
+EVALUATE testing/boole 3 qpro 60
 #waitforslave 2 qpro
 #newjob testing/boole/semaphore4_4-bin.qbf testing/semaphore4_4-bin.out qpro litcount
 #startjob 1

@@ -31,16 +31,14 @@ public class DTNode {
 		if (this.id == id) {
 			return this;
 		}
-		else {
-			DTNode tmp;
-			tmp = this.leftChild.getNode(id);
-			if (tmp.getId() == id)
-				return tmp;
-			tmp = this.rightChild.getNode(id);
-			if (tmp.getId() == id)
-				return tmp;
-			return null;
-		}
+		DTNode tmp;
+		tmp = this.leftChild.getNode(id);
+		if (tmp.getId() == id)
+			return tmp;
+		tmp = this.rightChild.getNode(id);
+		if (tmp.getId() == id)
+			return tmp;
+		return null;
 	}
 	
 	public void addChild(DTNode n) {

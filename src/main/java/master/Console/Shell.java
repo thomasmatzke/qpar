@@ -375,12 +375,11 @@ public class Shell implements Runnable{
 			String 	output_path = token.nextToken();
 			String 	solverid 	= token.nextToken();
 			String 	heuristic 	= token.nextToken();
-			long 	timeout 	= Integer.parseInt(token.nextToken()) * 1000;
 			int		maxCores	= Integer.parseInt(token.nextToken());
-			Job.createJob(input_path, output_path, solverid, heuristic, timeout, maxCores);
+			Job.createJob(input_path, output_path, solverid, heuristic, 0, maxCores);
 			
 		} catch(NoSuchElementException e) {
-			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic timeout max_cores");
+			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic max_cores");
 		}
 	}
 

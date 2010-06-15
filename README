@@ -16,7 +16,7 @@ Choose a control-host, which is reachable from all slave-hosts
 
 -- my_batch_file.txt
 waitforslave 2 qpro
-newjob PATH_TO_YOUR_QBF PATH_TO_RESULT_SUMMARY qpro {simple|rand|litcount}
+newjob PATH_TO_YOUR_QBF PATH_TO_RESULT_SUMMARY qpro {simple|rand|litcount} max_cores
 startjob 1
 waitforresult 1
 killallslaves
