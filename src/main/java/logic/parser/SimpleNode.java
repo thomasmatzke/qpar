@@ -25,17 +25,37 @@ public class SimpleNode implements Node, Serializable {
 	protected Qbf_parser parser;
 	protected Node parent;
 	protected Node[] children;
+	protected NodeType nodeType = null;
 
 	public int id; // TODO check if needed
 	public int var = -1; // -1 = not a var node
 	public String op = ""; // "" = not an operator node
 	public String truthValue = ""; // "" = not truth assigned
+	public enum NodeType {
+		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
+	}
 
 	/**
 	 * constructor
 	 */
 	public SimpleNode() {
 		logger.setLevel(QPar.logLevel);
+	}
+
+	public void setNodeType(NodeType nt) {
+		this.nodeType = nt;
+	}
+
+	public NodeType getNodeType() {
+		return nodeType;
+	}
+
+	public int getNodeVariable() {
+		return var;
+	}
+
+	public void setNodeVariable(int v) {
+		this.var = v;
 	}
 
 	/**
