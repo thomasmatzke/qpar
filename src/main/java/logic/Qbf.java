@@ -1,21 +1,20 @@
 package main.java.logic;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
-import java.util.HashMap;
-import main.java.QPar;
 
-import main.java.master.MasterDaemon;
-import main.java.logic.parser.*;
+import main.java.QPar;
+import main.java.logic.parser.ParseException;
+import main.java.logic.parser.Qbf_parser;
+import main.java.logic.parser.SimpleNode;
+import main.java.logic.parser.TokenMgrError;
+
 import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
 /**
 * A QBF object contains one QBF as well as methods to split it up into subQBFs
 * and merging subresults back together
@@ -26,10 +25,6 @@ public class Qbf {
     static Logger logger = Logger.getLogger(Qbf.class);
 
 	Heuristic h = null;
-	File file;
-	//	Tree solvingTree = new Tree(); // obsolete?
-	private String qbfString;
-	private String filename;
 	private static int id = 0;
 	private int receivedResults = 0;
 	private boolean satisfiable	= false;
@@ -45,7 +40,7 @@ public class Qbf {
 	public Vector<Integer> vars  = new Vector<Integer>();
 	public SimpleNode root = null;
 	private String op; // TODO
-	private DTNode dtroot = null;
+	
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object
@@ -57,10 +52,6 @@ public class Qbf {
 		Qbf_parser parser;
 
 		id++;
-		this.filename = filename;
-		file = new File(filename);
-
-		BufferedReader qbfBuffer =  new BufferedReader(new FileReader(file));
 
 		try {
 			parser = new Qbf_parser(new FileInputStream(filename));
@@ -104,8 +95,6 @@ public class Qbf {
 		int i,j;
 		TransmissionQbf tmp;
 		Vector<Integer> tempVars = new Vector<Integer>();
-		Vector<Integer> trueVars = new Vector<Integer>();
-		Vector<Integer> falseVars = new Vector<Integer>();
 		int numVarsToChoose = new Double(Math.log(n)/Math.log(2)).intValue();
 		boolean[][] decisionArray = new boolean[n][numVarsToChoose];		
 
@@ -144,9 +133,7 @@ public class Qbf {
 			}
 			logger.debug("------");
 		}
-
-		// generating an en empty decision tree
-		dtroot = new DTNode();
+		
 		DTNode[] leafNodes = new DTNode[n];
 		for (i = 0; i < n; i++) {
 			leafNodes[i] = new DTNode((id * 1000 + i));												
@@ -192,43 +179,11 @@ public class Qbf {
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
 	public synchronized boolean mergeQbf(String id, boolean result) {
-		resultAvailable.set((Integer.valueOf(id) - (this.id * 1000)), true);
-		qbfResults.set((Integer.valueOf(id) - (this.id * 1000)),result);
-
-//		Node op1 = solvingTree.search(id);
-//		Node operand = solvingTree.getParentNode(op1);
-//		Node op2 = solvingTree.getSibling(op1);
-
-//		// if a subresult can't be used at the time it arrives at the master,
-//		// it will be held back for later use		
-//		if ((op2.getKey() != "TRUE") || (op2.getKey() != "FALSE")) {
-//			return;
-//		} else {
-//			resultProcessed.set(op1.getID(), true);
-//			resultProcessed.set(op2.getID(), true);
-
-//			if (operand.getKey().equals("AND")) {
-//				if (result && op2.toBool()) {
-//					operand.setKey("TRUE");
-//				} else {
-//					operand.setKey("FALSE");					
-//				}
-//			} else if (operand.getKey().equals("OR")) {
-//				if (result || op2.toBool()) {
-//					operand.setKey("TRUE");
-//				} else {
-//					operand.setKey("FALSE");					
-//				}
-//			}
-////			solvingTree.remove(op1);
-////			solvingTree.remove(op2);
-//		}
-		
-		// if a result is merged, set resultProcessed(id) and resultAvailable(id)
-		// to TRUE and qbfResult(id) to result
+		resultAvailable.set((Integer.valueOf(id) - (Qbf.id * 1000)), true);
+		qbfResults.set((Integer.valueOf(id) - (Qbf.id * 1000)),result);
 	
 		// for testing
-		logger.debug("incoming result, id: " + id + ", value: " + result + " saved at " +(Integer.valueOf(id) - (this.id * 1000)));
+		logger.debug("incoming result, id: " + id + ", value: " + result + " saved at " +(Integer.valueOf(id) - (Qbf.id * 1000)));
 		
 		receivedResults++;
 		if (receivedResults < subQbfs.size())

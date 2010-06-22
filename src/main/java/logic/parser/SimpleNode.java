@@ -171,10 +171,8 @@ public class SimpleNode implements Node, Serializable {
 		String partialTree = "";
 		String negatedPartialTree = "";
 		String enclosedPartialTree = "";
-		int i = 0;
 		Vector<Integer> posLiterals = new Vector<Integer>();
 		Vector<Integer> negLiterals = new Vector<Integer>();
-		int numChildren = this.jjtGetNumChildren();
 
 		if (this.getOp().equals("&")) {
 			traversedTree += "c\n";
@@ -225,7 +223,6 @@ public class SimpleNode implements Node, Serializable {
 		Node grandparentNode = null;
 		Node siblingNode = null;
 		int i = 0;
-		int numChildren = this.jjtGetNumChildren();
 		boolean reducable = false;
 
 		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
@@ -251,9 +248,8 @@ public class SimpleNode implements Node, Serializable {
 						"main.java.logic.parser.ASTInput")) {
 					logger.debug("RETURNING FALSE");
 					return false;
-				} else {
-					reducable = true;
 				}
+				reducable = true;
 
 				// not x, set the parent to not x
 				if (parentNode.getOp().equals("!")) {
@@ -534,10 +530,9 @@ public class SimpleNode implements Node, Serializable {
 				return children[0].getTruthProbability();
 			}
 				
-		} else {
-			// We are a leaf(variable) node. So our P(T) = 0.5
-			return 0.5;
 		}
+		// We are a leaf(variable) node. So our P(T) = 0.5
+		return 0.5;
 	}
 }
 

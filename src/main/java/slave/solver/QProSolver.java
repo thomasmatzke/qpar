@@ -1,25 +1,17 @@
 package main.java.slave.solver;
 
-import main.java.logic.parser.SimpleNode;
-
-import java.util.Vector;
-import java.util.ArrayList;
-
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Vector;
 
 import main.java.QPar;
-import main.java.StreamGobbler;
 import main.java.logic.TransmissionQbf;
-import main.java.master.MasterDaemon;
 import main.java.slave.Master;
 import main.java.slave.SlaveDaemon;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -80,13 +72,11 @@ public class QProSolver implements Solver {
 			this.inputString = toInputString(this.formula);
 			stdin.print(inputString);
 			stdin.flush();
-			//StreamGobbler gobbler = new StreamGobbler(qpro_process.getInputStream());
-			//gobbler.start();
 			InputStreamReader isr = new InputStreamReader(qpro_process.getInputStream());
 			StringWriter writer = new StringWriter();
 			IOUtils.copy(isr, writer);
 			String readString = writer.toString();
-			int return_val = qpro_process.waitFor();
+			qpro_process.waitFor();
 			// If qpro returns 1 the subformula is satisfiable
 			if(readString.startsWith("1")) {
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(true) );
@@ -97,7 +87,7 @@ public class QProSolver implements Solver {
 				master.sendResultMessage(formula.getId(), new Boolean(false));
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(false) );
 			
-			// We have been executed by the master
+			// We have been killed by the master
 			} else if (this.killed == true) {
 				master.sendFormulaAbortedMessage(formula.getId());
 				
@@ -191,7 +181,6 @@ public class QProSolver implements Solver {
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
 		traversedTree += "/q\nQBF\n";	
 		logger.debug("traversing finished");
-//		logger.debug("traversing finished, tree:" + traversedTree);
 
 		return traversedTree;
 	}	
