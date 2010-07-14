@@ -77,7 +77,7 @@ public class SimpleNode implements Node, Serializable {
 		}
 		// in a leaf node now
 		else {
-			if (var == v) {
+			if ((var == v) && (nodeType == nodeType.VAR)) {
 				if (b) {
 					truthValue = "TRUE";
 				} else {
