@@ -3,5 +3,5 @@ package main.java;
 import org.apache.log4j.Level;
 
 public class QPar {
-	public static Level logLevel = Level.WARN;
+	public static Level logLevel = Level.DEBUG;
 }

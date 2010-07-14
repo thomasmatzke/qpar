@@ -64,6 +64,7 @@ public class Qbf {
 
 		// parse the formula, get various vectors of vars
 		try {
+			logger.debug("Begin parsing...");
 			parser.Input();	
 			logger.debug("Succesful parse");
 			literalCount = parser.getLiteralCount();
@@ -71,7 +72,7 @@ public class Qbf {
 			this.aVars = parser.getAVars();
 			this.vars = parser.getVars();
 			root = parser.getRootNode();
-		
+			root.dump("");
 		}
 		catch (ParseException e) {
 			logger.error("Parse error");			

@@ -4,6 +4,7 @@ import java.util.Vector;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 import java.io.*;
+import main.java.logic.parser.SimpleNode.NodeType;
 
 public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Serializable, Qbf_parserConstants {/*@bgen(jjtree)*/
   protected JJTQbf_parserState jjtree = new JJTQbf_parserState();
@@ -139,6 +140,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                 int varNumber = Integer.valueOf(varName).intValue();
                 varNumber++;
                 jjtn000.var = varNumber;
+                jjtn000.nodeType = NodeType.VAR;
 /*		if (s == "e") {*/
 /*			eVars.add(varNumber);*/
 /*		}*/
@@ -166,8 +168,14 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
   }
 
   final public void VarQ(String s) throws ParseException {
-        Token t;
-    t = jj_consume_token(VAR);
+ /*@bgen(jjtree) VarQ */
+        ASTVarQ jjtn000 = new ASTVarQ(JJTVARQ);
+        boolean jjtc000 = true;
+        jjtree.openNodeScope(jjtn000);Token t;
+    try {
+      t = jj_consume_token(VAR);
+          jjtree.closeNodeScope(jjtn000, true);
+          jjtc000 = false;
                 // Stripping down the variable name to a number (e.g. "v123" -> 123 and
                 // adding it to a vector containing all variable numbers as well as to a
                 // vector with all exist- or allquantified variables (that's the reason
@@ -175,16 +183,26 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                 String varName = t.image.replaceAll("[a-z]*","");
                 int varNumber = Integer.valueOf(varName).intValue();
                 varNumber++;
+
                 if (s == "e") {
+                        jjtn000.nodeType = NodeType.EXISTS;
+                        jjtn000.var = varNumber;
                         if (!vars.contains(varNumber)) {
                                 eVars.add(varNumber);
                         }
                 }
                 if (s == "f") {
+                        jjtn000.nodeType = NodeType.FORALL;
+                        jjtn000.var = varNumber;
                         if (!vars.contains(varNumber)) {
                                 aVars.add(varNumber);
                         }
                 }
+    } finally {
+          if (jjtc000) {
+            jjtree.closeNodeScope(jjtn000, true);
+          }
+    }
   }
 
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
@@ -198,7 +216,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
           jjtree.openNodeScope(jjtn001);
       try {
         Not();
-                        jjtn001.op = "!";
+                        jjtn001.op = "!"; jjtn001.nodeType = NodeType.NOT;
         Exp();
       } catch (Throwable jjte001) {
           if (jjtc001) {
@@ -238,11 +256,11 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case OR:
             jj_consume_token(OR);
-                                     jjtn002.op = "|";
+                                     jjtn002.op = "|"; jjtn002.nodeType = NodeType.OR;
             break;
           case AND:
             jj_consume_token(AND);
-                                     jjtn002.op = "&";
+                                     jjtn002.op = "&"; jjtn002.nodeType = NodeType.AND;
             break;
           default:
             jj_la1[0] = jj_gen;
@@ -458,7 +476,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
       return (jj_ntk = jj_nt.kind);
   }
 
-  private java.util.List jj_expentries = new java.util.ArrayList();
+  private java.util.List<int[]> jj_expentries = new java.util.ArrayList<int[]>();
   private int[] jj_expentry;
   private int jj_kind = -1;
 
@@ -488,7 +506,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
     }
     int[][] exptokseq = new int[jj_expentries.size()][];
     for (int i = 0; i < jj_expentries.size(); i++) {
-      exptokseq[i] = (int[])jj_expentries.get(i);
+      exptokseq[i] = jj_expentries.get(i);
     }
     return new ParseException(token, exptokseq, tokenImage);
   }
