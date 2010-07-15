@@ -34,6 +34,14 @@ public class TransmissionQbf implements Serializable {
 	}
 
 	/**
+	 * Print the tree
+	 * @param s optional string to prefix the tree
+	 */
+	public void dump(String s) {
+		root.dump(s);
+	}
+
+	/**
 	 * setter for the trueVars ArrayList
 	 * @param v the variable number to add
 	 */

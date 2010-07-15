@@ -164,7 +164,9 @@ public class QProSolver implements Solver {
 				eVars.remove(orphanedVars.get(i));
 		}
 		logger.debug("check for orphaned quantified vars finished");		
-		
+
+		t.dump();
+
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
 		traversedTree += "\nQBF\n" + (vars.size()+1) + "\n" +
