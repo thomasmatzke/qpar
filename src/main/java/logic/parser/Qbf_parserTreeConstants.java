@@ -8,8 +8,8 @@ public interface Qbf_parserTreeConstants
   public int JJTOR = 2;
   public int JJTVOID = 3;
   public int JJTVAR = 4;
-  public int JJTVARQ = 5;
-  public int JJTLOGICAL = 6;
+  public int JJTLOGICAL = 5;
+  public int JJTQUANTIFIER = 6;
 
 
   public String[] jjtNodeName = {
@@ -18,8 +18,8 @@ public interface Qbf_parserTreeConstants
     "Or",
     "void",
     "Var",
-    "VarQ",
     "Logical",
+    "Quantifier",
   };
 }
-/* JavaCC - OriginalChecksum=f74581f03af8d7eb1fe979924f041658 (do not edit this line) */
+/* JavaCC - OriginalChecksum=9898f1ef033b143fd3194d83f8262a25 (do not edit this line) */

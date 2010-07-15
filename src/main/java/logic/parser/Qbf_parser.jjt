@@ -173,7 +173,9 @@ void Var() #Var:
 	}
 }
 
-void VarQ(String s) #VarQ:
+
+// TODO remove later
+void VarQ(String s) #void:
 {
 	Token t;
 }
@@ -188,15 +190,15 @@ void VarQ(String s) #VarQ:
 		varNumber++;
 
 		if (s == "e") {
-			jjtThis.nodeType = NodeType.EXISTS;
-			jjtThis.var = varNumber;
+	//		jjtThis.nodeType = NodeType.EXISTS;
+//			jjtThis.var = varNumber;
 			if (!vars.contains(varNumber)) {
 				eVars.add(varNumber);
 			}
 		}
 		if (s == "f") {
-			jjtThis.nodeType = NodeType.FORALL;
-			jjtThis.var = varNumber;
+//			jjtThis.nodeType = NodeType.FORALL;
+//			jjtThis.var = varNumber;
 			if (!vars.contains(varNumber)) {
 				aVars.add(varNumber);
 			}
@@ -208,7 +210,9 @@ void VarQ(String s) #VarQ:
 // *				| <LP> <exp> <RP> | <VAR>
 void Exp() #void:
 {
+	String s = "";
 	String op = "";
+	Token t;
 }
 {
 	(
@@ -216,8 +220,38 @@ void Exp() #void:
 		Exp()
 	) #Logical(1)
 	|
-	Q_set()
-	Exp()
+	(
+		(
+			s = Quant()
+			<LSP>
+			t = <VAR>
+			(
+				{
+					String varName = t.image.replaceAll("[a-z]*","");
+					int varNumber = Integer.valueOf(varName).intValue();
+					varNumber++;
+
+					if (s == "e") {
+						jjtThis.nodeType = NodeType.EXISTS;
+						jjtThis.var = varNumber;
+						if (!vars.contains(varNumber)) {
+							eVars.add(varNumber);
+						}
+					}
+
+					if (s == "f") {
+						jjtThis.nodeType = NodeType.FORALL;
+						jjtThis.var = varNumber;
+						if (!vars.contains(varNumber)) {
+							aVars.add(varNumber);
+						}
+					} 		
+				}
+			)
+			<RSP>
+		)
+		Exp()
+	) #Quantifier(1)
 	|
 	<LP>
 	(
@@ -238,6 +272,8 @@ void Exp() #void:
 //	<EOF>
 }
 
+
+// TODO remove later
 // *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
 void Q_set() #void:
 {

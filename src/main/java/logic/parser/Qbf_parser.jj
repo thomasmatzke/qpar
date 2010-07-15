@@ -255,22 +255,11 @@ void Var()     :
 }
 
 void VarQ(String s)      :
-{/*@bgen(jjtree) VarQ */
-        ASTVarQ jjtn000 = new ASTVarQ(JJTVARQ);
-        boolean jjtc000 = true;
-        jjtree.openNodeScope(jjtn000);
-/*@egen*/
+{
 	Token t;
 }
-{/*@bgen(jjtree) VarQ */
-        try {
-/*@egen*/
-	t = <VAR>/*@bgen(jjtree)*/
-        {
-          jjtree.closeNodeScope(jjtn000, true);
-          jjtc000 = false;
-        }
-/*@egen*/
+{
+	t = <VAR>
 	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
 		// adding it to a vector containing all variable numbers as well as to a
 		// vector with all exist- or allquantified variables (that's the reason
@@ -280,33 +269,29 @@ void VarQ(String s)      :
 		varNumber++;
 
 		if (s == "e") {
-			jjtn000.nodeType = NodeType.EXISTS;
-			jjtn000.var = varNumber;
+	//		jjtThis.nodeType = NodeType.EXISTS;
+//			jjtThis.var = varNumber;
 			if (!vars.contains(varNumber)) {
 				eVars.add(varNumber);
 			}
 		}
 		if (s == "f") {
-			jjtn000.nodeType = NodeType.FORALL;
-			jjtn000.var = varNumber;
+//			jjtThis.nodeType = NodeType.FORALL;
+//			jjtThis.var = varNumber;
 			if (!vars.contains(varNumber)) {
 				aVars.add(varNumber);
 			}
 		} 
-	}/*@bgen(jjtree)*/
-        } finally {
-          if (jjtc000) {
-            jjtree.closeNodeScope(jjtn000, true);
-          }
-        }
-/*@egen*/
+	}
 }
 
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
 // *				| <LP> <exp> <RP> | <VAR>
 void Exp()      :
 {
+	String s = "";
 	String op = "";
+	Token t;
 }
 {/*@bgen(jjtree) #Logical( 1) */
         {
@@ -340,28 +325,49 @@ void Exp()      :
           }
         }
 /*@egen*/            
-	|
-	Q_set()
-	Exp()
-	|
-	<LP>/*@bgen(jjtree) #Logical(> 1) */
+	|/*@bgen(jjtree) #Quantifier( 1) */
         {
-          ASTLogical jjtn002 = new ASTLogical(JJTLOGICAL);
+          ASTQuantifier jjtn002 = new ASTQuantifier(JJTQUANTIFIER);
           boolean jjtc002 = true;
           jjtree.openNodeScope(jjtn002);
         }
         try {
 /*@egen*/
 	(
-		Exp()
+
+
+//Q_set()
 		(
+			s = Quant()
+			<LSP>
+			t = <VAR>
 			(
-				"|" {jjtn002.op = "|"; jjtn002.nodeType = NodeType.OR; }
-				|
-				"&" {jjtn002.op = "&"; jjtn002.nodeType = NodeType.AND; }
+				{
+					
+					String varName = t.image.replaceAll("[a-z]*","");
+					int varNumber = Integer.valueOf(varName).intValue();
+					varNumber++;
+
+					if (s == "e") {
+						jjtn002.nodeType = NodeType.EXISTS;
+						jjtn002.var = varNumber;
+						if (!vars.contains(varNumber)) {
+							eVars.add(varNumber);
+						}
+					}
+
+					if (s == "f") {
+						jjtn002.nodeType = NodeType.FORALL;
+						jjtn002.var = varNumber;
+						if (!vars.contains(varNumber)) {
+							aVars.add(varNumber);
+						}
+					} 		
+				}
 			)
-			Exp()
-		)?
+			<RSP>
+		)
+		Exp()
 	)/*@bgen(jjtree)*/
         } catch (Throwable jjte002) {
           if (jjtc002) {
@@ -379,7 +385,47 @@ void Exp()      :
           throw (Error)jjte002;
         } finally {
           if (jjtc002) {
-            jjtree.closeNodeScope(jjtn002, jjtree.nodeArity() > 1);
+            jjtree.closeNodeScope(jjtn002,  1);
+          }
+        }
+/*@egen*/               
+	|
+	<LP>/*@bgen(jjtree) #Logical(> 1) */
+        {
+          ASTLogical jjtn003 = new ASTLogical(JJTLOGICAL);
+          boolean jjtc003 = true;
+          jjtree.openNodeScope(jjtn003);
+        }
+        try {
+/*@egen*/
+	(
+		Exp()
+		(
+			(
+				"|" {jjtn003.op = "|"; jjtn003.nodeType = NodeType.OR; }
+				|
+				"&" {jjtn003.op = "&"; jjtn003.nodeType = NodeType.AND; }
+			)
+			Exp()
+		)?
+	)/*@bgen(jjtree)*/
+        } catch (Throwable jjte003) {
+          if (jjtc003) {
+            jjtree.clearNodeScope(jjtn003);
+            jjtc003 = false;
+          } else {
+            jjtree.popNode();
+          }
+          if (jjte003 instanceof RuntimeException) {
+            throw (RuntimeException)jjte003;
+          }
+          if (jjte003 instanceof ParseException) {
+            throw (ParseException)jjte003;
+          }
+          throw (Error)jjte003;
+        } finally {
+          if (jjtc003) {
+            jjtree.closeNodeScope(jjtn003, jjtree.nodeArity() > 1);
           }
         }
 /*@egen*/               

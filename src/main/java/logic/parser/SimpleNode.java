@@ -259,7 +259,7 @@ public class SimpleNode implements Node, Serializable {
 			parentNode = this.jjtGetParent();
 
 			if ((nodeType == NodeType.TRUE) || (nodeType == NodeType.FALSE)) {
-				// we're in a truth-assigned leaf node, let's see what to do
+				// we're in a truth-assigned leaf node now, let's see what to do
 
 				// if we're in the logical root node, then there's no more
 				// reducing
@@ -411,12 +411,15 @@ public class SimpleNode implements Node, Serializable {
 		int i;
 		boolean found = false;
 
+		// as long as we are in any non-VAR nodes, call the childrens findVar()
 		if (this.nodeType != NodeType.VAR) {
 			for (i = 0; i < this.jjtGetNumChildren(); i++) {
 				found = found || this.jjtGetChild(i).findVar(v);
 			}
 		} else {
-			if (this.var == v) {
+			// if we're in a VAR node with the right variable value, we've
+			// found our node
+			if ((nodeType == NodeType.VAR) && (this.var == v)) {
 				found = true;
 			}
 		}
@@ -425,7 +428,6 @@ public class SimpleNode implements Node, Serializable {
 
 	// mostly auto-generated stuff from here plus some simple getter/setter
 	// methods
-	// one doesn't really need because all vars are public anyway :)
 	public void setTruthValue(String t) {
 		this.truthValue = t;
 		if (truthValue == "TRUE")
