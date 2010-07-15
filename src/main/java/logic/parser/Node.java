@@ -26,11 +26,12 @@ public interface Node {
 	public boolean	checkConnectionToRoot();
 	public void		deleteChildren();
 	public void		dump(String prefix);
-	// public boolean	findNodes(Vector<Integer> v); // replaced by findVar(int v)
+	// public boolean	findNodes(Vector<Integer> v); // was replaced by findVar(int v)
 	public int		getId();
 	public String	getOp();
 	public String	getTruthValue();
 	public int		getVar();
+	public int		getNodeVariable();
 	public boolean	reduce();
 	public boolean	replaceChild(Node oldNode, Node newNode);
 	public void		setOp(String o);
@@ -44,7 +45,7 @@ public interface Node {
 	public Vector<Integer> getPositiveLiterals(String op, Vector<Integer> v);
 	public Vector<Integer> getNegativeLiterals(String op, Vector<Integer> v);
   /** This method is called after the node has been made the current
-    node.  It indicates that child nodes can now be added to it. */
+    node, it indicates that child nodes can now be added to it. */
   public void jjtOpen();
 
   /** This method is called after all the child nodes have been

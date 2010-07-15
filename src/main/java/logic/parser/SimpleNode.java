@@ -122,7 +122,7 @@ public class SimpleNode implements Node, Serializable {
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
 			// if the child is a var node, just add the var number
 			if ((this.jjtGetChild(i)).getNodeType() == NodeType.VAR) {
-				v.add(this.jjtGetChild(i).getVar());
+				v.add(this.jjtGetChild(i).getNodeVariable());
 			}
 
 			// nested con/disjunction, go deeper in the tree and collect
@@ -148,7 +148,7 @@ public class SimpleNode implements Node, Serializable {
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
 			// if the child is a var node, just add the var number
 			if (this.jjtGetChild(i).getOp().equals("!")) {
-				v.add(this.jjtGetChild(i).jjtGetChild(0).getVar());
+				v.add(this.jjtGetChild(i).jjtGetChild(0).getNodeVariable());
 			}
 
 			// nested con/disjunction, go deeper in the tree and collect
@@ -196,7 +196,7 @@ public class SimpleNode implements Node, Serializable {
 		Vector<Integer> posLiterals = new Vector<Integer>();
 		Vector<Integer> negLiterals = new Vector<Integer>();
 
-		if (this.getOp().equals("&")) {
+		if (nodeType == NodeType.AND) {
 			traversedTree += "c\n";
 			posLiterals = (this.getPositiveLiterals("&", posLiterals));
 			negLiterals = (this.getNegativeLiterals("&", negLiterals));
@@ -214,7 +214,7 @@ public class SimpleNode implements Node, Serializable {
 			traversedTree += "/c\n";
 		}
 
-		if (this.getOp().equals("|")) {
+		if (nodeType == NodeType.OR) {
 			traversedTree += "d\n";
 			posLiterals = (this.getPositiveLiterals("|", posLiterals));
 			negLiterals = (this.getNegativeLiterals("|", negLiterals));
@@ -247,7 +247,7 @@ public class SimpleNode implements Node, Serializable {
 		int i = 0;
 		boolean reducable = false;
 
-		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
+		if (nodeType != NodeType.VAR) { // we're not in a leaf node...
 			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just
 																// traverse
 																// through all
@@ -288,8 +288,7 @@ public class SimpleNode implements Node, Serializable {
 
 				// false & x = false, so set parent to false and make it a leaf
 				// node
-				if ((parentNode.getOp().equals("&"))
-						&& (truthValue.equals("FALSE"))) {
+				if ((parentNode.getOp().equals("&")) && (nodeType == NodeType.FALSE)) {
 					logger.debug("AND FALSE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("FALSE");
@@ -302,8 +301,7 @@ public class SimpleNode implements Node, Serializable {
 				// true & x = x, so delete this node, replace the parent node
 				// with
 				// the sibling
-				if ((parentNode.getOp().equals("&"))
-						&& (truthValue.equals("TRUE"))) {
+				if ((parentNode.getOp().equals("&")) && (nodeType == NodeType.FALSE)) {
 					logger.debug("AND TRUE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
@@ -354,8 +352,7 @@ public class SimpleNode implements Node, Serializable {
 
 				// true | x = true, so set the parent node to true and make it a
 				// leaf
-				if ((parentNode.getOp().equals("|"))
-						&& (nodeType == NodeType.TRUE)) {
+				if ((parentNode.getOp().equals("|")) && (nodeType == NodeType.TRUE)) {
 					logger.debug("OR TRUE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("TRUE");
@@ -450,6 +447,12 @@ public class SimpleNode implements Node, Serializable {
 
 	public void setOp(String o) {
 		this.op = o;
+		if (o == "&")
+			nodeType = NodeType.AND;
+		if (o == "|")
+			nodeType = NodeType.OR;
+		if (o == "!")
+			nodeType = NodeType.NOT;
 	}
 
 	public String getOp() {

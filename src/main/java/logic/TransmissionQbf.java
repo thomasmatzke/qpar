@@ -6,6 +6,7 @@ import main.java.logic.parser.SimpleNode;
 import java.io.Serializable;
 import main.java.QPar;
 
+import main.java.logic.parser.SimpleNode.NodeType;
 import main.java.master.MasterDaemon;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
@@ -174,7 +175,7 @@ public class TransmissionQbf implements Serializable {
 	 * @return a truth value
 	 */
 	public boolean rootGetTruthValue() {
-		if (root.jjtGetChild(0).getTruthValue().equals("TRUE"))
+		if (root.jjtGetChild(0).getNodeType() == NodeType.TRUE)
 			return true;
 		return false;	
 	}
