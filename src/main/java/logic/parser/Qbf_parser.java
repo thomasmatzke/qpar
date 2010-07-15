@@ -18,7 +18,6 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                 jjtree.reset();
         }
 
-
         public HashMap<Integer, Integer> getLiteralCount() {
                 return this.literalCount;
         }
@@ -70,13 +69,6 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
     }
   }
 
-// *	<var_list> 	::= <VAR> <var_list> | <VAR>
-//{}
-//{
-////	Var()
-////	|
-////	Var()
-//}
   final public void And() throws ParseException {
  /*@bgen(jjtree) And */
   ASTAnd jjtn000 = new ASTAnd(JJTAND);
@@ -141,57 +133,21 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                 varNumber++;
                 jjtn000.var = varNumber;
                 jjtn000.nodeType = NodeType.VAR;
-/*		if (s == "e") {*/
-/*			eVars.add(varNumber);*/
-/*		}*/
-/*		if (s == "f") {*/
-/*			aVars.add(varNumber);*/
-/*		}*/
-/*		if (s == "") {*/
 
-                        if (literalCount.get(varNumber) != null) {
-                                literalCount.put(varNumber, literalCount.get(varNumber) + 1);
-                        }
-                        else {
-                                literalCount.put(varNumber, 1);
-                        }
-                        if (!vars.contains(varNumber)) {
-                                vars.add(varNumber);
-                        }
-/*		}*/
-
+                if (literalCount.get(varNumber) != null) {
+                        literalCount.put(varNumber, literalCount.get(varNumber) + 1);
+                }
+                else {
+                        literalCount.put(varNumber, 1);
+                }
+                if (!vars.contains(varNumber)) {
+                        vars.add(varNumber);
+                }
     } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);
           }
     }
-  }
-
-  final public void VarQ(String s) throws ParseException {
-        Token t;
-    t = jj_consume_token(VAR);
-                // Stripping down the variable name to a number (e.g. "v123" -> 123 and
-                // adding it to a vector containing all variable numbers as well as to a
-                // vector with all exist- or allquantified variables (that's the reason
-                // for the funny String s fallthrough) 
-                String varName = t.image.replaceAll("[a-z]*","");
-                int varNumber = Integer.valueOf(varName).intValue();
-                varNumber++;
-
-                if (s == "e") {
-        //		jjtThis.nodeType = NodeType.EXISTS;
-//			jjtThis.var = varNumber;
-                        if (!vars.contains(varNumber)) {
-                                eVars.add(varNumber);
-                        }
-                }
-                if (s == "f") {
-//			jjtThis.nodeType = NodeType.FORALL;
-//			jjtThis.var = varNumber;
-                        if (!vars.contains(varNumber)) {
-                                aVars.add(varNumber);
-                        }
-                }
   }
 
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
@@ -338,15 +294,6 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
       jj_consume_token(-1);
       throw new ParseException();
     }
-  }
-
-// *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
-  final public void Q_set() throws ParseException {
-        String s;
-    s = Quant();
-    jj_consume_token(LSP);
-    VarQ(s);
-    jj_consume_token(RSP);
   }
 
 // *	<quant> 	::= <EXISTS> | <FORALL>

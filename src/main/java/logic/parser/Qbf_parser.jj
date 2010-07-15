@@ -25,7 +25,6 @@
 options {
 	             
 	                         
-	// VISITOR = true;
 	STATIC = false;
 }
 
@@ -52,7 +51,6 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants, /*@
 	public Qbf_parser() {
 		jjtree.reset();
 	}
-
 	
 	public HashMap<Integer, Integer> getLiteralCount() {
 		return this.literalCount;
@@ -129,14 +127,6 @@ void Input()       :	// Node with one child (Exp())
         }
 /*@egen*/
 }
-
-// *	<var_list> 	::= <VAR> <var_list> | <VAR>
-//{}
-//{
-////	Var()
-////	|
-////	Var()
-//}
 
 void And()     :	// Node with two children (Exp(), Exp())
 {/*@bgen(jjtree) And */
@@ -227,24 +217,16 @@ void Var()     :
 		varNumber++;
 		jjtn000.var = varNumber;
 		jjtn000.nodeType = NodeType.VAR;
-/*		if (s == "e") {*/
-/*			eVars.add(varNumber);*/
-/*		}*/
-/*		if (s == "f") {*/
-/*			aVars.add(varNumber);*/
-/*		}*/
-/*		if (s == "") {*/
 			
-			if (literalCount.get(varNumber) != null) {
-				literalCount.put(varNumber, literalCount.get(varNumber) + 1);
-			}
-			else {
-				literalCount.put(varNumber, 1);			
-			}	
-			if (!vars.contains(varNumber)) {
-				vars.add(varNumber);
-			}
-/*		}*/
+		if (literalCount.get(varNumber) != null) {
+			literalCount.put(varNumber, literalCount.get(varNumber) + 1);
+		}
+		else {
+			literalCount.put(varNumber, 1);			
+		}	
+		if (!vars.contains(varNumber)) {
+			vars.add(varNumber);
+		}
 	}/*@bgen(jjtree)*/
         } finally {
           if (jjtc000) {
@@ -252,37 +234,6 @@ void Var()     :
           }
         }
 /*@egen*/
-}
-
-void VarQ(String s)      :
-{
-	Token t;
-}
-{
-	t = <VAR>
-	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
-		// adding it to a vector containing all variable numbers as well as to a
-		// vector with all exist- or allquantified variables (that's the reason
-		// for the funny String s fallthrough) 
-		String varName = t.image.replaceAll("[a-z]*","");
-		int varNumber = Integer.valueOf(varName).intValue();
-		varNumber++;
-
-		if (s == "e") {
-	//		jjtThis.nodeType = NodeType.EXISTS;
-//			jjtThis.var = varNumber;
-			if (!vars.contains(varNumber)) {
-				eVars.add(varNumber);
-			}
-		}
-		if (s == "f") {
-//			jjtThis.nodeType = NodeType.FORALL;
-//			jjtThis.var = varNumber;
-			if (!vars.contains(varNumber)) {
-				aVars.add(varNumber);
-			}
-		} 
-	}
 }
 
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
@@ -334,16 +285,12 @@ void Exp()      :
         try {
 /*@egen*/
 	(
-
-
-//Q_set()
 		(
 			s = Quant()
 			<LSP>
 			t = <VAR>
 			(
 				{
-					
 					String varName = t.image.replaceAll("[a-z]*","");
 					int varNumber = Integer.valueOf(varName).intValue();
 					varNumber++;
@@ -432,20 +379,6 @@ void Exp()      :
 	<RP>
 	|
 	Var()
-//	|
-//	<EOF>
-}
-
-// *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
-void Q_set()      :
-{
-	String s;
-}
-{
-	s = Quant()
-	<LSP>
-	VarQ(s)
-	<RSP>
 }
 
 // *	<quant> 	::= <EXISTS> | <FORALL>

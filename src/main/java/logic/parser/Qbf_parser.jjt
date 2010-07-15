@@ -24,7 +24,6 @@
 options {
 	MULTI = true;
 	NODE_DEFAULT_VOID = true;
-	// VISITOR = true;
 	STATIC = false;
 }
 
@@ -48,7 +47,6 @@ public class Qbf_parser implements Serializable {
 	public Qbf_parser() {
 		jjtree.reset();
 	}
-
 	
 	public HashMap<Integer, Integer> getLiteralCount() {
 		return this.literalCount;
@@ -100,14 +98,6 @@ void Input() #Input:	// Node with one child (Exp())
 	<EOF>
 }
 
-// *	<var_list> 	::= <VAR> <var_list> | <VAR>
-//{}
-//{
-////	Var()
-////	|
-////	Var()
-//}
-
 void And() #And:	// Node with two children (Exp(), Exp())
 {}
 {       
@@ -152,57 +142,16 @@ void Var() #Var:
 		varNumber++;
 		jjtThis.var = varNumber;
 		jjtThis.nodeType = NodeType.VAR;
-/*		if (s == "e") {*/
-/*			eVars.add(varNumber);*/
-/*		}*/
-/*		if (s == "f") {*/
-/*			aVars.add(varNumber);*/
-/*		}*/
-/*		if (s == "") {*/
 			
-			if (literalCount.get(varNumber) != null) {
-				literalCount.put(varNumber, literalCount.get(varNumber) + 1);
-			}
-			else {
-				literalCount.put(varNumber, 1);			
-			}	
-			if (!vars.contains(varNumber)) {
-				vars.add(varNumber);
-			}
-/*		}*/
-	}
-}
-
-
-// TODO remove later
-void VarQ(String s) #void:
-{
-	Token t;
-}
-{
-	t = <VAR>
-	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
-		// adding it to a vector containing all variable numbers as well as to a
-		// vector with all exist- or allquantified variables (that's the reason
-		// for the funny String s fallthrough) 
-		String varName = t.image.replaceAll("[a-z]*","");
-		int varNumber = Integer.valueOf(varName).intValue();
-		varNumber++;
-
-		if (s == "e") {
-	//		jjtThis.nodeType = NodeType.EXISTS;
-//			jjtThis.var = varNumber;
-			if (!vars.contains(varNumber)) {
-				eVars.add(varNumber);
-			}
+		if (literalCount.get(varNumber) != null) {
+			literalCount.put(varNumber, literalCount.get(varNumber) + 1);
 		}
-		if (s == "f") {
-//			jjtThis.nodeType = NodeType.FORALL;
-//			jjtThis.var = varNumber;
-			if (!vars.contains(varNumber)) {
-				aVars.add(varNumber);
-			}
-		} 
+		else {
+			literalCount.put(varNumber, 1);			
+		}	
+		if (!vars.contains(varNumber)) {
+			vars.add(varNumber);
+		}
 	}
 }
 
@@ -268,22 +217,6 @@ void Exp() #void:
 	<RP>
 	|
 	Var()
-//	|
-//	<EOF>
-}
-
-
-// TODO remove later
-// *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
-void Q_set() #void:
-{
-	String s;
-}
-{
-	s = Quant()
-	<LSP>
-	VarQ(s)
-	<RSP>
 }
 
 // *	<quant> 	::= <EXISTS> | <FORALL>
