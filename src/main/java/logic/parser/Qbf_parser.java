@@ -135,7 +135,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                 // Stripping down the variable name to a number (e.g. "v123" -> 123 and
                 // adding it to a vector containing all variable numbers as well as to a
                 // vector with all exist- or allquantified variables (that's the reason
-                // for the funny String s fallthrough) TODO comment
+                // for the funny String s fallthrough) 
                 String varName = t.image.replaceAll("[a-z]*","");
                 int varNumber = Integer.valueOf(varName).intValue();
                 varNumber++;
@@ -179,7 +179,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                 // Stripping down the variable name to a number (e.g. "v123" -> 123 and
                 // adding it to a vector containing all variable numbers as well as to a
                 // vector with all exist- or allquantified variables (that's the reason
-                // for the funny String s fallthrough) TODO comment
+                // for the funny String s fallthrough) 
                 String varName = t.image.replaceAll("[a-z]*","");
                 int varNumber = Integer.valueOf(varName).intValue();
                 varNumber++;

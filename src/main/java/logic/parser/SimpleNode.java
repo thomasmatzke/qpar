@@ -27,9 +27,9 @@ public class SimpleNode implements Node, Serializable {
 	protected Node[] children;
 	public NodeType nodeType = null;
 
-	public int id;			// TODO check if needed
-	public int var = -1;		// -1 = not a var node
-	public String op = "";		// "" = not an operator node
+	public int id;				
+	public int var = -1;			// -1 = not a var node
+	public String op = "";			// "" = not an operator node
 	public String truthValue = "";	// "" = not truth assigned
 	public enum NodeType {
 		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
@@ -70,18 +70,20 @@ public class SimpleNode implements Node, Serializable {
 		int numChildren = this.jjtGetNumChildren();
 
 		// not in a leaf node, nothing to set
-		if (numChildren > 0) {
+		if (nodeType != NodeType.VAR) {
 			for (int i = 0; i < numChildren; i++) {
 				jjtGetChild(i).assignTruthValue(v, b);
 			}
 		}
-		// in a leaf node now
+		// in the right leaf node now
 		else {
-			if ((var == v) && (nodeType == nodeType.VAR)) {
+			if ((var == v) && (nodeType == NodeType.VAR)) {
 				if (b) {
-					truthValue = "TRUE";
+					truthValue = "TRUE"; // TODO remove later
+					nodeType = NodeType.TRUE;
 				} else {
-					truthValue = "FALSE";
+					truthValue = "FALSE"; // TODO remove later
+					nodeType = NodeType.FALSE;
 				}
 			}
 		}
@@ -119,7 +121,7 @@ public class SimpleNode implements Node, Serializable {
 	public Vector<Integer> getPositiveLiterals(String op, Vector<Integer> v) {
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
 			// if the child is a var node, just add the var number
-			if (this.jjtGetChild(i).getVar() > -1) {
+			if ((this.jjtGetChild(i)).getNodeType() == NodeType.VAR) {
 				v.add(this.jjtGetChild(i).getVar());
 			}
 
@@ -256,8 +258,7 @@ public class SimpleNode implements Node, Serializable {
 		} else { // we're in a leaf node...
 			parentNode = this.jjtGetParent();
 
-			if ((this.truthValue.equals("TRUE"))
-					|| (this.truthValue.equals("FALSE"))) {
+			if ((nodeType == NodeType.TRUE) || (nodeType == NodeType.FALSE)) {
 				// we're in a truth-assigned leaf node, let's see what to do
 
 				// if we're in the logical root node, then there's no more
@@ -275,10 +276,10 @@ public class SimpleNode implements Node, Serializable {
 				if (parentNode.getOp().equals("!")) {
 					logger.debug("NEGATION occured");
 					parentNode.setOp("");
-					if (truthValue.equals("FALSE")) {
-						parentNode.setTruthValue("TRUE");
+					if (nodeType == NodeType.FALSE) {
+						parentNode.setNodeType(NodeType.TRUE);
 					} else {
-						parentNode.setTruthValue("FALSE");
+						parentNode.setNodeType(NodeType.FALSE);
 					}
 					parentNode.deleteChildren();
 					jjtSetParent(null);
@@ -328,8 +329,7 @@ public class SimpleNode implements Node, Serializable {
 				// false | x = x, so delete this node, replace the parent node
 				// with
 				// the sibling
-				if ((parentNode.getOp().equals("|"))
-						&& (truthValue.equals("FALSE"))) {
+				if ((parentNode.getOp().equals("|")) && (nodeType == NodeType.FALSE)) {
 					logger.debug("OR FALSE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
@@ -355,7 +355,7 @@ public class SimpleNode implements Node, Serializable {
 				// true | x = true, so set the parent node to true and make it a
 				// leaf
 				if ((parentNode.getOp().equals("|"))
-						&& (truthValue.equals("TRUE"))) {
+						&& (nodeType == NodeType.TRUE)) {
 					logger.debug("OR TRUE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("TRUE");
@@ -411,7 +411,7 @@ public class SimpleNode implements Node, Serializable {
 		int i;
 		boolean found = false;
 
-		if (this.jjtGetNumChildren() > 0) {
+		if (this.nodeType != NodeType.VAR) {
 			for (i = 0; i < this.jjtGetNumChildren(); i++) {
 				found = found || this.jjtGetChild(i).findVar(v);
 			}
@@ -428,6 +428,10 @@ public class SimpleNode implements Node, Serializable {
 	// one doesn't really need because all vars are public anyway :)
 	public void setTruthValue(String t) {
 		this.truthValue = t;
+		if (truthValue == "TRUE")
+			nodeType = NodeType.TRUE;
+		else
+			nodeType = NodeType.FALSE;
 	}
 
 	public String getTruthValue() {

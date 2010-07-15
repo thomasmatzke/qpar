@@ -15,10 +15,11 @@ public interface Node {
 	public int		id = 0;
 	public boolean	reducable = false;
 	public NodeType nodeType = null;
+
 	public enum NodeType {
 		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
 	}
-
+	
 	// custom(ized) methods
 	public double getTruthProbability();
 	public void		assignTruthValue(int v, boolean b);
@@ -35,6 +36,8 @@ public interface Node {
 	public void		setOp(String o);
 	public void		setTruthValue(String t);
 	public void		setVar(int v);
+	public void		setNodeType(main.java.logic.parser.SimpleNode.NodeType n);
+	public main.java.logic.parser.SimpleNode.NodeType getNodeType();
 	public String	traverse();
 	public boolean	findVar(int v);
 	public String getEnclosedFormula(String op);
