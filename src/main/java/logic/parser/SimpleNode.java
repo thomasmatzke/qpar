@@ -196,6 +196,9 @@ public class SimpleNode implements Node, Serializable {
 		Vector<Integer> posLiterals = new Vector<Integer>();
 		Vector<Integer> negLiterals = new Vector<Integer>();
 
+		if ((nodeType == NodeType.FORALL) || (nodeType == NodeType.EXISTS))
+			traversedTree = this.jjtGetChild(0).traverse();
+
 		if (nodeType == NodeType.AND) {
 			traversedTree += "c\n";
 			posLiterals = (this.getPositiveLiterals("&", posLiterals));
@@ -246,8 +249,8 @@ public class SimpleNode implements Node, Serializable {
 		Node siblingNode = null;
 		int i = 0;
 		boolean reducable = false;
-
-		if (nodeType != NodeType.VAR) { // we're not in a leaf node...
+		
+		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
 			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just
 																// traverse
 																// through all
@@ -257,7 +260,7 @@ public class SimpleNode implements Node, Serializable {
 			}
 		} else { // we're in a leaf node...
 			parentNode = this.jjtGetParent();
-
+System.out.println(parentNode.getNodeType() + " " + this.getNodeType());
 			if ((nodeType == NodeType.TRUE) || (nodeType == NodeType.FALSE)) {
 				// we're in a truth-assigned leaf node now, let's see what to do
 
@@ -270,6 +273,13 @@ public class SimpleNode implements Node, Serializable {
 					logger.debug("RETURNING FALSE");
 					return false;
 				}
+
+				if (parentNode.getNodeType() == NodeType.FORALL)
+					return false;
+
+				if (parentNode.getNodeType() == NodeType.EXISTS)
+					return false;
+				
 				reducable = true;
 
 				// not x, set the parent to not x
@@ -288,7 +298,7 @@ public class SimpleNode implements Node, Serializable {
 
 				// false & x = false, so set parent to false and make it a leaf
 				// node
-				if ((parentNode.getOp().equals("&")) && (nodeType == NodeType.FALSE)) {
+				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.FALSE)) {
 					logger.debug("AND FALSE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("FALSE");
@@ -301,7 +311,7 @@ public class SimpleNode implements Node, Serializable {
 				// true & x = x, so delete this node, replace the parent node
 				// with
 				// the sibling
-				if ((parentNode.getOp().equals("&")) && (nodeType == NodeType.FALSE)) {
+				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.TRUE)) {
 					logger.debug("AND TRUE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
@@ -327,7 +337,7 @@ public class SimpleNode implements Node, Serializable {
 				// false | x = x, so delete this node, replace the parent node
 				// with
 				// the sibling
-				if ((parentNode.getOp().equals("|")) && (nodeType == NodeType.FALSE)) {
+				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.FALSE)) {
 					logger.debug("OR FALSE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
@@ -352,7 +362,7 @@ public class SimpleNode implements Node, Serializable {
 
 				// true | x = true, so set the parent node to true and make it a
 				// leaf
-				if ((parentNode.getOp().equals("|")) && (nodeType == NodeType.TRUE)) {
+				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.TRUE)) {
 					logger.debug("OR TRUE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("TRUE");
@@ -427,10 +437,11 @@ public class SimpleNode implements Node, Serializable {
 	// methods
 	public void setTruthValue(String t) {
 		this.truthValue = t;
-		if (truthValue == "TRUE")
+		if (t.equals("TRUE")) {
 			nodeType = NodeType.TRUE;
-		else
+		} else if (t.equals("FALSE")){
 			nodeType = NodeType.FALSE;
+		}
 	}
 
 	public String getTruthValue() {

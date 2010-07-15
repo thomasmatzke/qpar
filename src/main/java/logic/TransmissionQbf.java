@@ -156,7 +156,7 @@ public class TransmissionQbf implements Serializable {
 		boolean continueReducing = true;		
 
 		while (continueReducing) {
-			continueReducing = root.jjtGetChild(0).reduce();
+			continueReducing = root.reduce();
 		}
 	}
 
@@ -173,7 +173,14 @@ public class TransmissionQbf implements Serializable {
 	 * @return true if the first node after input has a truth value, false otherwise
 	 */
 	public boolean rootIsTruthNode() {
-		if (root.jjtGetChild(0).getTruthValue().equals(""))
+
+		SimpleNode start = (SimpleNode)root.jjtGetChild(0);
+
+		while ((start.getNodeType() == NodeType.FORALL) || (start.getNodeType() == NodeType.EXISTS)) {
+			start = (SimpleNode)start.jjtGetChild(0);
+			}
+
+		if (start.getTruthValue().equals(""))
 			return false;
 		return true;
 	}
