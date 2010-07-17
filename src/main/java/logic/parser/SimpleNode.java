@@ -260,7 +260,6 @@ public class SimpleNode implements Node, Serializable {
 			}
 		} else { // we're in a leaf node...
 			parentNode = this.jjtGetParent();
-System.out.println(parentNode.getNodeType() + " " + this.getNodeType());
 			if ((nodeType == NodeType.TRUE) || (nodeType == NodeType.FALSE)) {
 				// we're in a truth-assigned leaf node now, let's see what to do
 

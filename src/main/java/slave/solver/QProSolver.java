@@ -165,8 +165,8 @@ public class QProSolver implements Solver {
 		}
 		logger.debug("check for orphaned quantified vars finished");		
 
-	t.dump("DEBUG");
-	t.checkQbf();
+		// t.dump("DEBUG");
+		// t.checkQbf();
 
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
@@ -185,7 +185,7 @@ public class QProSolver implements Solver {
 		traversedTree += "/q\nQBF\n";	
 		logger.debug("traversing finished");
 
-	System.out.println(traversedTree);
+		logger.debug(traversedTree);
 
 		return traversedTree;
 	}	
