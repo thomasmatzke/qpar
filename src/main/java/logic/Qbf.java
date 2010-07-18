@@ -15,6 +15,7 @@ import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.TokenMgrError;
 
 import org.apache.log4j.Logger;
+
 /**
 * A QBF object contains one QBF as well as methods to split it up into subQBFs
 * and merging subresults back together
@@ -29,6 +30,7 @@ public class Qbf {
 	private int receivedResults = 0;
 	private boolean satisfiable	= false;
 	private boolean solved		= false;
+	private DTNode decisionRoot = null;
 	private ArrayList<TransmissionQbf> subQbfs	= new ArrayList<TransmissionQbf>();
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
 	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
@@ -72,7 +74,7 @@ public class Qbf {
 			this.aVars = parser.getAVars();
 			this.vars = parser.getVars();
 			root = parser.getRootNode();
-			root.dump("");
+			// root.dump("");
 		}
 		catch (ParseException e) {
 			logger.error("Parse error");			
@@ -98,21 +100,13 @@ public class Qbf {
 		Vector<Integer> tempVars = new Vector<Integer>();
 		int numVarsToChoose = new Double(Math.log(n)/Math.log(2)).intValue();
 		boolean[][] decisionArray = new boolean[n][numVarsToChoose];		
-
+		
 		// running the selected heuristic						
 		tempVars = h.decide(this);
 
 		// throw away the vars that are too much
 		for(i = 0; i < numVarsToChoose; i++) {
 			decisionVars.add(tempVars.get(i));
-		
-			if (aVars.contains(tempVars.get(i))) {
-				op = "F";
-			}
-			else {
-				op = "E";
-			}
-		
 		}
 
 		// generating a truth table
@@ -134,10 +128,32 @@ public class Qbf {
 			}
 			logger.debug("------");
 		}
+	
+		// creating the root of the decision node
+		if (aVars.contains(decisionVars.get(0))) {
+			decisionRoot = new DTNode("&");
+		} else if (eVars.contains(decisionVars.get(0))) {
+			decisionRoot = new DTNode("|");
+		}
+
+		// for every var that is going to get truth-assigned, add a layer on
+		// the tree, with AND or OR nodes, depending on the occurance of that
+		// var in either eVars or aVars
+		for (i=1; i < decisionVars.size(); i++) {
+			if (aVars.contains(decisionVars.get(i))) {
+				decisionRoot.addLayer("&");
+			}else if (eVars.contains(decisionVars.get(i))) {
+				decisionRoot.addLayer("|");
+			}
+		}
 		
-		DTNode[] leafNodes = new DTNode[n];
-		for (i = 0; i < n; i++) {
-			leafNodes[i] = new DTNode((id * 1000 + i));												
+		// finally gather all leave nodes...
+		Vector<DTNode> leafNodes = decisionRoot.getLeafNodes();
+		// ...and add the subformula IDs as their children
+		i = id * 1000;
+		for (DTNode dtmp : leafNodes) {
+			dtmp.addChild(new DTNode(i++));
+			dtmp.addChild(new DTNode(i++));
 		}
 
 		// generating n TransmissionQBFs
@@ -180,26 +196,19 @@ public class Qbf {
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
 	public synchronized boolean mergeQbf(String id, boolean result) {
-		resultAvailable.set((Integer.valueOf(id) - (Qbf.id * 1000)), true);
-		qbfResults.set((Integer.valueOf(id) - (Qbf.id * 1000)),result);
+		DTNode tmp = null;
 	
-		// for testing
-		logger.debug("incoming result, id: " + id + ", value: " + result + " saved at " +(Integer.valueOf(id) - (Qbf.id * 1000)));
+		// find the corresponding node in the decisiontree
+		tmp = decisionRoot.getNode(Integer.parseInt(id));
 		
-		receivedResults++;
-		if (receivedResults < subQbfs.size())
-			return false;	
+		// set the nodes truth value
+		tmp.setTruthValue(result);
 
-		solved = true;
+		// reduce the tree
+		tmp.reduce();
 
-		if (op.equals("E")){
-			satisfiable = qbfResults.get(0) || qbfResults.get(1);
-		}
-		else {
-			satisfiable = qbfResults.get(0) && qbfResults.get(1);	
-		}
-
-		return true;
+		// check the root for a truth value and return
+		return decisionRoot.hasTruthValue();
 	}
 
 	/**
@@ -207,24 +216,15 @@ public class Qbf {
 	* @return TRUE if there's a result, FALSE otherwise
 	*/
 	public synchronized boolean isSolved() {
-		// if solved = FALSE, go through the list of unused results and, if
-		// there are any, merge them. Then check again for solved and return it.
-		if (solved == false) {
-			for (int i = 0; i < subQbfs.size(); i++) {
-				if (!resultProcessed.get(i)) {
-					// mergeQbf(i, qbfResults.get(i));
-				}
-			}
-		}
-		return solved;
+		return decisionRoot.hasTruthValue();
 	}
 	
 	/**
 	* getter method for satisfiable
 	* @return TRUE the QBF is satisfiable, FALSE if not
 	*/
-	public synchronized  boolean getResult() {
-		return satisfiable;
+	public synchronized boolean getResult() {
+		return decisionRoot.getTruthValue();
 	}
 
 	public HashMap<Integer, Integer> getLiteralCount() {

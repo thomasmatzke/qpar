@@ -185,7 +185,7 @@ public class QProSolver implements Solver {
 		traversedTree += "/q\nQBF\n";	
 		logger.debug("traversing finished");
 
-		logger.debug(traversedTree);
+		// logger.debug(traversedTree);
 
 		return traversedTree;
 	}	
