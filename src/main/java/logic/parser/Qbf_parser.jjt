@@ -94,6 +94,7 @@ TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
 void Input() #Input:	// Node with one child (Exp())
 {}
 {
+	{ jjtThis.nodeType = NodeType.START; }
 	Exp()
 	<EOF>
 }

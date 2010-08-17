@@ -104,6 +104,7 @@ void Input()       :	// Node with one child (Exp())
 {/*@bgen(jjtree) Input */
         try {
 /*@egen*/
+	{ jjtn000.nodeType = NodeType.START; }
 	Exp()
 	<EOF>/*@bgen(jjtree)*/
         } catch (Throwable jjte000) {
