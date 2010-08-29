@@ -23,7 +23,7 @@ import javax.swing.ListSelectionModel;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import main.java.logic.HeuristicFactory;
+import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Job;
 import main.java.master.MasterDaemon;
 import main.java.master.Slave;

@@ -1,5 +1,6 @@
 package main.java;
 
+import java.util.Set;
 import java.util.Vector;
 public class Permuter {
 
@@ -7,6 +8,10 @@ public class Permuter {
 	
 	public Permuter(Vector v) {
 		this.v = v;
+	}
+	
+	public Permuter(Set s) {
+		this.v = new Vector(s);
 	}
 	
 	public Vector next() {

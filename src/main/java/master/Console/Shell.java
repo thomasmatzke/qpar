@@ -17,8 +17,8 @@ import org.apache.log4j.Logger;
 
 import main.java.QPar;
 import main.java.Util;
-import main.java.logic.Heuristic;
-import main.java.logic.HeuristicFactory;
+import main.java.logic.heuristic.Heuristic;
+import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Evaluation;
 import main.java.master.Job;
 import main.java.master.MasterDaemon;

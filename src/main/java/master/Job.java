@@ -13,9 +13,9 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import main.java.QPar;
-import main.java.logic.HeuristicFactory;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
+import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Console.Shell;
 
 public class Job {
@@ -148,7 +148,7 @@ public class Job {
 			availableCores = maxCores;
 		
 		this.subformulas = formula.splitQbf(availableCores, 
-											HeuristicFactory.getHeuristic(this.getHeuristic()));
+											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
 		List<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
 
 		logger.info("Starting Job. \n" +

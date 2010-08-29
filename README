@@ -1,5 +1,7 @@
 QPar - Distributed QBF-Solving
 
+CAUTION: THIS CODE IS CURRENTLY (again) UNDER HEAVY DEVELOPMENT. COMMITS MAY NOT EXECUTE AT ALL.
+
 Description
 QPar is a system for the distributed computation of quantified boolean 
 formulas (qbf) to multiple machines. QPar was initially designed to receive a 

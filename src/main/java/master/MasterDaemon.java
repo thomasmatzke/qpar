@@ -3,6 +3,8 @@ package main.java.master;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 import javax.jms.Connection;
 import javax.jms.JMSException;
@@ -32,21 +34,12 @@ public class MasterDaemon {
 	private static class ShutdownHook extends Thread {
 		@Override
 		public void run() {
-			try {
-				for(Slave slave : Slave.getSlaves().values()){
-					slave.stop();
-				}
-				connection.close();
-			} catch (JMSException e) {
-				logger.error("Error while closing connection: \n"
-						+ e);
-			}
-			stopMessageBroker();
+			MasterDaemon.bailOut();
 		}
 	}
 
 	private static ArgumentParser ap;
-	
+
 	private static BrokerService broker;
 
 	private static Connection connection;
@@ -59,6 +52,8 @@ public class MasterDaemon {
 	private static boolean startGui = false;
 	private static String user = ActiveMQConnection.DEFAULT_USER;
 
+	public java.sql.Connection c;
+	
 	public static void connectToBroker() {
 		logger.info("Connecting to MessageBroker...");
 		// Create the connection.
@@ -68,13 +63,15 @@ public class MasterDaemon {
 			connection = connectionFactory.createConnection();
 			connection.start();
 		} catch (JMSException e) {
-			logger.error("Could not establish connection to MessageBroker: \n" + e);
+			logger.error("Could not establish connection to MessageBroker: \n"
+					+ e);
 		}
 		logger.info("Connection to MessageBroker established.");
 	}
 
 	public static Session createSession() throws JMSException {
-		return MasterDaemon.connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+		return MasterDaemon.connection.createSession(false,
+				Session.AUTO_ACKNOWLEDGE);
 	}
 
 	public static synchronized Connection getConnection() {
@@ -92,7 +89,7 @@ public class MasterDaemon {
 
 		ap = new ArgumentParser(args);
 		MasterDaemon.startGui = ap.hasOption("gui");
-		
+
 		new MasterDaemon();
 	}
 
@@ -120,17 +117,37 @@ public class MasterDaemon {
 		logger.info("Messagebroker stopped.");
 	}
 
-	@SuppressWarnings("unused")
+	public void initializeDatabase() {
+		// TODO: rethink db concept
+//			try {
+//				Class.forName("org.hsqldb.jdbc.JDBCDriver");
+//				Db.conn = DriverManager.getConnection(
+//						"jdbc:hsqldb:mem:data", "SA", "");
+//				Db.update("CREATE TABLE quantifiers ( id INTEGER IDENTITY, qbf_id INTEGER, var INTEGER, type SMALLINT )");
+//				Db.update("CREATE TABLE dependencies ( id INTEGER IDENTITY, qbf_id INTEGER, from INTEGER, to INTEGER )");
+//				Db.update("CREATE INDEX from_index ON dependencies var");
+//				Db.update("CREATE INDEX from_index ON dependencies from");
+//				Db.update("CREATE INDEX from_index ON dependencies to");
+//			} catch (ClassNotFoundException e) {
+//				logger.error("Failed to load HSQLDB JDBC driver: \n" + e);
+//				System.exit(-1);
+//			} catch (SQLException e) {
+//				logger.error("Failed to create table: \n" + e);
+//				System.exit(-1);
+//			}
+			
+	}
+
 	private ShutdownHook hook;
 
 	public NewSlaveListener newSlaveListener;
 
 	public MasterDaemon() {
-		if(ap.hasOption("log")) {
+		if (ap.hasOption("log")) {
 			String lvl = ap.getOption("log");
-			if(lvl.equals("debug"))
-					QPar.logLevel = Level.DEBUG;
-			else if(lvl.equals("info"))
+			if (lvl.equals("debug"))
+				QPar.logLevel = Level.DEBUG;
+			else if (lvl.equals("info"))
 				QPar.logLevel = Level.INFO;
 			else
 				usage();
@@ -150,32 +167,47 @@ public class MasterDaemon {
 				}
 			});
 		} else {
-			if(ap.hasOption("i")) {
+			if (ap.hasOption("i")) {
 				try {
-					shell = new Shell(new BufferedReader(new FileReader(ap.getOption("i"))));
+					shell = new Shell(new BufferedReader(new FileReader(ap
+							.getOption("i"))));
 				} catch (FileNotFoundException e) {
 					logger.error(e);
 				}
 			} else {
 				shell = new Shell();
 			}
-						
+
 			shellthread = new Thread(shell);
 			shellthread.start();
 		}
 	}
 
+	public static void bailOut() {
+		for (Slave slave : Slave.getSlaves().values()) {
+			slave.stop();
+		}
+		try {
+			connection.close();
+		} catch (JMSException e) {}
+		stopMessageBroker();
+		try {
+			Db.shutdown();
+		} catch (SQLException e) {}
+	}
+	
 	private static void usage() {
-		System.out.println(	"Arguments: \"-gui\"               toggles graphical user interface" +
-							"           \"-i=INPUTFILE\"       specifies a batch-file" +
-							"           \"-log=(debug|info)\"  specifies log-lvl");
+		System.out
+				.println("Arguments: \"-gui\"               toggles graphical user interface"
+						+ "           \"-i=INPUTFILE\"       specifies a batch-file"
+						+ "           \"-log=(debug|info)\"  specifies log-lvl");
 		System.exit(-1);
 	}
 
 	public static Shell getShell() {
 		return shell;
 	}
-	
+
 	public static Thread getShellThread() {
 		return shellthread;
 	}

@@ -3,16 +3,26 @@ package main.java.logic;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.Stack;
 import java.util.Vector;
 
 import main.java.QPar;
+import main.java.logic.heuristic.DependencyNode;
+import main.java.logic.heuristic.Heuristic;
+import main.java.logic.parser.Node;
 import main.java.logic.parser.ParseException;
 import main.java.logic.parser.Qbf_parser;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.TokenMgrError;
+import main.java.master.Db;
+import main.java.master.MasterDaemon;
 
 import org.apache.log4j.Logger;
 
@@ -23,13 +33,16 @@ import org.apache.log4j.Logger;
 */
 public class Qbf {
 
+	// TODO: Delete these probably unused fields if tested OK 
+	// private int receivedResults = 0;
+	// private boolean satisfiable	= false;
+	// private boolean solved		= false;
+	// private String op; // TODO
+	
     static Logger logger = Logger.getLogger(Qbf.class);
 
 	Heuristic h = null;
-	private static int id = 0;
-	private int receivedResults = 0;
-	private boolean satisfiable	= false;
-	private boolean solved		= false;
+	private static int idCounter = 0;
 	private DTNode decisionRoot = null;
 	private ArrayList<TransmissionQbf> subQbfs	= new ArrayList<TransmissionQbf>();
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
@@ -41,7 +54,11 @@ public class Qbf {
 	public Vector<Integer> aVars = new Vector<Integer>();
 	public Vector<Integer> vars  = new Vector<Integer>();
 	public SimpleNode root = null;
-	private String op; // TODO
+	public int id;
+	public DependencyNode dependencyGraphRoot; 
+	
+	
+	private Stack<SimpleNode> quantifierStack;
 	
 	/**
 	* constructor
@@ -50,11 +67,11 @@ public class Qbf {
 	*/
 	public Qbf(String filename) throws IOException {
 		logger.setLevel(QPar.logLevel);
-
+		idCounter++;
+		this.id = idCounter;
+		
 		Qbf_parser parser;
-
-		id++;
-
+		
 		try {
 			parser = new Qbf_parser(new FileInputStream(filename));
 		}
@@ -86,6 +103,8 @@ public class Qbf {
 			return;
 		}
 		logger.debug("Finished reading a QBF from " + filename);
+		
+		this.generateDependencyGraph();
 	}
 
 	/**
@@ -97,16 +116,15 @@ public class Qbf {
 	public synchronized List<TransmissionQbf> splitQbf(int n, Heuristic h) {
 		int i,j;
 		TransmissionQbf tmp;
-		Vector<Integer> tempVars = new Vector<Integer>();
 		int numVarsToChoose = new Double(Math.log(n)/Math.log(2)).intValue();
 		boolean[][] decisionArray = new boolean[n][numVarsToChoose];		
 		
 		// running the selected heuristic						
-		tempVars = h.decide(this);
-
+		Integer[] tempVars = h.getVariableOrder().toArray(new Integer[0]);
+		
 		// throw away the vars that are too much
 		for(i = 0; i < numVarsToChoose; i++) {
-			decisionVars.add(tempVars.get(i));
+			decisionVars.add(tempVars[i]);
 		}
 
 		// generating a truth table
@@ -150,7 +168,7 @@ public class Qbf {
 		// finally gather all leave nodes...
 		Vector<DTNode> leafNodes = decisionRoot.getLeafNodes();
 		// ...and add the subformula IDs as their children
-		i = id * 1000;
+		i = this.id * 1000;
 		for (DTNode dtmp : leafNodes) {
 			dtmp.addChild(new DTNode(i++));
 			dtmp.addChild(new DTNode(i++));
@@ -164,7 +182,7 @@ public class Qbf {
 			resultAvailable.add(i, false);
 			resultProcessed.add(i, false);
 						
-			tmp.setId((new Integer(id * 1000 + i)).toString());
+			tmp.setId((new Integer(this.id * 1000 + i)).toString());
 			tmp.setRootNode(root);
 			
 			for (j = 0; j < numVarsToChoose; j++) {
@@ -211,6 +229,93 @@ public class Qbf {
 		return decisionRoot.hasTruthValue();
 	}
 
+	/**
+	 * Populates the in-memory database table dependencies with
+	 * quantifier dependencies, which are used by heuristics
+	 * @throws SQLException 
+	 */
+	public void generateDependencyGraph() {
+		logger.info("Generating dependency graph...");
+		long start = System.currentTimeMillis();
+		this.quantifierStack = new Stack<SimpleNode>();
+		this.traverse(this.root);
+		long end = System.currentTimeMillis();
+		logger.info("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
+	}
+	
+	private void traverse(SimpleNode node) {
+		
+		switch(node.getNodeType()) {
+			case START:
+				//Db.update("INSERT INTO quantifiers (qbf_id, var, type) VALUES ('" + this.id + "','0','" + node.getNodeType() + "')");
+				this.dependencyGraphRoot = new DependencyNode(0, DependencyNode.NodeType.ROOT);
+				this.quantifierStack.push(node);
+				traverse((SimpleNode)node.jjtGetChild(0));
+				break;
+			case FORALL:
+			case EXISTS:
+				// Db.update("INSERT INTO quantifiers (qbf_id, var, type) VALUES ('" + this.id + "','" + node.var + "','" + node.getNodeType() + "')");
+				
+				Set<Integer> deps = getDependencies(quantifierStack, node.getNodeType());
+				for(Integer dep : deps) {
+					DependencyNode.NodeType t = DependencyNode.NodeType.NIL;
+					if(node.getNodeType() == SimpleNode.NodeType.EXISTS){
+						t = DependencyNode.NodeType.EXISTENTIAL;
+					} else if(node.getNodeType() == SimpleNode.NodeType.FORALL) {
+						t = DependencyNode.NodeType.UNIVERSAL;
+					} else {
+						assert(false);
+					}
+						
+					DependencyNode.registry.get(dep).addChild(new DependencyNode(node.var, t));
+				}
+				//for(Integer i : deps) {
+				//	Db.update("INSERT INTO dependencies (qbf_id, from, to) VALUES ('" + this.id + "','" + i + "','" + node.getNodeVariable() + "')");
+				//}
+				
+				this.quantifierStack.push(node);								
+				traverse((SimpleNode)node.jjtGetChild(0));								
+				this.quantifierStack.pop();
+				
+				break;
+			case NOT:
+				traverse((SimpleNode)node.jjtGetChild(0));
+				break;
+			case AND:
+			case OR:
+				traverse((SimpleNode)node.jjtGetChild(0));
+				traverse((SimpleNode)node.jjtGetChild(1));
+				break;
+			case VAR:
+				break;
+			default:
+				logger.error("Encountered non-expected NodeType while traversing the tree for dependency-graph generation.");
+				MasterDaemon.bailOut();	
+		}
+		
+				
+	}
+	
+	private Set<Integer> getDependencies(Stack<SimpleNode> stack, SimpleNode.NodeType currentQuantifier) {
+		Set<Integer> ret = new HashSet<Integer>();
+		Stack<SimpleNode> stackClone = (Stack<SimpleNode>) stack.clone();
+		
+		// Search for first occurence of other quantifier
+		while(stackClone.peek().nodeType == currentQuantifier) { stackClone.pop(); }
+		
+		// Return all quants in the next block of the NOT-currentQuantifier
+		while(stackClone.peek().nodeType != currentQuantifier) {
+			SimpleNode n = stackClone.pop();
+			if(n.getNodeType() == SimpleNode.NodeType.START) {
+				ret.add(0);
+			} else {
+				ret.add(n.getNodeVariable()); 
+			}		
+		}
+							
+		return ret;
+	}
+	
 	/**
 	* getter method for solved
 	* @return TRUE if there's a result, FALSE otherwise
