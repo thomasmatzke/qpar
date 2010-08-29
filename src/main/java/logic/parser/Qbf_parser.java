@@ -46,6 +46,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
   boolean jjtc000 = true;
   jjtree.openNodeScope(jjtn000);
     try {
+          jjtn000.nodeType = NodeType.START;
       Exp();
       jj_consume_token(0);
     } catch (Throwable jjte000) {
