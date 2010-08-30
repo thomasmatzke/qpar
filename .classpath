@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="img"/>
 	<classpathentry kind="lib" path="lib/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="lib/commons-dbutils-1.3.jar"/>
+	<classpathentry kind="con" path="org.eclipse.tptp.platform.instrumentation.ui.ContainerInitializer/Build to Manage Libraries"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

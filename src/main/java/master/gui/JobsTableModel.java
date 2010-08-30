@@ -36,13 +36,13 @@ public class JobsTableModel extends AbstractTableModel {
 			return job.getStoppedAt();
 		case 3:
 			switch(job.getStatus()) {
-				case 0:
+				case READY:
 					return "Ready";
-				case 1:
+				case RUNNING:
 					return "Running";
-				case 2:
+				case COMPLETE:
 					return "Complete";
-				case 3:
+				case ERROR:
 					return "Error";
 			}
 			

@@ -20,11 +20,13 @@ import main.java.master.Console.Shell;
 
 public class Job {
 
-	public static final int READY = 0;
-	public static final int RUNNING = 1;
-	public static final int COMPLETE = 2;
-	public static final int ERROR = 3;
-	public static final int TIMEOUT = 4;
+	public enum Status { READY, RUNNING, COMPLETE, ERROR, TIMEOUT }
+	
+//	public static final int READY = 0;
+//	public static final int RUNNING = 1;
+//	public static final int COMPLETE = 2;
+//	public static final int ERROR = 3;
+//	public static final int TIMEOUT = 4;
 
 	private static int idCounter = 0;
 	private static Map<String, Job> jobs = new HashMap<String, Job>();
@@ -43,7 +45,8 @@ public class Job {
 																					// computing
 																					// slaves
 	private String heuristic, id, inputFileString, outputFileString, solver;
-	private int status, maxCores = 0;
+	private int maxCores = 0;
+	private Status status;
 	private List<TransmissionQbf> subformulas;
 	private Date startedAt, stoppedAt;
 	
@@ -74,7 +77,7 @@ public class Job {
 		job.setOutputFileString(outputFile);
 		job.setSolver(solverId);
 		job.setHeuristic(heuristicId);
-		job.setStatus(Job.READY);
+		job.setStatus(Status.READY);
 		addJob(job);
 		logger.info("Job created. \n" +
 					"	JobId:        " + job.getId() + "\n" + 
@@ -93,12 +96,12 @@ public class Job {
 	}
 
 	public void abort() {
-		if (this.status != Job.RUNNING)
+		if (this.status != Status.RUNNING)
 			return;
 		logger.info("Aborting Job " + this.id + "...\n");
 		logger.info("Aborting Formulas. Sending AbortFormulaMessages to slaves...");
 		abortComputations();
-		this.status = Job.ERROR;
+		this.status = Status.ERROR;
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 		logger.info("AbortMessages sent.");
@@ -117,7 +120,7 @@ public class Job {
 
 	public synchronized void startBlocking() throws IOException {
 		this.start();
-		while(this.getStatus() == Job.RUNNING) {
+		while(this.getStatus() == Status.RUNNING) {
 			try {
 				Thread.sleep(500);
 				if((startedAt.getTime() + timeout) < new Date().getTime()) {
@@ -125,7 +128,7 @@ public class Job {
 								"	Job Id:         " + this.id + "\n" +
 								"	Timeout (secs): " + timeout/1000 + "\n");
 					this.abort();
-					this.status = Job.TIMEOUT;
+					this.status = Status.TIMEOUT;
 					break;
 				}
 			} catch (InterruptedException e) {
@@ -171,7 +174,7 @@ public class Job {
 			}
 		}
 		
-		this.status = Job.RUNNING;
+		this.status = Status.RUNNING;
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 	}
@@ -186,8 +189,8 @@ public class Job {
 
 	public void fireJobCompleted(boolean result) {
 		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
+		this.setStatus(Status.COMPLETE);
 		this.abortComputations();
-		this.setStatus(Job.COMPLETE);
 		this.setResult(result);
 		this.setStoppedAt(new Date());
 
@@ -212,8 +215,16 @@ public class Job {
 		}
 		if (Job.getTableModel() != null)
 			Job.getTableModel().fireTableDataChanged();
+		this.freeResources();
 	}
 
+	private void freeResources() {
+		this.formula				= null;
+		this.formulaDesignations	= null;
+		this.subformulas			= null;
+		System.gc();
+	}
+	
 	public long totalMillis() {
 		// if(this.status != Job.COMPLETE)
 		// return -1;
@@ -240,6 +251,9 @@ public class Job {
 	}
 
 	public void handleResult(String tqbfId, boolean result) {
+		if(this.status == Status.COMPLETE) {
+			return;
+		}
 		boolean solved = formula.mergeQbf(tqbfId, result);
 		logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
 				+ getId());
@@ -278,10 +292,10 @@ public class Job {
 		return startedAt;
 	}
 
-	public int getStatus() {
-		if((this.status == Job.RUNNING) && (startedAt.getTime() + timeout) < new Date().getTime()) {
+	public Status getStatus() {
+		if((this.status == Status.RUNNING) && (startedAt.getTime() + timeout) < new Date().getTime()) {
 			this.abort();
-			this.status = Job.TIMEOUT;
+			this.status = Status.TIMEOUT;
 		}
 		return status;
 	}
@@ -318,7 +332,7 @@ public class Job {
 		this.startedAt = startedAt;
 	}
 
-	public void setStatus(int status) {
+	public void setStatus(Status status) {
 		this.status = status;
 	}
 
@@ -342,18 +356,18 @@ public class Job {
 		this.timeout = timeout;
 	}
 
-	public static String getStatusDescription(int status) {
+	public static String getStatusDescription(Status status) {
 		switch (status) {
-		case READY:
-			return "Ready";
-		case RUNNING:
-			return "Running";
-		case COMPLETE:
-			return "Complete";
-		case ERROR:
-			return "Error";
-		default:
-			return "undefined";
+			case READY:
+				return "Ready";
+			case RUNNING:
+				return "Running";
+			case COMPLETE:
+				return "Complete";
+			case ERROR:
+				return "Error";
+			default:
+				return "undefined";
 		}
 	}
 

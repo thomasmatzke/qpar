@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -121,11 +122,13 @@ public class Qbf {
 		
 		// running the selected heuristic						
 		Integer[] tempVars = h.getVariableOrder().toArray(new Integer[0]);
+		logger.info("Heuristic returned variable-assignment order: " + Arrays.toString(tempVars));
 		
 		// throw away the vars that are too much
 		for(i = 0; i < numVarsToChoose; i++) {
 			decisionVars.add(tempVars[i]);
 		}
+		logger.info("Actually assigning variables: " + decisionVars);
 
 		// generating a truth table
 		logger.debug("generating truth table");
@@ -152,7 +155,8 @@ public class Qbf {
 			decisionRoot = new DTNode("&");
 		} else if (eVars.contains(decisionVars.get(0))) {
 			decisionRoot = new DTNode("|");
-		}
+		}else
+			assert(false);
 
 		// for every var that is going to get truth-assigned, add a layer on
 		// the tree, with AND or OR nodes, depending on the occurance of that
@@ -214,10 +218,17 @@ public class Qbf {
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
 	public synchronized boolean mergeQbf(String id, boolean result) {
-		DTNode tmp = null;
-	
 		// find the corresponding node in the decisiontree
-		tmp = decisionRoot.getNode(Integer.parseInt(id));
+		DTNode tmp = decisionRoot.getNode(Integer.parseInt(id));
+		
+		if(tmp == null) {
+			logger.info("DecisionTreeNode for tQbfID " + id + " not found.");
+			if(decisionRoot.hasTruthValue()) {
+				logger.info("Formula already solved.");
+				return decisionRoot.hasTruthValue();
+			}
+			assert(false);			
+		}
 		
 		// set the nodes truth value
 		tmp.setTruthValue(result);
@@ -237,6 +248,7 @@ public class Qbf {
 	public void generateDependencyGraph() {
 		logger.info("Generating dependency graph...");
 		long start = System.currentTimeMillis();
+		DependencyNode.registry = new HashMap<Integer, DependencyNode>();
 		this.quantifierStack = new Stack<SimpleNode>();
 		this.traverse(this.root);
 		long end = System.currentTimeMillis();
@@ -244,21 +256,19 @@ public class Qbf {
 	}
 	
 	private void traverse(SimpleNode node) {
-		
+		logger.debug("Encountered " + node.getNodeType() + " node.");
 		switch(node.getNodeType()) {
 			case START:
-				//Db.update("INSERT INTO quantifiers (qbf_id, var, type) VALUES ('" + this.id + "','0','" + node.getNodeType() + "')");
 				this.dependencyGraphRoot = new DependencyNode(0, DependencyNode.NodeType.ROOT);
 				this.quantifierStack.push(node);
 				traverse((SimpleNode)node.jjtGetChild(0));
 				break;
 			case FORALL:
 			case EXISTS:
-				// Db.update("INSERT INTO quantifiers (qbf_id, var, type) VALUES ('" + this.id + "','" + node.var + "','" + node.getNodeType() + "')");
-				
+				logger.debug("Calculating dependencies of node " + node);
 				Set<Integer> deps = getDependencies(quantifierStack, node.getNodeType());
 				for(Integer dep : deps) {
-					DependencyNode.NodeType t = DependencyNode.NodeType.NIL;
+					DependencyNode.NodeType t = null;
 					if(node.getNodeType() == SimpleNode.NodeType.EXISTS){
 						t = DependencyNode.NodeType.EXISTENTIAL;
 					} else if(node.getNodeType() == SimpleNode.NodeType.FORALL) {
@@ -269,9 +279,6 @@ public class Qbf {
 						
 					DependencyNode.registry.get(dep).addChild(new DependencyNode(node.var, t));
 				}
-				//for(Integer i : deps) {
-				//	Db.update("INSERT INTO dependencies (qbf_id, from, to) VALUES ('" + this.id + "','" + i + "','" + node.getNodeVariable() + "')");
-				//}
 				
 				this.quantifierStack.push(node);								
 				traverse((SimpleNode)node.jjtGetChild(0));								
@@ -299,12 +306,13 @@ public class Qbf {
 	private Set<Integer> getDependencies(Stack<SimpleNode> stack, SimpleNode.NodeType currentQuantifier) {
 		Set<Integer> ret = new HashSet<Integer>();
 		Stack<SimpleNode> stackClone = (Stack<SimpleNode>) stack.clone();
+		logger.debug("Dependency stack: " + stackClone);
 		
 		// Search for first occurence of other quantifier
 		while(stackClone.peek().nodeType == currentQuantifier) { stackClone.pop(); }
 		
 		// Return all quants in the next block of the NOT-currentQuantifier
-		while(stackClone.peek().nodeType != currentQuantifier) {
+		while(!stackClone.empty() && stackClone.peek().nodeType != currentQuantifier) {
 			SimpleNode n = stackClone.pop();
 			if(n.getNodeType() == SimpleNode.NodeType.START) {
 				ret.add(0);

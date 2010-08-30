@@ -43,9 +43,9 @@ public class Evaluation {
 			try {
 				job.startBlocking();
 								
-				if(job.getStatus() == Job.COMPLETE) {
+				if(job.getStatus() == Job.Status.COMPLETE) {
 					elapsedTotal += job.totalMillis();
-				} else if(job.getStatus() == Job.ERROR) {
+				} else if(job.getStatus() == Job.Status.ERROR) {
 					elapsedTotal += timeout;
 					errors++;
 				} else { 

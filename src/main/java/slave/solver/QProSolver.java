@@ -70,6 +70,7 @@ public class QProSolver implements Solver {
 			logger.debug("qpro started");
 			PrintWriter stdin = new PrintWriter(qpro_process.getOutputStream());
 			this.inputString = toInputString(this.formula);
+			logger.debug("QPRO INPUT FORMULA. TQBFID: " + this.formula.getId() + "\n" + inputString);
 			stdin.print(inputString);
 			stdin.flush();
 			InputStreamReader isr = new InputStreamReader(qpro_process.getInputStream());
@@ -163,6 +164,11 @@ public class QProSolver implements Solver {
 			if (eVars.contains(orphanedVars.get(i)))
 				eVars.remove(orphanedVars.get(i));
 		}
+		
+		vars = new Vector<Integer>();
+		vars.addAll(aVars);
+		vars.addAll(eVars);
+		
 		logger.debug("check for orphaned quantified vars finished");		
 
 		// t.dump("DEBUG");

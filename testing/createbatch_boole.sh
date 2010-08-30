@@ -8,7 +8,7 @@
 echo "waitforslave 2 qpro"
 for f in boole/*.qbf
 do
-	echo "newjob testing/$f testing/`basename "$f" .qbf`.out qpro simple"
+	echo "newjob testing/$f testing/`basename "$f" .qbf`.out qpro simple 2"
 	echo "startjob $i"
 	echo "waitforresult $i"
 	((i++))

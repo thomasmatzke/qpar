@@ -191,9 +191,9 @@ public class MasterDaemon {
 			connection.close();
 		} catch (JMSException e) {}
 		stopMessageBroker();
-		try {
-			Db.shutdown();
-		} catch (SQLException e) {}
+//		try {
+//			Db.shutdown();
+//		} catch (SQLException e) {}
 	}
 	
 	private static void usage() {

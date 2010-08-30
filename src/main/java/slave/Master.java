@@ -163,6 +163,7 @@ public class Master {
 	 */
 	private void handleFormulaMessage(FormulaMessage m) {
 		logger.info("Received FormulaMessage. TQbfId: " + m.getFormula().getId());
+		Runtime.getRuntime().gc();
 		Solver solver = SolverFactory.getSolver(m.getSolver());
 		solver.setTransmissionQbf(m.getFormula());
 		solver.setMaster(this);

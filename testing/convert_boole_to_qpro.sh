@@ -6,5 +6,5 @@
 for f in boole/*.qbf
 do
 	echo "converting " $f "..."
-	./boole2qpro < $f > qpro/"`basename "$f" .qbf`.qpro"
+	bash ./boole2qpro < $f > qpro/"`basename "$f" .qbf`.qpro"
 done

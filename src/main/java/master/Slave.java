@@ -273,7 +273,7 @@ public class Slave implements MessageListener, Runnable {
 	}
 
 	public void sendFormulaMessage(TransmissionQbf tqbf, String solver) {
-		logger.info("Sending FormulaMessage to Slave " + this.getHostName());
+		logger.info("Sending FormulaMessage. Slave: " + this.getHostName() +", tQbfId: " + tqbf.getId());
 		FormulaMessage msg = new FormulaMessage(tqbf, solver);
 		sendObject(msg);
 		logger.info("FormulaMessage sent");
@@ -389,7 +389,7 @@ public class Slave implements MessageListener, Runnable {
 		for(Job job : Job.getJobs().values()) {
 			if(job.getFormulaDesignations().values().contains(this)) {
 				job.abort();
-				job.setStatus(Job.ERROR);
+				job.setStatus(Job.Status.ERROR);
 				if (Job.getTableModel() != null) {
 					SwingUtilities.invokeLater(new Runnable(){
 							public void run() {
