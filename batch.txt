@@ -1,5 +1,5 @@
 waitforslave 2 qpro
-newjob testing/boole/008-020-03-04-004.ncf-bin.qbf testing/008-020-03-04-004.ncf-bin.out qpro simple 2
+newjob testing/boole/008-020-03-04-004.ncf-bin.qbf testing/008-020-03-04-004.ncf-bin.out qpro probnet 2
 startjob 1
 waitforresult 1
 killallslaves

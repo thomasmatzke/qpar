@@ -103,6 +103,9 @@ public class Qbf {
 			logger.error(e);
 			return;
 		}
+		logger.info("eVars: " + eVars);
+		logger.info("aVars: " + aVars);
+		logger.info("Vars: " + vars);
 		logger.debug("Finished reading a QBF from " + filename);
 		
 		this.generateDependencyGraph();
