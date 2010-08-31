@@ -85,41 +85,41 @@
     </target>
     <target name="Master">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
-            <jvmarg line="-Xss1m"/>
+            <jvmarg line="-Xss1m -ea"/>
             <arg line="-gui"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="Master_batch (DEBUG)">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
-            <jvmarg line="-Xss1m"/>
+            <jvmarg line="-Xss1m -ea"/>
             <arg line="-i=batch.txt -log=debug"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="Master_batch">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
-            <jvmarg line="-Xss1m"/>
+            <jvmarg line="-Xss1m -ea"/>
             <arg line="-i=batch.txt -log=info"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="Master_console">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
-            <jvmarg line="-Xss1m"/>
+            <jvmarg line="-Xss1m -ea"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="Slave (DEBUG)">
         <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
-            <jvmarg line="-Xss1m"/>
+            <jvmarg line="-Xss1m -ea"/>
             <arg line="tcp://localhost:61616  -log=debug"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="Slave">
         <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
-            <jvmarg line="-Xss1m"/>
+            <jvmarg line="-Xss1m -ea"/>
             <arg line="tcp://localhost:61616  -log=info"/>
             <classpath refid="qpar.classpath"/>
         </java>

@@ -30,6 +30,7 @@ public abstract class Heuristic {
 				ordered.add(variable);
 			}
 		}
+		assert(ordered.size() == qbf.vars.size());
 		return ordered;
 	}
 	

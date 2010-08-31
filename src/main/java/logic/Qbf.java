@@ -206,7 +206,8 @@ public class Qbf {
 			tmp.setEVars(this.eVars);
 			tmp.setAVars(this.aVars);
 			tmp.setVars(this.vars);	
-
+			assert(tmp.getVars().size() == (tmp.getAVars().size() + tmp.getEVars().size()));
+			
 			tmp.checkQbf();
 			subQbfs.add(tmp);
 		}
