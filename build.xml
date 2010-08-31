@@ -4,26 +4,52 @@
               To include a user specific buildfile here, simply create one in the same
               directory with the processing instruction <?eclipse.ant.import?>
               as the first entry and export the buildfile again. -->
-<project basedir="." default="build" name="QPar">
+<project basedir="." default="build" name="qpar">
     <property environment="env"/>
-    <property name="ECLIPSE_HOME" value="C:/Users/thomasm/Desktop/eclipse"/>
+    <property name="ECLIPSE_HOME" value="C:/Users/thomasm/Desktop/eclipse_3_5"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.6"/>
     <property name="source" value="1.6"/>
-    <path id="QPar.classpath">
+    <path id="Build to Manage Libraries.libraryclasspath">
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.platform.logging.events_4.3.402.v201002100300/tlcore.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.platform.logging.events_4.3.402.v201002100300/hlcbe101.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.monitoring.instrumentation_4.3.101.v200901090956/cbeModel.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.monitoring.instrumentation_4.3.101.v200901090956/jmxModel.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.trace.arm_4.3.200.v200901090956/cbeLogging.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.trace.arm_4.3.200.v200901090956/armAspects.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.trace.arm_4.3.200.v200901090956/armLibrary.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.trace.arm_4.3.200.v200901090956/armModel.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.trace.arm_4.3.200.v200901090956/armProbes.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.tptp.trace.arm_4.3.200.v200901090956/armLoader.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.opengroup.arm_4.0.200.v200901090956/arm40_java_interfaces.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.hyades.execution_4.4.302.v201002100300/hexr.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.hyades.execution_4.4.302.v201002100300/hexl.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.hyades.execution_4.4.302.v201002100300/hexcore.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.hyades.logging.core_4.3.400.v201002100300/hl14.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.hyades.logging.core_4.3.400.v201002100300/hlcore.jar"/>
+    </path>
+    <path id="qpar.classpath">
         <pathelement location="bin"/>
         <pathelement location="lib/activemq-all-5.2.0.jar"/>
         <pathelement location="lib/commons-io-1.4.jar"/>
         <pathelement location="img"/>
         <pathelement location="lib/log4j-1.2.15.jar"/>
+        <pathelement location="lib/commons-dbutils-1.3.jar"/>
+        <path refid="Build to Manage Libraries.libraryclasspath"/>
     </path>
     <target name="init">
         <mkdir dir="bin"/>
         <copy includeemptydirs="false" todir="bin">
-            <fileset dir="src" excludes="**/*.launch, **/*.java"/>
+            <fileset dir="src">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
         </copy>
         <copy includeemptydirs="false" todir="bin">
-            <fileset dir="lib" excludes="**/*.launch, **/*.java"/>
+            <fileset dir="lib">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
         </copy>
     </target>
     <target name="clean">
@@ -36,11 +62,11 @@
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="src"/>
-            <classpath refid="QPar.classpath"/>
+            <classpath refid="qpar.classpath"/>
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
             <src path="lib"/>
-            <classpath refid="QPar.classpath"/>
+            <classpath refid="qpar.classpath"/>
         </javac>
     </target>
     <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
@@ -59,25 +85,43 @@
     </target>
     <target name="Master">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
+            <jvmarg line="-Xss1m"/>
             <arg line="-gui"/>
-            <classpath refid="QPar.classpath"/>
+            <classpath refid="qpar.classpath"/>
         </java>
     </target>
-    <target name="Master_console">
+    <target name="Master_batch (DEBUG)">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
-            <classpath refid="QPar.classpath"/>
-        </java>
-    </target>
-    <target name="Slave">
-        <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
-            <arg line="tcp://localhost:61616 -Xss=1024m"/>
-            <classpath refid="QPar.classpath"/>
+            <jvmarg line="-Xss1m"/>
+            <arg line="-i=batch.txt -log=debug"/>
+            <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="Master_batch">
         <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
-            <arg line="-i=batch.txt -Xss=1024m"/>
-            <classpath refid="QPar.classpath"/>
+            <jvmarg line="-Xss1m"/>
+            <arg line="-i=batch.txt -log=info"/>
+            <classpath refid="qpar.classpath"/>
+        </java>
+    </target>
+    <target name="Master_console">
+        <java classname="main.java.master.MasterDaemon" failonerror="true" fork="yes">
+            <jvmarg line="-Xss1m"/>
+            <classpath refid="qpar.classpath"/>
+        </java>
+    </target>
+    <target name="Slave (DEBUG)">
+        <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
+            <jvmarg line="-Xss1m"/>
+            <arg line="tcp://localhost:61616  -log=debug"/>
+            <classpath refid="qpar.classpath"/>
+        </java>
+    </target>
+    <target name="Slave">
+        <java classname="main.java.slave.SlaveDaemon" failonerror="true" fork="yes">
+            <jvmarg line="-Xss1m"/>
+            <arg line="tcp://localhost:61616  -log=info"/>
+            <classpath refid="qpar.classpath"/>
         </java>
     </target>
 </project>
