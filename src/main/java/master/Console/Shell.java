@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 
 import main.java.QPar;
 import main.java.Util;
+import main.java.logic.Qbf;
 import main.java.logic.heuristic.Heuristic;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Evaluation;
@@ -97,6 +98,8 @@ public class Shell implements Runnable{
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase()))
 		{
+			case TESTPARSER:
+				testParser(token);
 			case EVALUATE:
 				evaluate(token);
 				break;
@@ -141,6 +144,16 @@ public class Shell implements Runnable{
 		        break;
 		    default:
 		        assert(false);
+		}
+		
+	}
+
+	private void testParser(StringTokenizer token) {
+		try {
+			//TODO implement
+			Qbf qbf = new Qbf(token.nextToken());
+		} catch (IOException e) {
+			logger.error(e);
 		}
 		
 	}

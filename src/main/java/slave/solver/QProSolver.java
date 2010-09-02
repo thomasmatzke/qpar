@@ -165,9 +165,6 @@ public class QProSolver implements Solver {
 				eVars.remove(orphanedVars.get(i));
 		}
 		
-		vars = new Vector<Integer>();
-		vars.addAll(aVars);
-		vars.addAll(eVars);
 		
 		logger.debug("check for orphaned quantified vars finished");		
 

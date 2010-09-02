@@ -103,9 +103,12 @@ public class Qbf {
 			logger.error(e);
 			return;
 		}
-		logger.info("eVars: " + eVars);
-		logger.info("aVars: " + aVars);
-		logger.info("Vars: " + vars);
+		logger.info("Existential quantified Variables: " + eVars);
+		logger.info("Number of e.q.vs: " + eVars.size());
+		logger.info("Universally quantified Variables: " + aVars);
+		logger.info("Number of u.q.vs: " + aVars.size());
+		logger.info("All variables: " + vars);
+		logger.info("Number of all v.: " + vars.size());
 		logger.debug("Finished reading a QBF from " + filename);
 		
 		this.generateDependencyGraph();
@@ -205,7 +208,10 @@ public class Qbf {
 
 			tmp.setEVars(this.eVars);
 			tmp.setAVars(this.aVars);
-			tmp.setVars(this.vars);	
+			Vector<Integer> tmpVars = new Vector<Integer>();
+			tmpVars.addAll(aVars);
+			tmpVars.addAll(eVars);
+			tmp.setVars(tmpVars);	
 			assert(tmp.getVars().size() == (tmp.getAVars().size() + tmp.getEVars().size()));
 			
 			tmp.checkQbf();
@@ -245,8 +251,7 @@ public class Qbf {
 	}
 
 	/**
-	 * Populates the in-memory database table dependencies with
-	 * quantifier dependencies, which are used by heuristics
+	 * Generates a dependency graph which is used by the heuristics 
 	 * @throws SQLException 
 	 */
 	public void generateDependencyGraph() {
@@ -256,6 +261,7 @@ public class Qbf {
 		this.quantifierStack = new Stack<SimpleNode>();
 		this.traverse(this.root);
 		long end = System.currentTimeMillis();
+		assert(DependencyNode.registry.size() == vars.size()+1);
 		logger.info("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
 	}
 	
@@ -265,6 +271,7 @@ public class Qbf {
 			case START:
 				this.dependencyGraphRoot = new DependencyNode(0, DependencyNode.NodeType.ROOT);
 				this.quantifierStack.push(node);
+				DependencyNode.registry.put(0, this.dependencyGraphRoot);
 				traverse((SimpleNode)node.jjtGetChild(0));
 				break;
 			case FORALL:

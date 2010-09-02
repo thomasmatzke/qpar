@@ -30,7 +30,8 @@ public abstract class Heuristic {
 				ordered.add(variable);
 			}
 		}
-		assert(ordered.size() == qbf.vars.size());
+		
+		assert(ordered.size() == DependencyNode.registry.size() - 1);
 		return ordered;
 	}
 	
@@ -38,6 +39,8 @@ public abstract class Heuristic {
 	
 	
 	protected Vector<Set<Integer>> getDecisionGroups() {
+		assert(DependencyNode.registry.size()-1 == qbf.vars.size());
+		
 		Vector<Set<Integer>> groups = new Vector<Set<Integer>>();
 		for(DependencyNode n : DependencyNode.registry.values()) {
 			if(n.type == DependencyNode.NodeType.ROOT)
@@ -47,11 +50,20 @@ public abstract class Heuristic {
 				groups.setSize(n.depth);
 			
 			if(groups.get(n.depth-1) == null) {
-				groups.set(n.depth-1, new HashSet<Integer>());
-			} else {
-				groups.get(n.depth-1).add(n.variable);
+				groups.set(n.depth-1, new HashSet<Integer>());	
 			}
+			groups.get(n.depth-1).add(n.variable);
+			
 		}
+		
+		
+		int ctr = 0;
+		for(Set<Integer> set : groups) {
+			ctr += set.size();
+		}
+		
+		assert(ctr == DependencyNode.registry.size()-1);
+		
 		return groups;
 	}	
 	
