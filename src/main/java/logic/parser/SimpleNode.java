@@ -209,13 +209,13 @@ public class SimpleNode implements Node, Serializable {
 				// close the quantifier block
 				traversedTree += "\n/q\n";
 			}
-			if (jjtGetParent().getNodeType() == NodeType.EXISTS) {
+			else if (jjtGetParent().getNodeType() == NodeType.EXISTS) {
 				// add the var
 				traversedTree += var + " ";
 				// continue traversing
 				traversedTree += this.jjtGetChild(0).traverse();
 			}
-			if (jjtGetParent().getNodeType() == NodeType.FORALL) {
+			else if (jjtGetParent().getNodeType() == NodeType.FORALL) {
 				// start a new line
 				traversedTree += "\ne ";
 				// add the var
@@ -241,13 +241,13 @@ public class SimpleNode implements Node, Serializable {
 				// close the quantifier block
 				traversedTree += "\n/q\n";
 			}
-			if (jjtGetParent().getNodeType() == NodeType.FORALL) {
+			else if (jjtGetParent().getNodeType() == NodeType.FORALL) {
 				// add the var
 				traversedTree += var + " ";
 				// continue traversing
 				traversedTree += this.jjtGetChild(0).traverse();
 			}
-			if (jjtGetParent().getNodeType() == NodeType.EXISTS) {
+			else if (jjtGetParent().getNodeType() == NodeType.EXISTS) {
 				// start a new line
 				traversedTree += "\na ";
 				// add the var
