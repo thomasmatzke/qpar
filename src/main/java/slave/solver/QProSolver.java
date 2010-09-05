@@ -189,7 +189,7 @@ public class QProSolver implements Solver {
 		
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
-		traversedTree += "\nQBF\n" + (maxVar) + "\n";;
+		traversedTree += "QBF\n" + (maxVar) + "\n";;
 		//traversedTree += "\nq";
 		/*
 		 *if(aVars.size() > 0)
@@ -206,7 +206,7 @@ public class QProSolver implements Solver {
 		/*
 		 *traversedTree += "/q\n";
 		 */
-		traversedTree += "QBF";	
+		traversedTree += "QBF\n";	
 		logger.debug("traversing finished");
 
 		// logger.debug(traversedTree);
