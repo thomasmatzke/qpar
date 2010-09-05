@@ -172,6 +172,9 @@ public class SimpleNode implements Node, Serializable {
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
 			if (this.jjtGetChild(i).getOp().equals(op)) {
 				tmp += this.jjtGetChild(i).traverse();
+			} else if ((this.jjtGetChild(i).getNodeType() == NodeType.EXISTS) || 
+			           (this.jjtGetChild(i).getNodeType() == NodeType.FORALL)) {
+				tmp += jjtGetChild(i).traverse();
 			} else {
 				tmp += this.jjtGetChild(i).getEnclosedFormula(op);
 			}
@@ -214,7 +217,7 @@ public class SimpleNode implements Node, Serializable {
 			}
 			traversedTree += "\n";
 			traversedTree += tmpNode.traverse();
-			if (nt == NodeType.FORALL)
+			if (nt != NodeType.EXISTS)
 				traversedTree += "/q\n";
 			
 		}	
@@ -236,7 +239,7 @@ public class SimpleNode implements Node, Serializable {
 			}
 			traversedTree += "\n";
 			traversedTree += tmpNode.traverse();
-			if (nt == NodeType.EXISTS)
+			if (nt != NodeType.FORALL)
 				traversedTree += "/q\n";
 		}	
 			
