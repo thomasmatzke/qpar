@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import main.java.QPar;
@@ -208,7 +210,21 @@ public class QProSolver implements Solver {
 		logger.debug("traversing finished");
 
 		// logger.debug(traversedTree);
-
+		
 		return traversedTree;
-	}	
+		//return reindexVariables(traversedTree, vars);
+	}
+	
+	private static String reindexVariables(String s, Vector<Integer> vars) {
+		String replaced = s;
+		assert(new HashSet<Integer>(vars).size() == vars.size()); // uniqueness check
+		
+		for(int i = 0; i < vars.size(); i++) {
+			String oldVariable = " " + vars.get(i).toString() + " ";
+			String newVariable = " " + (Integer.toString(i+2)) + " ";
+			logger.info(oldVariable +"->"+ newVariable);
+			replaced = replaced.replaceAll(oldVariable, newVariable);
+		}
+		return replaced;
+	}
 }
