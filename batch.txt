@@ -1,5 +1,5 @@
 waitforslave 2 qpro
-newjob testing/boole/008-020-03-04-004.ncf-bin.qbf testing/008-020-03-04-004.ncf-bin.out qpro simple 2
+newjob testing/boole/counter4_10-bin.qbf testing/counter4_10-bin.out qpro simple 2
 startjob 1
 waitforresult 1
 newjob testing/boole/counter4_2-bin.qbf testing/counter4_2-bin.out qpro simple 2
@@ -20,38 +20,59 @@ waitforresult 6
 newjob testing/boole/counter4_7-bin.qbf testing/counter4_7-bin.out qpro simple 2
 startjob 7
 waitforresult 7
-newjob testing/boole/counter5_2-bin.qbf testing/counter5_2-bin.out qpro simple 2
+newjob testing/boole/counter4_8-bin.qbf testing/counter4_8-bin.out qpro simple 2
 startjob 8
 waitforresult 8
-newjob testing/boole/counter5_4-bin.qbf testing/counter5_4-bin.out qpro simple 2
+newjob testing/boole/counter4_9-bin.qbf testing/counter4_9-bin.out qpro simple 2
 startjob 9
 waitforresult 9
-newjob testing/boole/counter6_2-bin.qbf testing/counter6_2-bin.out qpro simple 2
+newjob testing/boole/counter5_2-bin.qbf testing/counter5_2-bin.out qpro simple 2
 startjob 10
 waitforresult 10
-newjob testing/boole/counter7_2-bin.qbf testing/counter7_2-bin.out qpro simple 2
+newjob testing/boole/counter5_4-bin.qbf testing/counter5_4-bin.out qpro simple 2
 startjob 11
 waitforresult 11
-newjob testing/boole/counter8_2-bin.qbf testing/counter8_2-bin.out qpro simple 2
+newjob testing/boole/counter6_2-bin.qbf testing/counter6_2-bin.out qpro simple 2
 startjob 12
 waitforresult 12
-newjob testing/boole/ring4_2-bin.qbf testing/ring4_2-bin.out qpro simple 2
+newjob testing/boole/counter6_4-bin.qbf testing/counter6_4-bin.out qpro simple 2
 startjob 13
 waitforresult 13
-newjob testing/boole/ring4_3-bin.qbf testing/ring4_3-bin.out qpro simple 2
+newjob testing/boole/counter7_2-bin.qbf testing/counter7_2-bin.out qpro simple 2
 startjob 14
 waitforresult 14
-newjob testing/boole/ring4_4-bin.qbf testing/ring4_4-bin.out qpro simple 2
+newjob testing/boole/counter7_4-bin.qbf testing/counter7_4-bin.out qpro simple 2
 startjob 15
 waitforresult 15
-newjob testing/boole/ring5_2-bin.qbf testing/ring5_2-bin.out qpro simple 2
+newjob testing/boole/counter8_2-bin.qbf testing/counter8_2-bin.out qpro simple 2
 startjob 16
 waitforresult 16
-newjob testing/boole/ring6_2-bin.qbf testing/ring6_2-bin.out qpro simple 2
+newjob testing/boole/ring4_2-bin.qbf testing/ring4_2-bin.out qpro simple 2
 startjob 17
 waitforresult 17
-newjob testing/boole/semaphore_2-bin.qbf testing/semaphore_2-bin.out qpro simple 2
+newjob testing/boole/ring4_3-bin.qbf testing/ring4_3-bin.out qpro simple 2
 startjob 18
 waitforresult 18
+newjob testing/boole/ring4_4-bin.qbf testing/ring4_4-bin.out qpro simple 2
+startjob 19
+waitforresult 19
+newjob testing/boole/ring5_2-bin.qbf testing/ring5_2-bin.out qpro simple 2
+startjob 20
+waitforresult 20
+newjob testing/boole/ring5_4-bin.qbf testing/ring5_4-bin.out qpro simple 2
+startjob 21
+waitforresult 21
+newjob testing/boole/ring6_2-bin.qbf testing/ring6_2-bin.out qpro simple 2
+startjob 22
+waitforresult 22
+newjob testing/boole/semaphore3_2-bin.qbf testing/semaphore3_2-bin.out qpro simple 2
+startjob 23
+waitforresult 23
+newjob testing/boole/semaphore_2-bin.qbf testing/semaphore_2-bin.out qpro simple 2
+startjob 24
+waitforresult 24
+newjob testing/boole/semaphore_3-bin.qbf testing/semaphore_3-bin.out qpro simple 2
+startjob 25
+waitforresult 25
 killallslaves
 quit

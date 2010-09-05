@@ -66,6 +66,7 @@ public class Qbf {
 	* @throws IOException 
 	*/
 	public Qbf(String filename) throws IOException {
+		assert(filename != null);
 		logger.setLevel(QPar.logLevel);
 		idCounter++;
 		this.id = idCounter;
