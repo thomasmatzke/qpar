@@ -312,7 +312,7 @@ public class SimpleNode implements Node, Serializable {
 	}
 
 	/**
-	 * reduces a tree containung truth-assigned variables to a tree without them
+	 * reduces a tree containing truth-assigned variables to a tree without them
 	 * 
 	 * @return true if tree is still traversable, false if not
 	 */
@@ -480,7 +480,7 @@ public class SimpleNode implements Node, Serializable {
 	}
 
 	/**
-	 * search for at least one occurance of car v in the tree
+	 * search for at least one occurance of var v in the tree
 	 * 
 	 * @param v
 	 *            the var to search for
@@ -498,7 +498,7 @@ public class SimpleNode implements Node, Serializable {
 		} else {
 			// if we're in a VAR node with the right variable value, we've
 			// found our node
-			if ((nodeType == NodeType.VAR) && (this.var == v)) {
+			if (this.var == v) {
 				found = true;
 			}
 		}
@@ -521,6 +521,7 @@ public class SimpleNode implements Node, Serializable {
 	}
 
 	public void setVar(int v) {
+		assert((nodeType == NodeType.VAR) || (nodeType == NodeType.FORALL) || (nodeType == NodeType.EXISTS));
 		this.var = v;
 	}
 
@@ -530,12 +531,13 @@ public class SimpleNode implements Node, Serializable {
 
 	public void setOp(String o) {
 		this.op = o;
-		if (o == "&")
+		if (o == "&") {
 			nodeType = NodeType.AND;
-		if (o == "|")
+		} else if (o == "|") {
 			nodeType = NodeType.OR;
-		if (o == "!")
+		} else if (o == "!") {
 			nodeType = NodeType.NOT;
+		} 
 	}
 
 	public String getOp() {
@@ -562,6 +564,8 @@ public class SimpleNode implements Node, Serializable {
 	}
 
 	public void jjtSetParent(Node n) {
+		// TODO: Check the need for setting parent to null when deleting children
+		//assert(n != null);
 		parent = n;
 	}
 
@@ -570,6 +574,7 @@ public class SimpleNode implements Node, Serializable {
 	}
 
 	public void jjtAddChild(Node n, int i) {
+		assert(n != null);
 		if (children == null) {
 			children = new Node[i + 1];
 		} else if (i >= children.length) {

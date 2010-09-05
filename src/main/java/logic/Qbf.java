@@ -22,7 +22,6 @@ import main.java.logic.parser.ParseException;
 import main.java.logic.parser.Qbf_parser;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.TokenMgrError;
-import main.java.master.Db;
 import main.java.master.MasterDaemon;
 
 import org.apache.log4j.Logger;

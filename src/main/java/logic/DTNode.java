@@ -18,6 +18,7 @@ public class DTNode {
 
 	// constructors
 	public DTNode(String op) {
+		assert(op != null);
 		this.op = op;
 	}
 

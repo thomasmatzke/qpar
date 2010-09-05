@@ -10,7 +10,6 @@ import java.util.Vector;
 import org.apache.log4j.Logger;
 
 import main.java.logic.Qbf;
-import main.java.master.Db;
 import main.java.master.MasterDaemon;
 
 public abstract class Heuristic {
