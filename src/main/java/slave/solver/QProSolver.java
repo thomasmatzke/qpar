@@ -78,6 +78,8 @@ public class QProSolver implements Solver {
 			IOUtils.copy(isr, writer);
 			String readString = writer.toString();
 			qpro_process.waitFor();
+
+
 			// If qpro returns 1 the subformula is satisfiable
 			if(readString.startsWith("1")) {
 				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(true) );
@@ -171,21 +173,38 @@ public class QProSolver implements Solver {
 		// t.dump("DEBUG");
 		// t.checkQbf();
 
+		int maxVar = 0;
+		for (i = 0; i < aVars.size(); i++) {
+			if (aVars.get(i) >= maxVar)
+				maxVar = aVars.get(i);
+		}
+		for (i = 0; i < eVars.size(); i++) {
+			if (eVars.get(i) >= maxVar)
+				maxVar = eVars.get(i);
+		}
+
+		logger.debug("max var: " + maxVar);
+		
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
-		traversedTree += "\nQBF\n" + (vars.size()+1) + "\n" +
-				"q";
-		if(aVars.size() > 0)
-			traversedTree += "\na ";
-		for (i=0; i < aVars.size(); i++)
-			traversedTree += aVars.get(i) + " ";
-		if(eVars.size() > 0)
-			traversedTree += "\ne ";
-		for (i=0; i < eVars.size(); i++)
-			traversedTree += eVars.get(i) + " ";
-		traversedTree += "\n";
+		traversedTree += "\nQBF\n" + (maxVar) + "\n";;
+		//traversedTree += "\nq";
+		/*
+		 *if(aVars.size() > 0)
+		 *    traversedTree += "\na ";
+		 *for (i=0; i < aVars.size(); i++)
+		 *    traversedTree += aVars.get(i) + " ";
+		 *if(eVars.size() > 0)
+		 *    traversedTree += "\ne ";
+		 *for (i=0; i < eVars.size(); i++)
+		 *    traversedTree += eVars.get(i) + " ";
+		 *traversedTree += "\n";
+		 */
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
-		traversedTree += "/q\nQBF\n";	
+		/*
+		 *traversedTree += "/q\n";
+		 */
+		traversedTree += "QBF";	
 		logger.debug("traversing finished");
 
 		// logger.debug(traversedTree);

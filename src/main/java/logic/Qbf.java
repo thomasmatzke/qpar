@@ -92,7 +92,7 @@ public class Qbf {
 			this.aVars = parser.getAVars();
 			this.vars = parser.getVars();
 			root = parser.getRootNode();
-			// root.dump("");
+			//root.dump("");
 		}
 		catch (ParseException e) {
 			logger.error("Parse error");			

@@ -196,10 +196,79 @@ public class SimpleNode implements Node, Serializable {
 		Vector<Integer> posLiterals = new Vector<Integer>();
 		Vector<Integer> negLiterals = new Vector<Integer>();
 
-		if ((nodeType == NodeType.FORALL) || (nodeType == NodeType.EXISTS))
-			traversedTree = this.jjtGetChild(0).traverse();
+		if (nodeType == NodeType.EXISTS) {
+			if ((jjtGetParent().getNodeType() != NodeType.EXISTS) &&
+			        (jjtGetParent().getNodeType() != NodeType.FORALL)) {
+				// open a new quantifier block	
+				traversedTree += "q\n";
+				traversedTree += "e ";
+				// add the first var
+				traversedTree += var + " ";
+				// continue traversing
+				traversedTree += this.jjtGetChild(0).traverse();
+				// close the quantifier block
+				traversedTree += "\n/q\n";
+			}
+			if (jjtGetParent().getNodeType() == NodeType.EXISTS) {
+				// add the var
+				traversedTree += var + " ";
+				// continue traversing
+				traversedTree += this.jjtGetChild(0).traverse();
+			}
+			if (jjtGetParent().getNodeType() == NodeType.FORALL) {
+				// start a new line
+				traversedTree += "\ne ";
+				// add the var
+				traversedTree += var + " ";
+				//continue traversing
+				traversedTree += this.jjtGetChild(0).traverse();
+			}
+		}
+
+
+
+
+		if (nodeType == NodeType.FORALL) {
+			if ((jjtGetParent().getNodeType() != NodeType.EXISTS) &&
+			        (jjtGetParent().getNodeType() != NodeType.FORALL)) {
+				// open a new quantifier block	
+				traversedTree += "q\n";
+				traversedTree += "a ";
+				// add the first var
+				traversedTree += var + " ";
+				// continue traversing
+				traversedTree += this.jjtGetChild(0).traverse();
+				// close the quantifier block
+				traversedTree += "\n/q\n";
+			}
+			if (jjtGetParent().getNodeType() == NodeType.FORALL) {
+				// add the var
+				traversedTree += var + " ";
+				// continue traversing
+				traversedTree += this.jjtGetChild(0).traverse();
+			}
+			if (jjtGetParent().getNodeType() == NodeType.EXISTS) {
+				// start a new line
+				traversedTree += "\na ";
+				// add the var
+				traversedTree += var + " ";
+				//continue traversing
+				traversedTree += this.jjtGetChild(0).traverse();
+				// add a newline
+			}
+		}
+			
+			
+			
+
+
+
 
 		if (nodeType == NodeType.AND) {
+			/*
+			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
+			 *    traversedTree += "\n";
+			 */
 			traversedTree += "c\n";
 			posLiterals = (this.getPositiveLiterals("&", posLiterals));
 			negLiterals = (this.getNegativeLiterals("&", negLiterals));
@@ -218,6 +287,10 @@ public class SimpleNode implements Node, Serializable {
 		}
 
 		if (nodeType == NodeType.OR) {
+			/*
+			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
+			 *    traversedTree += "\n";
+			 */
 			traversedTree += "d\n";
 			posLiterals = (this.getPositiveLiterals("|", posLiterals));
 			negLiterals = (this.getNegativeLiterals("|", negLiterals));
