@@ -172,6 +172,9 @@ public class SimpleNode implements Node, Serializable {
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
 			if (this.jjtGetChild(i).getOp().equals(op)) {
 				tmp += this.jjtGetChild(i).traverse();
+			} else if ((this.jjtGetChild(i).getNodeType() == NodeType.EXISTS) || 
+			           (this.jjtGetChild(i).getNodeType() == NodeType.FORALL)) {
+				tmp += jjtGetChild(i).traverse();
 			} else {
 				tmp += this.jjtGetChild(i).getEnclosedFormula(op);
 			}
@@ -195,69 +198,50 @@ public class SimpleNode implements Node, Serializable {
 		String enclosedPartialTree = "";
 		Vector<Integer> posLiterals = new Vector<Integer>();
 		Vector<Integer> negLiterals = new Vector<Integer>();
+		SimpleNode tmpNode = null;
 
 		if (nodeType == NodeType.EXISTS) {
-			if ((jjtGetParent().getNodeType() != NodeType.EXISTS) &&
-			        (jjtGetParent().getNodeType() != NodeType.FORALL)) {
-				// open a new quantifier block	
+			NodeType nt = jjtGetParent().getNodeType(); 	
+			if (nt != NodeType.FORALL)
 				traversedTree += "q\n";
-				traversedTree += "e ";
-				// add the first var
-				traversedTree += var + " ";
-				// continue traversing
-				traversedTree += this.jjtGetChild(0).traverse();
-				// close the quantifier block
-				traversedTree += "\n/q\n";
-			}
-			if (jjtGetParent().getNodeType() == NodeType.EXISTS) {
-				// add the var
-				traversedTree += var + " ";
-				// continue traversing
-				traversedTree += this.jjtGetChild(0).traverse();
-			}
-			if (jjtGetParent().getNodeType() == NodeType.FORALL) {
-				// start a new line
-				traversedTree += "\ne ";
-				// add the var
-				traversedTree += var + " ";
-				//continue traversing
-				traversedTree += this.jjtGetChild(0).traverse();
-			}
-		}
+			traversedTree += "e ";
 
-
-
-
-		if (nodeType == NodeType.FORALL) {
-			if ((jjtGetParent().getNodeType() != NodeType.EXISTS) &&
-			        (jjtGetParent().getNodeType() != NodeType.FORALL)) {
-				// open a new quantifier block	
-				traversedTree += "q\n";
-				traversedTree += "a ";
-				// add the first var
-				traversedTree += var + " ";
-				// continue traversing
-				traversedTree += this.jjtGetChild(0).traverse();
-				// close the quantifier block
-				traversedTree += "\n/q\n";
-			}
-			if (jjtGetParent().getNodeType() == NodeType.FORALL) {
-				// add the var
-				traversedTree += var + " ";
-				// continue traversing
-				traversedTree += this.jjtGetChild(0).traverse();
-			}
-			if (jjtGetParent().getNodeType() == NodeType.EXISTS) {
-				// start a new line
-				traversedTree += "\na ";
-				// add the var
-				traversedTree += var + " ";
-				//continue traversing
-				traversedTree += this.jjtGetChild(0).traverse();
-				// add a newline
-			}
-		}
+			// add the first var
+			traversedTree += var + " ";
 			
+			tmpNode = (SimpleNode)this.jjtGetChild(0);
+
+			while (tmpNode.getNodeType() == NodeType.EXISTS) {
+				traversedTree += tmpNode.getVar() + " ";
+				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
+			}
+			traversedTree += "\n";
+			traversedTree += tmpNode.traverse();
+			if (nt != NodeType.EXISTS)
+				traversedTree += "/q\n";
+			
+		}	
+			
+		if (nodeType == NodeType.FORALL) {
+			NodeType nt = jjtGetParent().getNodeType(); 	
+			if (nt != NodeType.EXISTS)
+				traversedTree += "q\n";
+			traversedTree += "a ";
+
+			// add the first var
+			traversedTree += var + " ";
+			
+			tmpNode = (SimpleNode)this.jjtGetChild(0);
+
+			while (tmpNode.getNodeType() == NodeType.FORALL) {
+				traversedTree += tmpNode.getVar() + " ";
+				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
+			}
+			traversedTree += "\n";
+			traversedTree += tmpNode.traverse();
+			if (nt != NodeType.FORALL)
+				traversedTree += "/q\n";
+		}	
 			
 			
 
