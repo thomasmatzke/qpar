@@ -236,8 +236,7 @@ public class Qbf {
 			if(decisionRoot.hasTruthValue()) {
 				logger.info("Formula already solved.");
 				return decisionRoot.hasTruthValue();
-			}
-			assert(false);			
+			}		
 		}
 		
 		// set the nodes truth value

@@ -138,13 +138,9 @@ public class Job {
 	}
 
 	public void start() throws IOException {
-		logger.info("Starting Job " + this.id + "...\n");
 		this.startedAt = new Date();
-		// try {
 		this.formula = new Qbf(inputFileString);
-		// } catch (IOException e) {
-		// logger.error("Error while reading formula file: " + e);
-		// }
+		
 		int availableCores = Slave.getCoresForSolver(this.solver);
 
 		if(this.maxCores != 0 && availableCores > this.maxCores)
@@ -154,20 +150,19 @@ public class Job {
 											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
 		List<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
 
-		logger.info("Starting Job. \n" +
-					"	# Subformulas: " + this.subformulas.size()+ "\n" + 
-					"	# Cores:       " + availableCores + "\n" +
-					"	# Slaves:      " + slaves.size());
+		logger.info("Starting Job " + this.id + "...\n" +
+					"	Started at:  " + startedAt + "\n" +
+					"	Subformulas: " + this.subformulas.size()+ "\n" + 
+					"	Cores:       " + availableCores + "\n" +
+					"	Slaves:      " + slaves.size());
 		
 		
-		int j = 0;
+		
 		synchronized(formulaDesignations_lock) {
 			outerLoop: for (Slave slave : slaves) {
 				for (int i = 0; i < slave.getCores(); i++) {
-					slave.computeFormula(subformulas.get(j), this);
-					formulaDesignations.put(subformulas.get(j).getId(), slave);
-					j++;
-					// TODO: Race condition here, formulaDesignations is beeing modified
+					formulaDesignations.put(subformulas.get(i).getId(), slave);
+					slave.computeFormula(subformulas.get(i), this);
 					if (formulaDesignations.size() == subformulas.size())
 						break outerLoop;
 				}
