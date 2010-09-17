@@ -3,10 +3,13 @@ package main.java.master;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
+
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.log4j.Level;
@@ -148,7 +151,7 @@ public class Job {
 		
 		this.subformulas = formula.splitQbf(availableCores, 
 											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
-		List<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
+		Vector<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
 
 		logger.info("Starting Job " + this.id + "...\n" +
 					"	Started at:  " + startedAt + "\n" +
@@ -157,7 +160,7 @@ public class Job {
 					"	Slaves:      " + slaves.size());
 		
 		
-		
+		Collections.shuffle(slaves);
 		synchronized(formulaDesignations_lock) {
 			outerLoop: for (Slave slave : slaves) {
 				for (int i = 0; i < slave.getCores(); i++) {

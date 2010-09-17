@@ -15,6 +15,7 @@ import java.util.Stack;
 import java.util.Vector;
 
 import main.java.QPar;
+import main.java.logic.DTNode.DTNodeType;
 import main.java.logic.heuristic.DependencyNode;
 import main.java.logic.heuristic.Heuristic;
 import main.java.logic.parser.Node;
@@ -43,6 +44,7 @@ public class Qbf {
 
 	Heuristic h = null;
 	private static int idCounter = 0;
+	private int tqbfIdCounter = 0;
 	private DTNode decisionRoot = null;
 	private ArrayList<TransmissionQbf> subQbfs	= new ArrayList<TransmissionQbf>();
 	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
@@ -158,9 +160,9 @@ public class Qbf {
 	
 		// creating the root of the decision node
 		if (aVars.contains(decisionVars.get(0))) {
-			decisionRoot = new DTNode("&");
+			decisionRoot = new DTNode(DTNodeType.AND);
 		} else if (eVars.contains(decisionVars.get(0))) {
-			decisionRoot = new DTNode("|");
+			decisionRoot = new DTNode(DTNodeType.OR);
 		}else
 			assert(false);
 
@@ -169,19 +171,23 @@ public class Qbf {
 		// var in either eVars or aVars
 		for (i=1; i < decisionVars.size(); i++) {
 			if (aVars.contains(decisionVars.get(i))) {
-				decisionRoot.addLayer("&");
+				decisionRoot.addLayer(DTNodeType.AND);
 			}else if (eVars.contains(decisionVars.get(i))) {
-				decisionRoot.addLayer("|");
+				decisionRoot.addLayer(DTNodeType.OR);
 			}
 		}
 		
 		// finally gather all leave nodes...
 		Vector<DTNode> leafNodes = decisionRoot.getLeafNodes();
 		// ...and add the subformula IDs as their children
-		i = this.id * 1000;
+		// DELETEME: i = this.id * 1000;
 		for (DTNode dtmp : leafNodes) {
-			dtmp.addChild(new DTNode(i++));
-			dtmp.addChild(new DTNode(i++));
+			DTNode lhs = new DTNode(DTNodeType.UNDEFINED);
+			lhs.setId(this.nextTqbfId());
+			DTNode rhs = new DTNode(DTNodeType.UNDEFINED);
+			rhs.setId(this.nextTqbfId());
+			dtmp.addChild(lhs);
+			dtmp.addChild(rhs);
 		}
 
 		// generating n TransmissionQBFs
@@ -192,7 +198,7 @@ public class Qbf {
 			resultAvailable.add(i, false);
 			resultProcessed.add(i, false);
 						
-			tmp.setId((new Integer(this.id * 1000 + i)).toString());
+			tmp.setId(this.id + "_" + i);
 			tmp.setRootNode(root);
 			
 			for (j = 0; j < numVarsToChoose; j++) {
@@ -220,6 +226,10 @@ public class Qbf {
 		return subQbfs;
 	}
 
+	private String nextTqbfId() {
+		return this.id + "_" + this.tqbfIdCounter++;
+	}
+	
 	/**
 	* merge 
 	* the variables.
@@ -227,18 +237,16 @@ public class Qbf {
 	* @param result The result of the evaluated subformula
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
-	public synchronized boolean mergeQbf(String id, boolean result) {
+	public synchronized boolean mergeQbf(String tqbfId, boolean result) {
+		if(decisionRoot.hasTruthValue())
+			return true;
+		
 		// find the corresponding node in the decisiontree
-		DTNode tmp = decisionRoot.getNode(Integer.parseInt(id));
+		DTNode tmp = decisionRoot.getNode(tqbfId);
 		
-		if(tmp == null) {
-			logger.info("DecisionTreeNode for tQbfID " + id + " not found.");
-			if(decisionRoot.hasTruthValue()) {
-				logger.info("Formula already solved.");
-				return decisionRoot.hasTruthValue();
-			}		
-		}
-		
+		if(tmp == null)
+			logger.error("DecisionTreeNode for tQbfID " + tqbfId + " not found.");
+					
 		// set the nodes truth value
 		tmp.setTruthValue(result);
 

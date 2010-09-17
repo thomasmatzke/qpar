@@ -8,30 +8,22 @@ import org.apache.log4j.Level;
 public class DTNode {
 
     static Logger logger = Logger.getLogger(Qbf.class);
-	private int id = -1;
-	private boolean hasTruthValue = false;
-	private boolean truthValue;
-	private String op = "";
+	private String id = null;
+	//private boolean truthValue;
+	//private DTNodeType op;
 	private DTNode leftChild = null;
 	private DTNode rightChild = null;
 	private DTNode parent = null;
-
-	// constructors
-	public DTNode(String op) {
-		assert(op != null);
-		this.op = op;
-	}
-
-	public DTNode(int id) {
-		this.id = id;
-	}
-
-	public DTNode() {
-	}
-
+	public DTNodeType type;
 	
+	public enum DTNodeType { AND, OR, TRUE, FALSE, UNDEFINED }
+	
+	// constructors
+	public DTNode(DTNodeType type) {
+		this.type = type;
+	}
+		
 	public void reduce() {
-		String op = getParent().getOp();
 		DTNode sibling = null;
 
 		if (getParent().getRightChild() != this) {
@@ -40,59 +32,62 @@ public class DTNode {
 			sibling = getParent().getLeftChild();
 		}
 
-
-		if (op.equals("&")) {
+		if(getParent().getType() == DTNodeType.AND) {
 			// AND FALSE
-			if (truthValue == false) {
-				parent.setTruthValue(false);
-				parent.setOp("");
+			if (this.type == DTNodeType.FALSE) {
+				parent.setType(DTNodeType.FALSE);
 				parent.setLeftChild(null);
 				parent.setRightChild(null);
 				parent = null;
 				sibling.setParent(null);
+				if(this.parent != null)
+					parent.reduce();
 			// AND TRUE
-			} else if (truthValue == true) {
-				if (sibling.hasTruthValue) {
-					parent.setTruthValue(sibling.getTruthValue() && truthValue);
-					parent.setOp("");
+			} else if(this.type == DTNodeType.TRUE) {
+				if (sibling.hasTruthValue()) {
+					parent.setTruthValue(sibling.getTruthValue() && this.getTruthValue());
 					parent.setLeftChild(null);
 					parent.setRightChild(null);
 					parent = null;
 					sibling.setParent(null);
+					if(this.parent != null)
+						parent.reduce();
 				}
 			}
-		} else if (op.equals("|")) {
+		} else if(getParent().getType() == DTNodeType.OR) {
 			// OR TRUE
-			if (truthValue == true) {
+			if(this.type == DTNodeType.TRUE) {
 				parent.setTruthValue(true);
-				parent.setOp("");
 				parent.setLeftChild(null);
 				parent.setRightChild(null);
 				parent = null;
 				sibling.setParent(null);
+				if(this.parent != null)
+					parent.reduce();
 			// OR FALSE
-			} else if (truthValue == false) {
-				if (sibling.hasTruthValue) {
-					parent.setTruthValue(sibling.getTruthValue() || truthValue);
-					parent.setOp("");
+			} else if(this.type == DTNodeType.FALSE) {
+				if (sibling.hasTruthValue()) {
+					parent.setTruthValue(sibling.getTruthValue() || this.getTruthValue());
 					parent.setLeftChild(null);
 					parent.setRightChild(null);
 					parent = null;
 					sibling.setParent(null);
+					if(this.parent != null)
+						parent.reduce();
 				}
 			}
 		}
 	}
 
-	public DTNode getNode(int sid) {
+	public DTNode getNode(String tqbfId) {
 		DTNode tmpLeft = null;
 		DTNode tmpRight = null;
-		if (this.id == sid) {
+		if (this.id != null && this.id.equals(tqbfId)) {
 			return this;
 		}
 	
-		if (leftChild != null) tmpLeft = leftChild.getNode(sid);
-		if (rightChild != null) tmpRight = rightChild.getNode(sid);
+		if (leftChild != null) tmpLeft = leftChild.getNode(tqbfId);
+		if (rightChild != null) tmpRight = rightChild.getNode(tqbfId);
 
 		if (tmpLeft != null) return tmpLeft;
 		return tmpRight;
@@ -127,31 +122,32 @@ public class DTNode {
 		}
 	}
 
-	public void addLayer(String op) {
+	public void addLayer(DTNodeType operator) {
+		assert(operator == DTNodeType.AND || operator == DTNodeType.OR);
 		DTNode tmp = null;
 		if (leftChild == null) {
-			tmp = new DTNode(op);
+			tmp = new DTNode(operator);
 			tmp.setParent(this);	
 			leftChild = tmp;
 		} else {
-			leftChild.addLayer(op);
+			leftChild.addLayer(operator);
 		}
 
 		if (rightChild == null) {
-			tmp = new DTNode(op);
+			tmp = new DTNode(operator);
 			tmp.setParent(this);
 			rightChild = tmp;
 		} else {
-			rightChild.addLayer(op);
+			rightChild.addLayer(operator);
 		}
 	}
 
 	// getter & setter
-	public int getId() {
+	public String getId() {
 		return this.id;
 	}
 
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 	
@@ -178,25 +174,35 @@ public class DTNode {
 	public DTNode getRightChild() {
 		return this.rightChild;
 	}
-	
-	public void setTruthValue (boolean t) {
-		this.hasTruthValue = true;
-		this.truthValue = t;
-	}
-
-	public boolean getTruthValue () {
-		return this.truthValue;
-	}
-	
+		
 	public boolean hasTruthValue () {
-		return this.hasTruthValue;
+		if(this.type == DTNodeType.TRUE || this.type == DTNodeType.FALSE)
+			return true;
+		return false;
 	}
 	
-	public void setOp(String op) {
-		this.op = op;
+	public void setType(DTNodeType type) {
+		this.type = type;
 	}	
 
-	public String getOp() {
-		return this.op;
+	public DTNodeType getType() {
+		return this.type;
+	}
+
+	public void setTruthValue(boolean result) {
+		if(result)
+			this.setType(DTNode.DTNodeType.TRUE);
+		else
+			this.setType(DTNode.DTNodeType.FALSE);
+	}
+
+	public boolean getTruthValue() {
+		if(this.type == DTNode.DTNodeType.TRUE)
+			return true;
+		else if((this.type == DTNode.DTNodeType.FALSE))
+			return false;
+		else
+			assert(false);
+		return false;
 	}
 }
