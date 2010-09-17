@@ -156,6 +156,7 @@ public class Shell implements Runnable{
 		String 	solverId			= "qpro";
 		Vector<String>	heuristics	= HeuristicFactory.getAvailableHeuristics();
 		String	referenceFileName 	= "qpro_results.txt";
+		boolean correctness			= true;
 		
 		try{
 			directory 			= new File(token.nextToken());
@@ -198,27 +199,41 @@ public class Shell implements Runnable{
 		}
 		
 		// Check correctness
+		String correctnessReport = "\n\nDetailed results:\n";
 		for(File f : directory.listFiles()) {
 			if(f.getName().equals("evaluation.txt") || f.getName().equals(referenceFileName))
 				continue;
+			correctnessReport += "File: " + f.getName() + "\n";
 			Boolean compare = null;
-			for(int c = 2; c <= cores; c++) {
-				for(String h : HeuristicFactory.getAvailableHeuristics()) {
+			for(String h : HeuristicFactory.getAvailableHeuristics()) {
+				correctnessReport += "Heuristic: " + h + "\n";
+				for(int c = 2; c <= cores; c++) {
 					Boolean current = result[c-2][heuristics.indexOf(h)].getResults().get(f);
+					if(current == null) {
+						correctnessReport += "x";
+					} else if(current == true) {
+						correctnessReport += "t";
+					} else if(current == false) {
+						correctnessReport += "f";
+					} else { assert(false);}
 					if(compare == null && current != null) {
 						compare = current;
-					} else if(compare != null && compare != current) {
+					} else if(compare != null && current != null && compare != current) {
 						logger.error("Correctness error detected: File: " + f + ", Cores: " + c + ", Heuristic: " + h);
-						MasterDaemon.bailOut();
+						//MasterDaemon.bailOut();
 					}
-					
 				}
-			}			
+				correctnessReport += "\n";
+			}
+			correctnessReport += "\n";
 		}
 		
 		
 		String evalPath = directory.getAbsolutePath() + File.separator + "evaluation.txt";
-		
+		if(correctness)
+			report = report + correctnessReport;
+		else
+			report = report + "WARNING: INCONSISTENT RESULTS DETECTED! PROGRAM NOT CORRECT!\n\n" + correctnessReport;
 		report = report.replaceAll("\n", System.getProperty("line.separator"));
 		
 		try {
