@@ -387,7 +387,7 @@ public class Slave implements MessageListener, Runnable {
 	private void handleDeath() {
 		if(this.runningComputations.size() < 1) return;
 		for(Job job : Job.getJobs().values()) {
-			if(job.getFormulaDesignations().values().contains(this)) {
+			if(job.getStatus() == Job.Status.RUNNING && job.getFormulaDesignations().values().contains(this) ) {
 				job.abort();
 				job.setStatus(Job.Status.ERROR);
 				if (Job.getTableModel() != null) {

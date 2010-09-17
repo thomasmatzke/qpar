@@ -5,7 +5,6 @@ public enum Command {
 	KILLSLAVE, VIEWSLAVES, WAITFORSLAVE, KILLALLSLAVES,
 	HELP, QUIT,
 	SOURCE, WAITFORRESULT,
-	TESTPARSER,
 	NOVALUE;
 	
 	public static Command toCommand(String str)

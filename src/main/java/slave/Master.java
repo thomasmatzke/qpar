@@ -64,7 +64,7 @@ public class Master {
 
 	private MessageProducer producer_snd;
 
-	private boolean run, connected;
+	public	boolean run, connected;
 
 	private Session session;
 
@@ -91,6 +91,7 @@ public class Master {
 			while(!connected) {
 				try {
 					connection = connectionFactory.createConnection();
+					((ActiveMQConnection)connection).addTransportListener(new MsgBrokerTransportListener());
 					connection.start();
 					session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 					connected = true;
@@ -136,6 +137,7 @@ public class Master {
 			Thread.sleep(1000);
 			this.session.close();
 			this.connection.close();
+			connected = false;
 		} catch (Exception e) {
 			logger.error("Error while disconnecting from MessageBroker... \n"
 					+ e);

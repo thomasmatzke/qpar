@@ -22,13 +22,12 @@ import sun.misc.Signal;
  *
  */
 public class SlaveDaemon {
-
+	static Logger logger = Logger.getLogger(SlaveDaemon.class);
+	
 	public static Vector<String> availableSolvers = new Vector<String>();
 	public static String master_str;
 	public static Master master;
-	private static Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
-	static Logger logger = Logger.getLogger(SlaveDaemon.class);
-	public static Level logLevel = Level.WARN;
+	public static Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	
 	/**
 	 * Program execution entry point

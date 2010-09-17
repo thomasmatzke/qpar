@@ -98,8 +98,6 @@ public class Shell implements Runnable{
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase()))
 		{
-			case TESTPARSER:
-				testParser(token);
 			case EVALUATE:
 				evaluate(token);
 				break;
@@ -148,33 +146,26 @@ public class Shell implements Runnable{
 		
 	}
 
-	private void testParser(StringTokenizer token) {
-		try {
-			//TODO implement
-			Qbf qbf = new Qbf(token.nextToken());
-		} catch (IOException e) {
-			logger.error(e);
-		}
-		
-	}
-
 	/**
-	 * Syntax: EVALUATE directory_path_to_formulas cores solverId timeout
+	 * Syntax: EVALUATE directory_path_to_formulas cores solverId timeout [reference_file]
 	 */
 	private void evaluate(StringTokenizer token) {
-		File	directory	= null;
-		int 	cores		= 2;
-		long 	timeout		= 60000;
-		String 	solverId	= "qpro";
+		File	directory			= null;
+		int 	cores				= 2;
+		long 	timeout				= 60000;
+		String 	solverId			= "qpro";
 		Vector<String>	heuristics	= HeuristicFactory.getAvailableHeuristics();
+		String	referenceFileName 	= "qpro_results.txt";
 		
 		try{
-			directory 	= new File(token.nextToken());
-			cores		= Integer.parseInt(token.nextToken());
-			solverId	= token.nextToken();
-			timeout		= Integer.parseInt(token.nextToken()) * 1000;
+			directory 			= new File(token.nextToken());
+			cores				= Integer.parseInt(token.nextToken());
+			solverId			= token.nextToken();
+			timeout				= Integer.parseInt(token.nextToken()) * 1000;
+			if(token.hasMoreTokens())
+				referenceFileName	= token.nextToken();
 		} catch(NoSuchElementException e) {
-			puts("Syntax: EVALUATE directory_path_to_formulas cores solverId timeout");
+			puts("Syntax: EVALUATE directory_path_to_formulas cores solverId timeout [reference_file]");
 		}
 		String report = "Evaluation Report\n" +
 						"Solver: \t" + solverId + "\n" +
@@ -206,6 +197,26 @@ public class Shell implements Runnable{
 			report += line;
 		}
 		
+		// Check correctness
+		for(File f : directory.listFiles()) {
+			if(f.getName().equals("evaluation.txt") || f.getName().equals(referenceFileName))
+				continue;
+			Boolean compare = null;
+			for(int c = 2; c <= cores; c++) {
+				for(String h : HeuristicFactory.getAvailableHeuristics()) {
+					Boolean current = result[c-2][heuristics.indexOf(h)].getResults().get(f);
+					if(compare == null && current != null) {
+						compare = current;
+					} else if(compare != null && compare != current) {
+						logger.error("Correctness error detected: File: " + f + ", Cores: " + c + ", Heuristic: " + h);
+						MasterDaemon.bailOut();
+					}
+					
+				}
+			}			
+		}
+		
+		
 		String evalPath = directory.getAbsolutePath() + File.separator + "evaluation.txt";
 		
 		report = report.replaceAll("\n", System.getProperty("line.separator"));
@@ -227,6 +238,9 @@ public class Shell implements Runnable{
 		for(Slave s : Slave.getSlaves().values()) {
 			s.kill("User request");
 		}
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {}
 	}
 
 	/**

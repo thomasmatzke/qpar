@@ -34,7 +34,7 @@ public class MasterDaemon {
 	private static class ShutdownHook extends Thread {
 		@Override
 		public void run() {
-			MasterDaemon.bailOut();
+			MasterDaemon.stopMessageBroker();
 		}
 	}
 
@@ -117,27 +117,6 @@ public class MasterDaemon {
 		logger.info("Messagebroker stopped.");
 	}
 
-	public void initializeDatabase() {
-		// TODO: rethink db concept
-//			try {
-//				Class.forName("org.hsqldb.jdbc.JDBCDriver");
-//				Db.conn = DriverManager.getConnection(
-//						"jdbc:hsqldb:mem:data", "SA", "");
-//				Db.update("CREATE TABLE quantifiers ( id INTEGER IDENTITY, qbf_id INTEGER, var INTEGER, type SMALLINT )");
-//				Db.update("CREATE TABLE dependencies ( id INTEGER IDENTITY, qbf_id INTEGER, from INTEGER, to INTEGER )");
-//				Db.update("CREATE INDEX from_index ON dependencies var");
-//				Db.update("CREATE INDEX from_index ON dependencies from");
-//				Db.update("CREATE INDEX from_index ON dependencies to");
-//			} catch (ClassNotFoundException e) {
-//				logger.error("Failed to load HSQLDB JDBC driver: \n" + e);
-//				System.exit(-1);
-//			} catch (SQLException e) {
-//				logger.error("Failed to create table: \n" + e);
-//				System.exit(-1);
-//			}
-			
-	}
-
 	private ShutdownHook hook;
 
 	public NewSlaveListener newSlaveListener;
@@ -191,9 +170,7 @@ public class MasterDaemon {
 			connection.close();
 		} catch (JMSException e) {}
 		stopMessageBroker();
-//		try {
-//			Db.shutdown();
-//		} catch (SQLException e) {}
+		System.exit(-1);
 	}
 	
 	private static void usage() {
