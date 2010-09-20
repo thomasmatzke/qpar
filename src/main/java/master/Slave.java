@@ -45,7 +45,7 @@ public class Slave implements MessageListener, Runnable {
 	public static final int READY = 0;
 	public static final int BUSY = 1;
 
-	public int status;
+	public int status = 0;
 	
 	// The slave has that much time to answer to the ping
 	public static final long KEEPALIVE_TIMEOUT = 10 * 1000; // In Millis
@@ -102,7 +102,7 @@ public class Slave implements MessageListener, Runnable {
 	public static int getCoresForSolver(String solverId) {
 		int cores = 0;
 		for (Slave slave : slaves.values()) {
-			if (slave.getToolIds().contains(solverId) && slave.status == Slave.READY) {
+			if (slave.getToolIds().contains(solverId)) {
 				cores += slave.getCores();
 			}
 		}
@@ -169,8 +169,8 @@ public class Slave implements MessageListener, Runnable {
 	}
 
 	public void computeFormula(TransmissionQbf tqbf, Job job) {
-		this.sendFormulaMessage(tqbf, job.getSolver());
 		this.runningComputations.put(tqbf.getId(), job);
+		this.sendFormulaMessage(tqbf, job.getSolver());
 	}
 
 	public int getCores() {

@@ -22,8 +22,8 @@ public class TransmissionQbf implements Serializable {
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();
 	private Vector<Integer> vars = new Vector<Integer>();
-	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
-	private ArrayList<Integer> falseVars = new ArrayList<Integer>();
+	public ArrayList<Integer> trueVars = new ArrayList<Integer>();
+	public ArrayList<Integer> falseVars = new ArrayList<Integer>();
 	static Logger logger = Logger.getLogger(TransmissionQbf.class);
 
 	/**
@@ -40,23 +40,7 @@ public class TransmissionQbf implements Serializable {
 	public void dump(String s) {
 		root.dump(s);
 	}
-
-	/**
-	 * setter for the trueVars ArrayList
-	 * @param v the variable number to add
-	 */
-	public void addToTrueVars(int v) {
-		trueVars.add(v);
-	}
-
-	/**
-	 * setter for the falseVars ArrayList
-	 * @param v the variable number to add
-	 */
-	public void addToFalseVars(int v) {
-		falseVars.add(v);
-	}
-
+	
 	/**
 	 * getter for the trueVars ArrayList
 	 * @return the ArrayList of true-assigned vars

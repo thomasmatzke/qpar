@@ -4,21 +4,19 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
 
 import main.java.QPar;
-import main.java.logic.DTNode.DTNodeType;
 import main.java.logic.heuristic.DependencyNode;
 import main.java.logic.heuristic.Heuristic;
-import main.java.logic.parser.Node;
 import main.java.logic.parser.ParseException;
 import main.java.logic.parser.Qbf_parser;
 import main.java.logic.parser.SimpleNode;
@@ -33,24 +31,12 @@ import org.apache.log4j.Logger;
 *
 */
 public class Qbf {
-
-	// TODO: Delete these probably unused fields if tested OK 
-	// private int receivedResults = 0;
-	// private boolean satisfiable	= false;
-	// private boolean solved		= false;
-	// private String op; // TODO
 	
     static Logger logger = Logger.getLogger(Qbf.class);
 
 	Heuristic h = null;
 	private static int idCounter = 0;
-	private int tqbfIdCounter = 0;
 	private DTNode decisionRoot = null;
-	private ArrayList<TransmissionQbf> subQbfs	= new ArrayList<TransmissionQbf>();
-	private ArrayList<Boolean> qbfResults		= new ArrayList<Boolean>();
-	private ArrayList<Boolean> resultAvailable	= new ArrayList<Boolean>();
-	private ArrayList<Boolean> resultProcessed	= new ArrayList<Boolean>();
-	private Vector<Integer> decisionVars = new Vector<Integer>();
 	private HashMap<Integer, Integer> literalCount = new HashMap<Integer, Integer>();	
 	public Vector<Integer> eVars = new Vector<Integer>();
 	public Vector<Integer> aVars = new Vector<Integer>();
@@ -58,7 +44,6 @@ public class Qbf {
 	public SimpleNode root = null;
 	public int id;
 	public DependencyNode dependencyGraphRoot; 
-	
 	
 	private Stack<SimpleNode> quantifierStack;
 	
@@ -119,117 +104,67 @@ public class Qbf {
 	/**
 	* split a QBF to two or more subQBFs by assigning truth values to some of
 	* the variables.
+	* V2: Uses exactly n cores now
 	* @param n Number of subformulas to return
 	* @return A list of n TransmissionQbfs, each a subformula of the whole QBF
 	*/
 	public synchronized List<TransmissionQbf> splitQbf(int n, Heuristic h) {
-		int i,j;
-		TransmissionQbf tmp;
-		int numVarsToChoose = new Double(Math.log(n)/Math.log(2)).intValue();
-		boolean[][] decisionArray = new boolean[n][numVarsToChoose];		
+		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
+		logger.info("Heuristic returned variable-assignment order: " + Arrays.toString(order));
 		
-		// running the selected heuristic						
-		Integer[] tempVars = h.getVariableOrder().toArray(new Integer[0]);
-		logger.info("Heuristic returned variable-assignment order: " + Arrays.toString(tempVars));
+		logger.info("Splitting into " + n + " subformulas...");
 		
-		// throw away the vars that are too much
-		for(i = 0; i < numVarsToChoose; i++) {
-			decisionVars.add(tempVars[i]);
-		}
-		logger.info("Actually assigning variables: " + decisionVars);
-
-		// generating a truth table
-		logger.debug("generating truth table");
-		for (j = 0; j < numVarsToChoose; j++) {
-			decisionArray[0][j] = true;
-			logger.debug(decisionArray[0][j]);
-		}
-
-		for(i = 1; i < n; i++) {
-			for(j = 0; j < numVarsToChoose; j++) {
-				if(i % (Math.pow(2,j)) == 0) {
-					decisionArray[i][j] = !decisionArray[i-1][j];
-				} 
-				else {
-					decisionArray[i][j] = decisionArray[i-1][j];
-				}
-				logger.debug(decisionArray[i][j]);
-			}
-			logger.debug("------");
-		}
-	
-		// creating the root of the decision node
-		if (aVars.contains(decisionVars.get(0))) {
-			decisionRoot = new DTNode(DTNodeType.AND);
-		} else if (eVars.contains(decisionVars.get(0))) {
-			decisionRoot = new DTNode(DTNodeType.OR);
-		}else
-			assert(false);
-
-		// for every var that is going to get truth-assigned, add a layer on
-		// the tree, with AND or OR nodes, depending on the occurance of that
-		// var in either eVars or aVars
-		for (i=1; i < decisionVars.size(); i++) {
-			if (aVars.contains(decisionVars.get(i))) {
-				decisionRoot.addLayer(DTNodeType.AND);
-			}else if (eVars.contains(decisionVars.get(i))) {
-				decisionRoot.addLayer(DTNodeType.OR);
-			}
-		}
+		int leafCtr = 1;
+		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
+		decisionRoot = new DTNode(null);
+		leaves.addFirst(decisionRoot);
 		
-		// finally gather all leave nodes...
-		Vector<DTNode> leafNodes = decisionRoot.getLeafNodes();
-		// ...and add the subformula IDs as their children
-		// DELETEME: i = this.id * 1000;
-		for (DTNode dtmp : leafNodes) {
-			DTNode lhs = new DTNode(DTNodeType.UNDEFINED);
-			lhs.setId(this.nextTqbfId());
-			DTNode rhs = new DTNode(DTNodeType.UNDEFINED);
-			rhs.setId(this.nextTqbfId());
-			dtmp.addChild(lhs);
-			dtmp.addChild(rhs);
-		}
-
-		// generating n TransmissionQBFs
-		for (i = 0; i < n; i++) {
-			tmp = new TransmissionQbf();
-			
-			qbfResults.add(i, false);
-			resultAvailable.add(i, false);
-			resultProcessed.add(i, false);
-						
-			tmp.setId(this.id + "_" + i);
-			tmp.setRootNode(root);
-			
-			for (j = 0; j < numVarsToChoose; j++) {
-				this.eVars.remove(decisionVars.get(j));
-				this.aVars.remove(decisionVars.get(j));
-				if (decisionArray[i][j]) {
-					tmp.addToTrueVars(decisionVars.get(j));
-				}
-				else {
-					tmp.addToFalseVars(decisionVars.get(j));
-				}
+		// Generate the tree
+		logger.info("Generating decision tree...");
+		do {
+			DTNode leaf 		= leaves.pollLast();
+			Integer splitVar 	= order[leaf.getDepth()]; 
+			if(aVars.contains(splitVar)) {
+				leaf.setType(DTNode.DTNodeType.AND);
+			} else if(eVars.contains(splitVar)) {
+				leaf.setType(DTNode.DTNodeType.OR);
 			}
-
-			tmp.setEVars(this.eVars);
-			tmp.setAVars(this.aVars);
+			DTNode negChild = new DTNode(DTNode.DTNodeType.UNDEFINED);
+			negChild.variablesAssignedFalse.add(splitVar);
+			DTNode posChild = new DTNode(DTNode.DTNodeType.UNDEFINED);
+			posChild.variablesAssignedTrue.add(splitVar);
+			leaf.addChild(negChild); leaf.addChild(posChild);
+			leaves.addFirst(negChild); leaves.addFirst(posChild);
+			leafCtr++;
+		} while(leafCtr < n);
+		
+		assert(leaves.size() == n);
+		
+		logger.info("Generating TransmissionQbfs...");
+		List<TransmissionQbf> tqbfs = new ArrayList<TransmissionQbf>();
+		// Generate ids for leaves and corresponding tqbfs
+		int idCtr = 0;
+		for(DTNode node : leaves) {
+			String id = Integer.toString(this.id) + "." +  Integer.toString(idCtr++);
+			node.setId(id);
+			TransmissionQbf tqbf = new TransmissionQbf();
+			tqbf.setId(id);
+			tqbf.falseVars.addAll(node.variablesAssignedFalse);
+			tqbf.trueVars.addAll(node.variablesAssignedTrue);
+			tqbf.setRootNode(root);
+			tqbf.setEVars(this.eVars);
+			tqbf.setAVars(this.aVars);
 			Vector<Integer> tmpVars = new Vector<Integer>();
 			tmpVars.addAll(aVars);
 			tmpVars.addAll(eVars);
-			tmp.setVars(tmpVars);	
-			assert(tmp.getVars().size() == (tmp.getAVars().size() + tmp.getEVars().size()));
-			
-			tmp.checkQbf();
-			subQbfs.add(tmp);
+			tqbf.setVars(tmpVars);
+			tqbfs.add(tqbf);
 		}
-		return subQbfs;
+		assert(tqbfs.size() == n);
+		return tqbfs;
 	}
 
-	private String nextTqbfId() {
-		return this.id + "_" + this.tqbfIdCounter++;
-	}
-	
+
 	/**
 	* merge 
 	* the variables.

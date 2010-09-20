@@ -3,6 +3,7 @@ package main.java.master;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,16 +26,10 @@ public class Job {
 
 	public enum Status { READY, RUNNING, COMPLETE, ERROR, TIMEOUT }
 	
-//	public static final int READY = 0;
-//	public static final int RUNNING = 1;
-//	public static final int COMPLETE = 2;
-//	public static final int ERROR = 3;
-//	public static final int TIMEOUT = 4;
-
 	private static int idCounter = 0;
 	private static Map<String, Job> jobs = new HashMap<String, Job>();
 	private static AbstractTableModel tableModel;
-	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	static Logger logger = Logger.getLogger(Job.class);
 
 	private boolean result;
 	private long timeout = 0;
@@ -48,10 +43,12 @@ public class Job {
 																					// computing
 																					// slaves
 	private String heuristic, id, inputFileString, outputFileString, solver;
-	private int maxCores = 0;
+	private int usedCores = 0;
 	private Status status;
 	private List<TransmissionQbf> subformulas;
 	private Date startedAt, stoppedAt;
+	
+	private Object fireCompleteLock = new Object();
 	
 	public Job() {
 		logger.setLevel(QPar.logLevel);
@@ -73,7 +70,7 @@ public class Job {
 	public static Job createJob(String inputFile, String outputFile,
 			String solverId, String heuristicId, long timeout, int maxCores) {
 		Job job = new Job();
-		job.maxCores = maxCores;
+		job.usedCores = maxCores;
 		job.setTimeout(timeout);
 		job.setId(allocateJobId());
 		job.setInputFileString(inputFile);
@@ -145,32 +142,43 @@ public class Job {
 		this.formula = new Qbf(inputFileString);
 		
 		int availableCores = Slave.getCoresForSolver(this.solver);
-
-		if(this.maxCores != 0 && availableCores > this.maxCores)
-			availableCores = maxCores;
 		
-		this.subformulas = formula.splitQbf(availableCores, 
+		this.subformulas = formula.splitQbf(Math.min(availableCores, usedCores), 
 											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
 		Vector<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
 
 		logger.info("Starting Job " + this.id + "...\n" +
 					"	Started at:  " + startedAt + "\n" +
 					"	Subformulas: " + this.subformulas.size()+ "\n" + 
-					"	Cores:       " + availableCores + "\n" +
+					"	Cores(avail):" + availableCores + "\n" +
+					"	Cores(used): " + usedCores + "\n" +
 					"	Slaves:      " + slaves.size());
 		
-		
-		Collections.shuffle(slaves);
-		synchronized(formulaDesignations_lock) {
-			outerLoop: for (Slave slave : slaves) {
-				for (int i = 0; i < slave.getCores(); i++) {
-					formulaDesignations.put(subformulas.get(i).getId(), slave);
-					slave.computeFormula(subformulas.get(i), this);
-					if (formulaDesignations.size() == subformulas.size())
-						break outerLoop;
-				}
+		ArrayList<Slave> slots = new ArrayList<Slave>();
+		for(Slave s : slaves) {
+			for(int i = 0; i < s.getCores(); i++) {
+				slots.add(s);
 			}
 		}
+		if(slots.size() < this.subformulas.size())
+			logger.warn("Not enough cores available for Job. Overbooking random slaves.");
+		Collections.shuffle(slots);
+		
+		String slotStr = "";
+		for(Slave s : slots)
+			slotStr += s.getHostName() + " ";
+		logger.info("Computationslots generated: " + slotStr.trim());
+		
+		int slotIndex = 0;
+		for(TransmissionQbf sub : subformulas) {
+			Slave s = slots.get(slotIndex);
+			slotIndex += 1;
+			formulaDesignations.put(sub.getId(), s);
+			s.computeFormula(sub, this);
+			if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
+				slotIndex = 0;
+		}
+			
 		
 		this.status = Status.RUNNING;
 		if (tableModel != null)
@@ -186,8 +194,12 @@ public class Job {
 	}
 
 	public void fireJobCompleted(boolean result) {
+		synchronized(this.fireCompleteLock) {
+			if(this.getStatus() == Status.COMPLETE)
+				return;
+			this.setStatus(Status.COMPLETE);
+		}
 		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
-		this.setStatus(Status.COMPLETE);
 		this.abortComputations();
 		this.setResult(result);
 		this.setStoppedAt(new Date());

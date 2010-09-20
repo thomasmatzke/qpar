@@ -1,5 +1,6 @@
 package main.java.logic;
 
+import java.util.ArrayList;
 import java.util.Vector;
 import org.apache.log4j.Logger;
 import org.apache.log4j.Level;
@@ -9,12 +10,13 @@ public class DTNode {
 
     static Logger logger = Logger.getLogger(Qbf.class);
 	private String id = null;
-	//private boolean truthValue;
-	//private DTNodeType op;
 	private DTNode leftChild = null;
 	private DTNode rightChild = null;
 	private DTNode parent = null;
+	private int depth = 0;
 	public DTNodeType type;
+	public ArrayList<Integer> variablesAssignedTrue 	= new ArrayList<Integer>();
+	public ArrayList<Integer> variablesAssignedFalse 	= new ArrayList<Integer>();
 	
 	public enum DTNodeType { AND, OR, TRUE, FALSE, UNDEFINED }
 	
@@ -22,8 +24,19 @@ public class DTNode {
 	public DTNode(DTNodeType type) {
 		this.type = type;
 	}
-		
-	public void reduce() {
+	
+	public int getDepth() {
+		if(depth != 0)
+			return depth;
+		DTNode p = parent;
+		int d = 0;
+		while(p != null) {
+			d++;
+		}
+		return d;
+	}
+	
+	public synchronized void reduce() {
 		DTNode sibling = null;
 
 		if (getParent().getRightChild() != this) {
@@ -79,7 +92,7 @@ public class DTNode {
 		}
 	}
 
-	public DTNode getNode(String tqbfId) {
+	public synchronized DTNode getNode(String tqbfId) {
 		DTNode tmpLeft = null;
 		DTNode tmpRight = null;
 		if (this.id != null && this.id.equals(tqbfId)) {
