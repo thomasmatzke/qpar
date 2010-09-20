@@ -28,9 +28,10 @@ public class DTNode {
 	public int getDepth() {
 		if(depth != 0)
 			return depth;
-		DTNode p = parent;
+		DTNode p = this;
 		int d = 0;
-		while(p != null) {
+		while(p.parent != null) {
+			p = parent;
 			d++;
 		}
 		return d;
