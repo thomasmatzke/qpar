@@ -98,6 +98,8 @@ public class MasterDaemon {
 		// Start Messagebroker for Slave-Communication
 		try {
 			broker = new BrokerService();
+			broker.setPersistent(false);
+			broker.deleteAllMessages();
 			broker.setUseJmx(false);
 			broker.addConnector("tcp://localhost:61616");
 			broker.start();

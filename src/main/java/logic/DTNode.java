@@ -8,36 +8,55 @@ import org.apache.log4j.Level;
 // a simple node class
 public class DTNode {
 
-    static Logger logger = Logger.getLogger(Qbf.class);
+    static Logger logger = Logger.getLogger(DTNode.class);
 	private String id = null;
 	private DTNode leftChild = null;
 	private DTNode rightChild = null;
 	private DTNode parent = null;
-	private int depth = 0;
+	private int depth = -1;
 	public DTNodeType type;
 	public ArrayList<Integer> variablesAssignedTrue 	= new ArrayList<Integer>();
 	public ArrayList<Integer> variablesAssignedFalse 	= new ArrayList<Integer>();
 	
-	public enum DTNodeType { AND, OR, TRUE, FALSE, UNDEFINED }
+	public enum DTNodeType { AND, OR, TRUE, FALSE, TQBF }
 	
 	// constructors
 	public DTNode(DTNodeType type) {
 		this.type = type;
 	}
 	
+	public String dump() {
+		
+		String indent = "";
+		for(int i = 0; i < this.depth; i++)
+			indent += "  ";
+		
+		String s = indent + this + "\n";
+				if(leftChild != null)
+			s += leftChild.dump();
+		if(rightChild != null)
+			s += rightChild.dump();
+		return s;
+	}
+	
+	public String toString() {
+		return type.toString();
+	}
+	
 	public int getDepth() {
-		if(depth != 0)
+		if(depth >= 0)
 			return depth;
-		DTNode p = this;
-		int d = 0;
-		while(p.parent != null) {
-			p = parent;
-			d++;
+		if(parent == null) {
+			depth = 0;
+			return 0;
 		}
-		return d;
+		depth = parent.getDepth()+1;
+		return depth;			
 	}
 	
 	public synchronized void reduce() {
+		if(parent == null)
+			return;
 		DTNode sibling = null;
 
 		if (getParent().getRightChild() != this) {
@@ -45,27 +64,21 @@ public class DTNode {
 		} else {
 			sibling = getParent().getLeftChild();
 		}
-
+		
 		if(getParent().getType() == DTNodeType.AND) {
 			// AND FALSE
 			if (this.type == DTNodeType.FALSE) {
 				parent.setType(DTNodeType.FALSE);
 				parent.setLeftChild(null);
 				parent.setRightChild(null);
-				parent = null;
 				sibling.setParent(null);
-				if(this.parent != null)
-					parent.reduce();
 			// AND TRUE
 			} else if(this.type == DTNodeType.TRUE) {
 				if (sibling.hasTruthValue()) {
 					parent.setTruthValue(sibling.getTruthValue() && this.getTruthValue());
 					parent.setLeftChild(null);
 					parent.setRightChild(null);
-					parent = null;
 					sibling.setParent(null);
-					if(this.parent != null)
-						parent.reduce();
 				}
 			}
 		} else if(getParent().getType() == DTNodeType.OR) {
@@ -74,23 +87,18 @@ public class DTNode {
 				parent.setTruthValue(true);
 				parent.setLeftChild(null);
 				parent.setRightChild(null);
-				parent = null;
 				sibling.setParent(null);
-				if(this.parent != null)
-					parent.reduce();
 			// OR FALSE
 			} else if(this.type == DTNodeType.FALSE) {
 				if (sibling.hasTruthValue()) {
 					parent.setTruthValue(sibling.getTruthValue() || this.getTruthValue());
 					parent.setLeftChild(null);
 					parent.setRightChild(null);
-					parent = null;
 					sibling.setParent(null);
-					if(this.parent != null)
-						parent.reduce();
 				}
 			}
 		}
+		parent.reduce();
 	}
 
 	public synchronized DTNode getNode(String tqbfId) {
@@ -136,25 +144,25 @@ public class DTNode {
 		}
 	}
 
-	public void addLayer(DTNodeType operator) {
-		assert(operator == DTNodeType.AND || operator == DTNodeType.OR);
-		DTNode tmp = null;
-		if (leftChild == null) {
-			tmp = new DTNode(operator);
-			tmp.setParent(this);	
-			leftChild = tmp;
-		} else {
-			leftChild.addLayer(operator);
-		}
-
-		if (rightChild == null) {
-			tmp = new DTNode(operator);
-			tmp.setParent(this);
-			rightChild = tmp;
-		} else {
-			rightChild.addLayer(operator);
-		}
-	}
+//	public void addLayer(DTNodeType operator) {
+//		assert(operator == DTNodeType.AND || operator == DTNodeType.OR);
+//		DTNode tmp = null;
+//		if (leftChild == null) {
+//			tmp = new DTNode(operator);
+//			tmp.setParent(this);	
+//			leftChild = tmp;
+//		} else {
+//			leftChild.addLayer(operator);
+//		}
+//
+//		if (rightChild == null) {
+//			tmp = new DTNode(operator);
+//			tmp.setParent(this);
+//			rightChild = tmp;
+//		} else {
+//			rightChild.addLayer(operator);
+//		}
+//	}
 
 	// getter & setter
 	public String getId() {

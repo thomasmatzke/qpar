@@ -34,21 +34,15 @@ public class Job {
 	private boolean result;
 	private long timeout = 0;
 	private Qbf formula;
-	
-	private Object formulaDesignations_lock = new Object();
-	private volatile Map<String, Slave> formulaDesignations = new HashMap<String, Slave>(); // Maps
-																					// tqbfids
-																					// to
-																					// the
-																					// computing
-																					// slaves
+
+	private Object handleResultLock = new Object();
+	// tqbfs -> slaves
+	public volatile Map<String, Slave> formulaDesignations = new HashMap<String, Slave>();
 	private String heuristic, id, inputFileString, outputFileString, solver;
-	private int usedCores = 0;
-	private Status status;
+	private int usedCores = 0, resultCtr = 0;
+	private volatile Status status;
 	private List<TransmissionQbf> subformulas;
 	private Date startedAt, stoppedAt;
-	
-	private Object fireCompleteLock = new Object();
 	
 	public Job() {
 		logger.setLevel(QPar.logLevel);
@@ -95,7 +89,7 @@ public class Job {
 		return jobs;
 	}
 
-	public void abort() {
+	public synchronized void abort() {
 		if (this.status != Status.RUNNING)
 			return;
 		logger.info("Aborting Job " + this.id + "...\n");
@@ -108,17 +102,15 @@ public class Job {
 	}
 
 	private void abortComputations() {
-		synchronized(formulaDesignations_lock) {
-			for (Map.Entry<String, Slave> entry : this.formulaDesignations
-					.entrySet()) {
-				Slave s = entry.getValue();
-				String tqbfId = entry.getKey();
-				s.abortFormulaComputation(tqbfId);
-			}
+		for (Map.Entry<String, Slave> entry : this.formulaDesignations
+				.entrySet()) {
+			Slave s = entry.getValue();
+			String tqbfId = entry.getKey();
+			s.abortFormulaComputation(tqbfId);
 		}
 	}
 
-	public synchronized void startBlocking() throws IOException {
+	public void startBlocking() throws IOException {
 		this.start();
 		while(this.getStatus() == Status.RUNNING) {
 			try {
@@ -193,12 +185,10 @@ public class Job {
 		return result;
 	}
 
-	public void fireJobCompleted(boolean result) {
-		synchronized(this.fireCompleteLock) {
-			if(this.getStatus() == Status.COMPLETE)
-				return;
-			this.setStatus(Status.COMPLETE);
-		}
+	public synchronized void fireJobCompleted(boolean result) {
+		if(this.getStatus() == Status.COMPLETE)
+			return;
+		this.setStatus(Status.COMPLETE);
 		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
 		this.abortComputations();
 		this.setResult(result);
@@ -261,17 +251,28 @@ public class Job {
 	}
 
 	public void handleResult(String tqbfId, boolean result) {
-		if(this.status == Status.COMPLETE) {
-			return;
-		}
-		boolean solved = formula.mergeQbf(tqbfId, result);
-		logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
-				+ getId());
-		synchronized(formulaDesignations_lock) {
+		synchronized(handleResultLock) {
+			if(this.status == Status.COMPLETE) {
+				return;
+			}
+			resultCtr++;
+			boolean solved = formula.mergeQbf(tqbfId, result);
+			logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
+					+ getId());
+			
 			this.formulaDesignations.remove(tqbfId);
+			if (solved)
+				fireJobCompleted(formula.getResult());
+			else {
+				if(resultCtr == subformulas.size()) {
+					// Received all subformulas but still no result...something is wrong
+					logger.fatal("Merging broken!");
+					logger.fatal("Dumping decisiontree: \n" + formula.decisionRoot.dump());
+					MasterDaemon.bailOut();
+				}
+			}
+			
 		}
-		if (solved)
-			fireJobCompleted(formula.getResult());
 	}
 
 	public Qbf getFormula() {
@@ -381,15 +382,4 @@ public class Job {
 		}
 	}
 
-	public Map<String, Slave> getFormulaDesignations() {
-		synchronized(formulaDesignations_lock) {
-			return formulaDesignations;
-		}
-	}
-
-	public void setFormulaDesignations(Map<String, Slave> formulaDesignations) {
-		synchronized(formulaDesignations_lock){
-			this.formulaDesignations = formulaDesignations;
-		}
-	}
 }

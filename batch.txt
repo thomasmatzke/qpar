@@ -1,3 +1,2 @@
 EVALUATE testing/boole 5 qpro 60
-killallslaves
 quit

@@ -36,7 +36,7 @@ public class Qbf {
 
 	Heuristic h = null;
 	private static int idCounter = 0;
-	private DTNode decisionRoot = null;
+	public DTNode decisionRoot = null;
 	private HashMap<Integer, Integer> literalCount = new HashMap<Integer, Integer>();	
 	public Vector<Integer> eVars = new Vector<Integer>();
 	public Vector<Integer> aVars = new Vector<Integer>();
@@ -46,6 +46,8 @@ public class Qbf {
 	public DependencyNode dependencyGraphRoot; 
 	
 	private Stack<SimpleNode> quantifierStack;
+	
+	private Object mergeLock = new Object();
 	
 	/**
 	* constructor
@@ -129,14 +131,20 @@ public class Qbf {
 			} else if(eVars.contains(splitVar)) {
 				leaf.setType(DTNode.DTNodeType.OR);
 			}
-			DTNode negChild = new DTNode(DTNode.DTNodeType.UNDEFINED);
+			DTNode negChild = new DTNode(DTNode.DTNodeType.TQBF);
 			negChild.variablesAssignedFalse.add(splitVar);
-			DTNode posChild = new DTNode(DTNode.DTNodeType.UNDEFINED);
+			negChild.setParent(leaf);
+			negChild.getDepth();
+			DTNode posChild = new DTNode(DTNode.DTNodeType.TQBF);
 			posChild.variablesAssignedTrue.add(splitVar);
+			posChild.setParent(leaf);
+			posChild.getDepth();
 			leaf.addChild(negChild); leaf.addChild(posChild);
 			leaves.addFirst(negChild); leaves.addFirst(posChild);
 			leafCtr++;
 		} while(leafCtr < n);
+		
+		//logger.info("\n" + decisionRoot.dump());
 		
 		assert(leaves.size() == n);
 		
@@ -172,24 +180,30 @@ public class Qbf {
 	* @param result The result of the evaluated subformula
 	* @return TRUE if the formula is already solved, FALSE if otherwise
 	*/
-	public synchronized boolean mergeQbf(String tqbfId, boolean result) {
-		if(decisionRoot.hasTruthValue())
-			return true;
-		
-		// find the corresponding node in the decisiontree
-		DTNode tmp = decisionRoot.getNode(tqbfId);
-		
-		if(tmp == null)
-			logger.error("DecisionTreeNode for tQbfID " + tqbfId + " not found.");
-					
-		// set the nodes truth value
-		tmp.setTruthValue(result);
-
-		// reduce the tree
-		tmp.reduce();
-
-		// check the root for a truth value and return
-		return decisionRoot.hasTruthValue();
+	public boolean mergeQbf(String tqbfId, boolean result) {
+		synchronized(mergeLock) {
+			if(decisionRoot.hasTruthValue())
+				return true;
+			
+			// find the corresponding node in the decisiontree
+			DTNode tmp = decisionRoot.getNode(tqbfId);
+			
+			
+			if(tmp == null) {
+				// The node has been cut off from the root by another reduce()
+				// The result is thus irrelevant
+				return decisionRoot.hasTruthValue();
+			}
+						
+			// set the nodes truth value
+			tmp.setTruthValue(result);
+	
+			// reduce the tree
+			tmp.reduce();
+	
+			// check the root for a truth value and return
+			return decisionRoot.hasTruthValue();
+		}
 	}
 
 	/**

@@ -50,7 +50,7 @@ public class Slave implements MessageListener, Runnable {
 	// The slave has that much time to answer to the ping
 	public static final long KEEPALIVE_TIMEOUT = 10 * 1000; // In Millis
 
-	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	static Logger logger = Logger.getLogger(Slave.class);
 	
 	private static Map<String, Slave> slaves = new HashMap<String, Slave>();
 	private static AbstractTableModel tableModel;
@@ -213,7 +213,7 @@ public class Slave implements MessageListener, Runnable {
 		logger.info("Slave information updated.");
 	}
 	
-	private void handleResultMessage(ResultMessage m) {
+	private synchronized void handleResultMessage(ResultMessage m) {
 		logger.info("Receiving ResultMessage from " + this.getHostName());
 		Job job = this.runningComputations.get(m.getTqbfId());
 		this.runningComputations.remove(m.getTqbfId());
@@ -387,7 +387,7 @@ public class Slave implements MessageListener, Runnable {
 	private void handleDeath() {
 		if(this.runningComputations.size() < 1) return;
 		for(Job job : Job.getJobs().values()) {
-			if(job.getStatus() == Job.Status.RUNNING && job.getFormulaDesignations().values().contains(this) ) {
+			if(job.getStatus() == Job.Status.RUNNING && job.formulaDesignations.values().contains(this) ) {
 				job.abort();
 				job.setStatus(Job.Status.ERROR);
 				if (Job.getTableModel() != null) {

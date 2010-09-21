@@ -46,7 +46,7 @@ import org.apache.activemq.util.IndentPrinter;
  */
 public class Master {
 
-	static Logger logger = Logger.getLogger(SlaveDaemon.class);
+	static Logger logger = Logger.getLogger(Master.class);
 	
 	private Connection connection;
 
