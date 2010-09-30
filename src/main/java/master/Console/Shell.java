@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -169,6 +170,7 @@ public class Shell implements Runnable{
 			puts("Syntax: EVALUATE directory_path_to_formulas cores solverId timeout [reference_file]");
 		}
 		String report = "Evaluation Report\n" +
+						"Started: " + new Date() + 
 						"Solver: \t" + solverId + "\n" +
 						"Timeout: \t" + timeout + "\n" +
 						"Cores: \t" + cores + "\n" +
