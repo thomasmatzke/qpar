@@ -10,11 +10,20 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
 import java.util.NoSuchElementException;
+import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+
+import com.sun.mail.smtp.SMTPTransport;
 
 import main.java.QPar;
 import main.java.Util;
@@ -36,7 +45,7 @@ public class Shell implements Runnable{
 	private static int 		waitfor_cores;				// We want that many cores before proceeding
 	private static String 	waitfor_solver 	= null; 	// We are waiting for Slaves with this kind of solver
 	private static String 	waitfor_jobid 	= "";
-	
+		
 	public Shell() {
 		logger.setLevel(QPar.logLevel);
 		in 	= new BufferedReader(new InputStreamReader(System.in));
@@ -99,6 +108,9 @@ public class Shell implements Runnable{
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase()))
 		{
+			case MAIL:
+				mail(token);
+				break;
 			case EVALUATE:
 				evaluate(token);
 				break;
@@ -147,6 +159,40 @@ public class Shell implements Runnable{
 		
 	}
 
+	/**
+	 * Syntax: MAIL my@email.com esmtp.server.com user pass subject message
+	 * @param token
+	 */
+	private void mail(StringTokenizer token) {
+		String email 	= token.nextToken();
+		String server 	= token.nextToken();
+		String user		= token.nextToken();
+		String pass		= token.nextToken();
+		String subject	= token.nextToken();
+		String message	= token.nextToken();
+		Properties props = System.getProperties();
+		props.put("mail.smtp.starttls.enable", true);
+		props.put("mail.smtp.port", 587);
+		Session session = Session.getInstance(props, null);
+		Message msg = new MimeMessage(session);
+		try {
+			msg.setFrom();
+			msg.setRecipients(Message.RecipientType.TO,
+					InternetAddress.parse(email, false));
+			msg.setSubject(subject);
+			msg.setText(message);
+			msg.setHeader("X-Mailer", "smtpsend");
+		    msg.setSentDate(new Date());
+		    SMTPTransport t = (SMTPTransport)session.getTransport("smtp");
+		    t.connect(server, user, pass);
+		    t.sendMessage(msg, msg.getAllRecipients());
+		    t.close();
+		} catch (MessagingException e) {
+			logger.error(e);
+		}
+		
+	}
+	
 	/**
 	 * Syntax: EVALUATE directory_path_to_formulas cores solverId timeout [reference_file]
 	 */
@@ -343,7 +389,7 @@ public class Shell implements Runnable{
 	}
 
 	private void help() {
-		puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFORSLAVE, KILLALLSLAVES, WAITFORRESULT, QUIT (Case insensitive)");
+		puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFORSLAVE, KILLALLSLAVES, WAITFORRESULT, EMAIL, QUIT (Case insensitive)");
 	}
 
 	/**
