@@ -30,11 +30,11 @@
     </path>
     <path id="qpar.classpath">
         <pathelement location="bin"/>
+        <pathelement location="img"/>
         <pathelement location="lib/activemq-all-5.2.0.jar"/>
         <pathelement location="lib/commons-io-1.4.jar"/>
-        <pathelement location="img"/>
         <pathelement location="lib/log4j-1.2.15.jar"/>
-        <pathelement location="lib/commons-dbutils-1.3.jar"/>
+        <pathelement location="lib/mail.jar"/>
         <path refid="Build to Manage Libraries.libraryclasspath"/>
     </path>
     <target name="init">
