@@ -1,12 +1,12 @@
 package main.java.slave;
 
+import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.Vector;
 
 import main.java.ArgumentParser;
 import main.java.QPar;
-import main.java.master.MasterDaemon;
 import main.java.slave.solver.Solver;
 
 import org.apache.log4j.BasicConfigurator;
@@ -79,6 +79,24 @@ public class SlaveDaemon {
 		System.exit(0);
 		
 	}
+	
+	public static void shutdown() throws RuntimeException, IOException {
+	    String shutdownCommand = "";
+	    String osName = System.getProperty("os.name");        
+	    
+	    if (osName.startsWith("Win")) {
+	      shutdownCommand = "shutdown.exe -s -t 0";
+	    } else if (osName.startsWith("Linux") || osName.startsWith("Mac")) {
+	      shutdownCommand = "shutdown -h now";
+	    } else {
+	      logger.error("Shutdown unsupported operating system ...");
+	      System.exit(0);
+	    }
+
+	    Runtime.getRuntime().exec(shutdownCommand);
+	    System.exit(0);
+	}
+
 	
 	public static void usage() {
 		System.err.println("Usage: java main.java.Slave MASTER (ex. tcp://localhost:61616)");

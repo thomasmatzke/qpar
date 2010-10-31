@@ -8,11 +8,10 @@ import javax.jms.MessageListener;
 import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import main.java.QPar;
 import main.java.messages.InformationMessage;
+
+import org.apache.log4j.Logger;
 
 public class NewSlaveListener implements MessageListener {
 

@@ -1,13 +1,10 @@
 package main.java.master.gui;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
 import main.java.Util;
-import main.java.master.Job;
 import main.java.master.Slave;
 
 public class SlavesTableModel extends AbstractTableModel {

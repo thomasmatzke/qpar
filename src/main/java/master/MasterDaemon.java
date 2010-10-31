@@ -3,8 +3,6 @@ package main.java.master;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 
 import javax.jms.Connection;
 import javax.jms.JMSException;
@@ -18,7 +16,6 @@ import main.java.master.gui.ProgramWindow;
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.broker.BrokerService;
-import org.apache.activemq.util.IndentPrinter;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -153,7 +150,8 @@ public class MasterDaemon {
 					shell = new Shell(new BufferedReader(new FileReader(ap
 							.getOption("i"))));
 				} catch (FileNotFoundException e) {
-					logger.error(e);
+					logger.fatal(e);
+					bailOut();
 				}
 			} else {
 				shell = new Shell();

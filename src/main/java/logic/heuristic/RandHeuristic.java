@@ -1,9 +1,7 @@
 package main.java.logic.heuristic;
 
 import java.util.LinkedHashSet;
-import java.util.Random;
 import java.util.Set;
-import java.util.Vector;
 
 import main.java.Permuter;
 import main.java.logic.Qbf;

@@ -18,8 +18,7 @@ public class LCHeuristic extends Heuristic {
 		super(qbf);
 		orderedVector = sortByCount(qbf.getLiteralCount());
 	}
-
-	@Override
+	
 	public LinkedHashSet<Integer> sortGroup(Set<Integer> group) {
 		LinkedHashSet<Integer> orderedGroup = new LinkedHashSet<Integer>();
 		for(Integer i : orderedVector) {

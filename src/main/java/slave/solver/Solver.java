@@ -1,7 +1,5 @@
 package main.java.slave.solver;
 
-import java.util.Hashtable;
-
 import main.java.logic.TransmissionQbf;
 import main.java.slave.Master;
 

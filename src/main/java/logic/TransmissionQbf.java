@@ -1,15 +1,14 @@
 package main.java.logic;
 
-import java.util.Vector;
-import java.util.ArrayList;
-import main.java.logic.parser.SimpleNode;
 import java.io.Serializable;
-import main.java.QPar;
+import java.util.ArrayList;
+import java.util.Vector;
 
+import main.java.QPar;
+import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
-import main.java.master.MasterDaemon;
+
 import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
 
 // A TransmissionQbf contains a QBF as a tree as well as vectors and lists of
 // all vars/exist-quantified vars/all-quantified vars/vars to assign true and

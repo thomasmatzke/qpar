@@ -13,14 +13,13 @@ import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import main.java.QPar;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Console.Shell;
+
+import org.apache.log4j.Logger;
 
 public class Job {
 
@@ -131,10 +130,12 @@ public class Job {
 
 	public void start() throws IOException {
 		this.startedAt = new Date();
+		this.status = Status.RUNNING;
+		if (tableModel != null)
+			tableModel.fireTableDataChanged();
 		this.formula = new Qbf(inputFileString);
 		
 		int availableCores = Slave.getCoresForSolver(this.solver);
-		
 		this.subformulas = formula.splitQbf(Math.min(availableCores, usedCores), 
 											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
 		Vector<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
@@ -163,18 +164,18 @@ public class Job {
 		
 		int slotIndex = 0;
 		for(TransmissionQbf sub : subformulas) {
-			Slave s = slots.get(slotIndex);
-			slotIndex += 1;
-			formulaDesignations.put(sub.getId(), s);
-			s.computeFormula(sub, this);
-			if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
-				slotIndex = 0;
+			synchronized(this) {
+				if(this.status != Status.RUNNING)
+					return;
+				Slave s = slots.get(slotIndex);
+				slotIndex += 1;
+				formulaDesignations.put(sub.getId(), s);
+				s.computeFormula(sub, this);
+				if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
+					slotIndex = 0;
+			}
 		}
-			
-		
-		this.status = Status.RUNNING;
-		if (tableModel != null)
-			tableModel.fireTableDataChanged();
+							
 	}
 
 	public void setResult(boolean result) {

@@ -1,11 +1,10 @@
 package main.java.slave;
 
 import java.util.Hashtable;
-import java.util.Vector;
+import java.util.Map.Entry;
 
 import main.java.slave.solver.Solver;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import sun.misc.Signal;
@@ -17,21 +16,19 @@ import sun.misc.Signal;
  */
 public class SignalHandler implements sun.misc.SignalHandler {
 
-	static Logger logger = Logger.getLogger(SlaveDaemon.class);
-	{
-		logger.setLevel(Level.INFO);
-	}
-	
+	static Logger logger = Logger.getLogger(SignalHandler.class);
+		
 	public void handle(Signal sig) {
 		logger.info("Cought Signal " + sig.getName());
 		logger.info("Killing workerthreads...");
 		Hashtable<String, Solver> threads = SlaveDaemon.getThreads();
-		for(Solver t : threads.values()) {
-			t.kill();
+		for(Entry<String, Solver> entry : threads.entrySet()) {
+			entry.getValue().kill();
+			SlaveDaemon.master.sendFormulaAbortedMessage(entry.getKey());
 		}
+		
 		if(SlaveDaemon.master.isConnected()) {
 			logger.info("Informing MasterDaemon...");
-			SlaveDaemon.master.sendShutdownMessage("Cought Signal " + sig.getName());
 			logger.info("Shutting down...");
 			SlaveDaemon.master.disconnect();
 		}

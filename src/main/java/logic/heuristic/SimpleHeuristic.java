@@ -2,6 +2,7 @@ package main.java.logic.heuristic;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+
 import main.java.logic.Qbf;
 import main.java.logic.parser.SimpleNode;
 

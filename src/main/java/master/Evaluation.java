@@ -4,11 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
-
-import main.java.master.Console.Shell;
 
 /**
  * Encapsulates solving all formulas in a directory with a specified heuristic

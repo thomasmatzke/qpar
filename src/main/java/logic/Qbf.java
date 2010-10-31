@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.Vector;
@@ -17,6 +18,7 @@ import java.util.Vector;
 import main.java.QPar;
 import main.java.logic.heuristic.DependencyNode;
 import main.java.logic.heuristic.Heuristic;
+import main.java.logic.heuristic.CondensedDependencyNode;
 import main.java.logic.parser.ParseException;
 import main.java.logic.parser.Qbf_parser;
 import main.java.logic.parser.SimpleNode;
@@ -43,10 +45,9 @@ public class Qbf {
 	public Vector<Integer> vars  = new Vector<Integer>();
 	public SimpleNode root = null;
 	public int id;
-	public DependencyNode dependencyGraphRoot; 
 	
-	private Stack<SimpleNode> quantifierStack;
-	
+	public DependencyNode dependencyGraphRoot;
+		
 	private Object mergeLock = new Object();
 	
 	/**
@@ -100,7 +101,12 @@ public class Qbf {
 		logger.info("Number of all v.: " + vars.size());
 		logger.debug("Finished reading a QBF from " + filename);
 		
-		this.generateDependencyGraph();
+		logger.info("Generating dependency graph...");
+		long start = System.currentTimeMillis();
+		dependencyGraphRoot = this.root.dependencyTree()[0];
+		long end = System.currentTimeMillis();
+		logger.info("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
+		logger.debug("Dependencyree: \n" + dependencyGraphRoot.dump());
 	}
 
 	/**
@@ -205,90 +211,10 @@ public class Qbf {
 			return decisionRoot.hasTruthValue();
 		}
 	}
-
-	/**
-	 * Generates a dependency graph which is used by the heuristics 
-	 * @throws SQLException 
-	 */
-	public void generateDependencyGraph() {
-		logger.info("Generating dependency graph...");
-		long start = System.currentTimeMillis();
-		DependencyNode.registry = new HashMap<Integer, DependencyNode>();
-		this.quantifierStack = new Stack<SimpleNode>();
-		this.traverse(this.root);
-		long end = System.currentTimeMillis();
-		assert(DependencyNode.registry.size() == vars.size()+1);
-		logger.info("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
-	}
 	
-	private void traverse(SimpleNode node) {
-		logger.debug("Encountered " + node.getNodeType() + " node.");
-		switch(node.getNodeType()) {
-			case START:
-				this.dependencyGraphRoot = new DependencyNode(0, DependencyNode.NodeType.ROOT);
-				this.quantifierStack.push(node);
-				DependencyNode.registry.put(0, this.dependencyGraphRoot);
-				traverse((SimpleNode)node.jjtGetChild(0));
-				break;
-			case FORALL:
-			case EXISTS:
-				logger.debug("Calculating dependencies of node " + node);
-				Set<Integer> deps = getDependencies(quantifierStack, node.getNodeType());
-				for(Integer dep : deps) {
-					DependencyNode.NodeType t = null;
-					if(node.getNodeType() == SimpleNode.NodeType.EXISTS){
-						t = DependencyNode.NodeType.EXISTENTIAL;
-					} else if(node.getNodeType() == SimpleNode.NodeType.FORALL) {
-						t = DependencyNode.NodeType.UNIVERSAL;
-					} else {
-						assert(false);
-					}
-						
-					DependencyNode.registry.get(dep).addChild(new DependencyNode(node.var, t));
-				}
-				
-				this.quantifierStack.push(node);								
-				traverse((SimpleNode)node.jjtGetChild(0));								
-				this.quantifierStack.pop();
-				
-				break;
-			case NOT:
-				traverse((SimpleNode)node.jjtGetChild(0));
-				break;
-			case AND:
-			case OR:
-				traverse((SimpleNode)node.jjtGetChild(0));
-				traverse((SimpleNode)node.jjtGetChild(1));
-				break;
-			case VAR:
-				break;
-			default:
-				logger.error("Encountered non-expected NodeType while traversing the tree for dependency-graph generation.");
-				MasterDaemon.bailOut();	
-		}
-		
-				
-	}
 	
-	private Set<Integer> getDependencies(Stack<SimpleNode> stack, SimpleNode.NodeType currentQuantifier) {
-		Set<Integer> ret = new HashSet<Integer>();
-		Stack<SimpleNode> stackClone = (Stack<SimpleNode>) stack.clone();
-		logger.debug("Dependency stack: " + stackClone);
-		
-		// Search for first occurence of other quantifier
-		while(stackClone.peek().nodeType == currentQuantifier) { stackClone.pop(); }
-		
-		// Return all quants in the next block of the NOT-currentQuantifier
-		while(!stackClone.empty() && stackClone.peek().nodeType != currentQuantifier) {
-			SimpleNode n = stackClone.pop();
-			if(n.getNodeType() == SimpleNode.NodeType.START) {
-				ret.add(0);
-			} else {
-				ret.add(n.getNodeVariable()); 
-			}		
-		}
-							
-		return ret;
+	public boolean isUniversalQuantified(Integer v) {
+		return aVars.contains(v);
 	}
 	
 	/**

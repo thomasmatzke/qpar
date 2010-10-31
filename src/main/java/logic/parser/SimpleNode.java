@@ -2,16 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package main.java.logic.parser;
 
-import java.lang.String;
-import java.util.Arrays;
-import java.util.Vector;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Vector;
+
 import main.java.QPar;
+import main.java.logic.heuristic.DependencyNode;
 
-
-import main.java.master.MasterDaemon;
 import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
 
 // All nodes in the formula tree are derived from SimpleNode.
 public class SimpleNode implements Node, Serializable {
@@ -24,7 +22,7 @@ public class SimpleNode implements Node, Serializable {
 	protected Object value;
 	protected Qbf_parser parser;
 	protected Node parent;
-	protected Node[] children;
+	public Node[] children;
 	public NodeType nodeType = null;
 
 	public int id;				
@@ -182,6 +180,56 @@ public class SimpleNode implements Node, Serializable {
 		return tmp;
 	}
 
+	/**
+	 * Returns a dependency Tree
+	 */
+	public DependencyNode[] dependencyTree() {
+		DependencyNode dn = null;
+		switch(this.nodeType) {
+			case START:
+				dn = new DependencyNode(0, DependencyNode.NodeType.ROOT);
+			case FORALL:
+				if(dn == null)
+					dn = new DependencyNode(this.getVar(), DependencyNode.NodeType.UNIVERSAL);
+			case EXISTS:
+				if(dn == null)
+					dn = new DependencyNode(this.getVar(), DependencyNode.NodeType.EXISTENTIAL);
+				
+				DependencyNode[] kids = ((SimpleNode)children[0]).dependencyTree();		
+				assert(kids.length <= 2);
+				
+				for(DependencyNode d : kids) {
+					dn.addChild(d);
+				}
+				
+				if(dn.type == DependencyNode.NodeType.ROOT)
+					dn.setDepth(0);
+				DependencyNode[] ret = {dn};
+				return ret;
+			case NOT:
+				return ((SimpleNode)children[0]).dependencyTree();
+			case VAR:
+				return new DependencyNode[0];
+			case AND:
+			case OR:
+				ArrayList<DependencyNode> ret1 = new ArrayList<DependencyNode>();
+				
+				DependencyNode[] d1 = ((SimpleNode)children[0]).dependencyTree();
+				DependencyNode[] d2 = ((SimpleNode)children[1]).dependencyTree();
+				if(d1.length > 0) {
+					ret1.add(d1[0]);
+				}
+				if(d2.length > 0) {
+					ret1.add(d2[0]);
+				}
+				
+				return ret1.toArray(new DependencyNode[ret1.size()]);
+			default:
+				assert(false);
+				return null;
+		}
+	}
+	
 	/**
 	 * traverse tree goes through all children of a node and builds a String in
 	 * .qpro format

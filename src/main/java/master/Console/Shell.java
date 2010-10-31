@@ -10,30 +10,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
 import java.util.NoSuchElementException;
-import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
-import com.sun.mail.smtp.SMTPTransport;
-
 import main.java.QPar;
 import main.java.Util;
-import main.java.logic.Qbf;
-import main.java.logic.heuristic.Heuristic;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Evaluation;
 import main.java.master.Job;
+import main.java.master.Mailer;
 import main.java.master.MasterDaemon;
 import main.java.master.Slave;
+
+import org.apache.log4j.Logger;
 
 public class Shell implements Runnable{
 
@@ -108,6 +97,9 @@ public class Shell implements Runnable{
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase()))
 		{
+			case MAIL_EVALUATION_REPORT:
+				set_report_address(token);
+				break;
 			case MAIL:
 				mail(token);
 				break;
@@ -141,6 +133,9 @@ public class Shell implements Runnable{
 			case KILLALLSLAVES:
 				killallslaves();
 				break;
+			case SHUTDOWNALLSLAVES:
+				shutdownallslaves();
+				break;
 			case WAITFORSLAVE:
 				waitforslave(token);
 				break;
@@ -158,41 +153,64 @@ public class Shell implements Runnable{
 		}
 		
 	}
+	
+	/**
+	 * Syntax: MAIL_EVALUATION_REPORT my@email.com 
+	 * @param token
+	 */
+	private void set_report_address(StringTokenizer token) {
+		try {
+			Mailer.email 	= token.nextToken();
+			Mailer.server 	= token.nextToken();
+			Mailer.user 	= token.nextToken();
+			Mailer.pass 	= token.nextToken();
+		} catch(NoSuchElementException e) {
+			puts("Syntax: MAIL_EVALUATION_REPORT my@email.com");
+		}
+	}
 
 	/**
+	 * Syntax: SHUTDOWNALLSLAVES
+	 */
+	private void shutdownallslaves() {
+		for(Slave s : Slave.getSlaves().values()) {
+			s.shutdown();
+		}
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {}		
+	}
+
+	/**
+	 * Sends a message to an email-address
 	 * Syntax: MAIL my@email.com esmtp.server.com user pass subject message
 	 * @param token
 	 */
 	private void mail(StringTokenizer token) {
-		String email 	= token.nextToken();
-		String server 	= token.nextToken();
-		String user		= token.nextToken();
-		String pass		= token.nextToken();
-		String subject	= token.nextToken();
-		String message	= token.nextToken();
-		Properties props = System.getProperties();
-		props.put("mail.smtp.starttls.enable", true);
-		props.put("mail.smtp.port", 587);
-		Session session = Session.getInstance(props, null);
-		Message msg = new MimeMessage(session);
+		String email 	= null;
+		String server 	= null;
+		String user		= null;
+		String pass		= null;
+		String subject	= null;
+		String message	= null;
+		
 		try {
-			msg.setFrom();
-			msg.setRecipients(Message.RecipientType.TO,
-					InternetAddress.parse(email, false));
-			msg.setSubject(subject);
-			msg.setText(message);
-			msg.setHeader("X-Mailer", "smtpsend");
-		    msg.setSentDate(new Date());
-		    SMTPTransport t = (SMTPTransport)session.getTransport("smtp");
-		    t.connect(server, user, pass);
-		    t.sendMessage(msg, msg.getAllRecipients());
-		    t.close();
-		} catch (MessagingException e) {
-			logger.error(e);
+			email 	= token.nextToken();
+			server 	= token.nextToken();
+			user	= token.nextToken();
+			pass	= token.nextToken();
+			subject	= token.nextToken();
+			message	= token.nextToken("\n");
+		} catch(NoSuchElementException e) {
+			puts("Syntax: MAIL my@email.com esmtp.server.com user pass subject message");
+			return;
 		}
+		Mailer.send_mail(email, server, user, pass, subject, message);
 		
 	}
 	
+	
+
 	/**
 	 * Syntax: EVALUATE directory_path_to_formulas cores solverId timeout [reference_file]
 	 */
@@ -205,7 +223,7 @@ public class Shell implements Runnable{
 		String	referenceFileName 	= "qpro_results.txt";
 		boolean correctness			= true;
 		
-		try{
+		try {
 			directory 			= new File(token.nextToken());
 			cores				= Integer.parseInt(token.nextToken());
 			solverId			= token.nextToken();
@@ -214,6 +232,7 @@ public class Shell implements Runnable{
 				referenceFileName	= token.nextToken();
 		} catch(NoSuchElementException e) {
 			puts("Syntax: EVALUATE directory_path_to_formulas cores solverId timeout [reference_file]");
+			return;
 		}
 		String report = "Evaluation Report\n" +
 						"Started: " + new Date() + 
@@ -264,11 +283,12 @@ public class Shell implements Runnable{
 					} else if(current == false) {
 						correctnessReport += "f";
 					} else { assert(false);}
+					
 					if(compare == null && current != null) {
 						compare = current;
 					} else if(compare != null && current != null && compare != current) {
 						logger.error("Correctness error detected: File: " + f + ", Cores: " + c + ", Heuristic: " + h);
-						//MasterDaemon.bailOut();
+						correctness = false;
 					}
 				}
 				correctnessReport += "\n";
@@ -283,6 +303,9 @@ public class Shell implements Runnable{
 		else
 			report = report + "WARNING: INCONSISTENT RESULTS DETECTED! PROGRAM NOT CORRECT!\n\n" + correctnessReport;
 		report = report.replaceAll("\n", System.getProperty("line.separator"));
+		
+		if(Mailer.email != null && Mailer.server != null && Mailer.user != null && Mailer.pass != null)
+			Mailer.send_mail(Mailer.email, Mailer.server, Mailer.user, Mailer.pass, "Evaluation Report", report);
 		
 		try {
 			BufferedWriter out = new BufferedWriter(new FileWriter(evalPath));

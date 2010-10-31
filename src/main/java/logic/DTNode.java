@@ -2,8 +2,8 @@ package main.java.logic;
 
 import java.util.ArrayList;
 import java.util.Vector;
+
 import org.apache.log4j.Logger;
-import org.apache.log4j.Level;
 
 // a simple node class
 public class DTNode {
@@ -32,7 +32,7 @@ public class DTNode {
 			indent += "  ";
 		
 		String s = indent + this + "\n";
-				if(leftChild != null)
+		if(leftChild != null)
 			s += leftChild.dump();
 		if(rightChild != null)
 			s += rightChild.dump();
@@ -143,26 +143,6 @@ public class DTNode {
 			this.rightChild = n;
 		}
 	}
-
-//	public void addLayer(DTNodeType operator) {
-//		assert(operator == DTNodeType.AND || operator == DTNodeType.OR);
-//		DTNode tmp = null;
-//		if (leftChild == null) {
-//			tmp = new DTNode(operator);
-//			tmp.setParent(this);	
-//			leftChild = tmp;
-//		} else {
-//			leftChild.addLayer(operator);
-//		}
-//
-//		if (rightChild == null) {
-//			tmp = new DTNode(operator);
-//			tmp.setParent(this);
-//			rightChild = tmp;
-//		} else {
-//			rightChild.addLayer(operator);
-//		}
-//	}
 
 	// getter & setter
 	public String getId() {

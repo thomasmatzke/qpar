@@ -3,8 +3,6 @@ package main.java.slave;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Hashtable;
-import java.util.Vector;
 
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
@@ -17,7 +15,6 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 
 import main.java.QPar;
-import main.java.master.MasterDaemon;
 import main.java.messages.AbortMessage;
 import main.java.messages.ErrorMessage;
 import main.java.messages.FormulaAbortedMessage;
@@ -29,15 +26,12 @@ import main.java.messages.Ping;
 import main.java.messages.Pong;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
-import main.java.slave.solver.QProSolver;
 import main.java.slave.solver.Solver;
 import main.java.slave.solver.SolverFactory;
 
 import org.apache.activemq.ActiveMQConnection;
 import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.activemq.util.IndentPrinter;
 
 /**
  * Represents the Master-server from client perspective
@@ -206,7 +200,6 @@ public class Master {
 		for (Solver t : SlaveDaemon.getThreads().values()) {
 			t.kill();
 		}
-		this.sendShutdownMessage("Kill requested by Masterserver");
 		this.run = false;
 	}
 
@@ -235,10 +228,22 @@ public class Master {
 			handleInformationRequestMessage((InformationRequestMessage) t);
 		} else if (t instanceof KillMessage) {
 			handleKillMessage((KillMessage) t);
+		}else if (t instanceof ShutdownMessage) {
+			handleShutdownMessage((ShutdownMessage) t);
 		} else if (t instanceof Ping) {
 			this.sendPong();
 		} else {
 			logger.error("Received message object of unknown type.");
+		}
+	}
+
+	private void handleShutdownMessage(ShutdownMessage t) {
+		try {
+			logger.info("Received ShutdownMessage. Shutting down.");
+			SlaveDaemon.shutdown();
+		} catch (Exception e) {
+			logger.error("Shutdown failed. Exiting...");
+			System.exit(0);
 		}
 	}
 
@@ -303,17 +308,6 @@ public class Master {
 				+ result);
 		ResultMessage msg = new ResultMessage(tqbfId, result);
 		sendObject(msg, producer_snd);
-	}
-
-	/**
-	 * Tells the master that the slave is going to shutdown; transmitting 
-	 * a list of open jobs and the reason for shutdown in the process
-	 * @param reason
-	 */
-	public void sendShutdownMessage(String reason) {
-		logger.info("Sending ShutdownMessage");
-		ShutdownMessage msg = new ShutdownMessage(reason);
-		this.sendObject(msg, producer_snd);
 	}
 	
 	/**

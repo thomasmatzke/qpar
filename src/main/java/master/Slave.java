@@ -1,7 +1,6 @@
 package main.java.master;
 
 import java.io.Serializable;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -21,13 +20,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
-import main.java.Util;
-import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 import main.java.master.Console.Shell;
+import main.java.messages.AbortMessage;
 import main.java.messages.ErrorMessage;
 import main.java.messages.FormulaAbortedMessage;
-import main.java.messages.AbortMessage;
 import main.java.messages.FormulaMessage;
 import main.java.messages.InformationMessage;
 import main.java.messages.InformationRequestMessage;
@@ -37,7 +34,6 @@ import main.java.messages.Pong;
 import main.java.messages.ResultMessage;
 import main.java.messages.ShutdownMessage;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 public class Slave implements MessageListener, Runnable {
@@ -77,7 +73,9 @@ public class Slave implements MessageListener, Runnable {
 		instance.hostName = hostName;
 		instance.setToolIds(solvers);
 		instance.status = Slave.READY;
-		new Thread(instance).start();
+		Thread t = new Thread(instance);
+		t.setDaemon(true);
+		t.start();
 		Slave.addSlave(instance);
 		if(solvers.contains(Shell.getWaitfor_solver())) {
 			Shell.setWaitfor_count(cores + Shell.getWaitfor_count());
@@ -219,20 +217,23 @@ public class Slave implements MessageListener, Runnable {
 		this.runningComputations.remove(m.getTqbfId());
 		job.handleResult(m.getTqbfId(), m.getResult());
 	}
-
-	private void handleShutdownMessage(ShutdownMessage m) {
-		logger.info("ShutdownMessage received. Removing slave "
-				+ this.getHostName());
-		stop();
-		handleDeath();
-		Slave.removeSlave(this);
-		logger.info("Slave " + this.getHostName() + " removed");
-	}
 	
 	public void kill(String reason) {
 		logger.info("Killing Slave " + this.getHostName() + " ...");
+		stop();
+		handleDeath();
+		Slave.removeSlave(this);
 		this.sendKillMessage(reason);
 		logger.info("Kill-Message sent to " + this.getHostName());
+	}
+	
+	public void shutdown() {
+		logger.info("Shutting down Slave " + this.getHostName() + " ...");
+		stop();
+		handleDeath();
+		Slave.removeSlave(this);
+		this.sendShutdownMessage();
+		logger.info("ShutdownMessage sent to " + this.getHostName());
 	}
 
 	public void onMessage(Message m) {
@@ -254,8 +255,6 @@ public class Slave implements MessageListener, Runnable {
 			handleInformationMessage((InformationMessage) t);
 		} else if (t instanceof ResultMessage) {
 			handleResultMessage((ResultMessage) t);
-		} else if (t instanceof ShutdownMessage) {
-			handleShutdownMessage((ShutdownMessage) t);
 		} else if (t instanceof Pong) {
 			this.lastPongMillis = System.currentTimeMillis();
 		} else if (t instanceof ErrorMessage) {
@@ -289,6 +288,12 @@ public class Slave implements MessageListener, Runnable {
 	public void sendKillMessage(String reason) {
 		logger.info("Sending KillMessage to Slave " + this.getHostName());
 		KillMessage msg = new KillMessage(reason);
+		sendObject(msg);
+	}
+	
+	public void sendShutdownMessage() {
+		logger.info("Sending ShutdownMessage to Slave " + this.getHostName());
+		ShutdownMessage msg = new ShutdownMessage();
 		sendObject(msg);
 	}
 

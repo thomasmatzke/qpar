@@ -3,11 +3,8 @@ package main.java.logic.heuristic;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.Stack;
-import java.util.Vector;
 
 import main.java.logic.Qbf;
-import main.java.logic.parser.SimpleNode;
 
 public class SimpleProbNetHeuristic extends Heuristic {
 
@@ -22,14 +19,10 @@ public class SimpleProbNetHeuristic extends Heuristic {
 		LinkedHashSet<Integer> sorted	= new LinkedHashSet<Integer>();
 		
 		for(Integer i : group) {
-			DependencyNode n = DependencyNode.registry.get(i);
-			if(n.type == DependencyNode.NodeType.EXISTENTIAL) {
+			if(qbf.isUniversalQuantified(i))
+				universals.add(i); 
+			else
 				existentials.add(i);
-			} else if(n.type == DependencyNode.NodeType.UNIVERSAL) {
-				universals.add(i);
-			} else {
-				assert(false);
-			}
 		}
 		
 		if(qbf.root.getTruthProbability() > 0.5) {
