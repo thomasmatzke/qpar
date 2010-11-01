@@ -265,7 +265,7 @@ public class SimpleNode implements Node, Serializable {
 			}
 			traversedTree += "\n";
 			traversedTree += tmpNode.traverse();
-			if (nt != NodeType.EXISTS)
+			if ((nt != NodeType.EXISTS) && (nt != NodeType.FORALL))
 				traversedTree += "/q\n";
 			
 		}	
@@ -287,15 +287,10 @@ public class SimpleNode implements Node, Serializable {
 			}
 			traversedTree += "\n";
 			traversedTree += tmpNode.traverse();
-			if (nt != NodeType.FORALL)
+			if ((nt != NodeType.EXISTS) && (nt != NodeType.FORALL))
 				traversedTree += "/q\n";
 		}	
 			
-			
-
-
-
-
 		if (nodeType == NodeType.AND) {
 			/*
 			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))

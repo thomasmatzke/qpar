@@ -2,7 +2,7 @@
 #EVALUATE testing/NPNCNF2008 6 qpro 60
 #SHUTDOWNALLSLAVES
 waitforslave 2 qpro
-newjob F:\thomasm\uni\praktikum_logik\QPar\testing\NPNCNF2008\assertion10_0_1-bin.qbf F:\thomasm\uni\praktikum_logik\QPar\testing\NPNCNF2008\assertion10_0_1-bin.txt qpro simple 2
+newjob testing/NPNCNF2008/assertion10_0_1-bin.qbf testing/NPNCNF2008/assertion10_0_1-bin.txt qpro simple 2
 startjob 1
 waitforresult 1
 killallslaves
