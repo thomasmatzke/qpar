@@ -136,11 +136,13 @@ public class Job {
 		this.formula = new Qbf(inputFileString);
 		
 		int availableCores = Slave.getCoresForSolver(this.solver);
+		Vector<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
+	
+		logger.debug("Available Cores: " + availableCores + ", Used Cores: " + usedCores);
 		this.subformulas = formula.splitQbf(Math.min(availableCores, usedCores), 
 											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
-		Vector<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
-
-		logger.info("Starting Job " + this.id + "...\n" +
+		
+		logger.info("Job started " + this.id + "...\n" +
 					"	Started at:  " + startedAt + "\n" +
 					"	Subformulas: " + this.subformulas.size()+ "\n" + 
 					"	Cores(avail):" + availableCores + "\n" +
@@ -153,10 +155,12 @@ public class Job {
 				slots.add(s);
 			}
 		}
-		if(slots.size() < this.subformulas.size())
-			logger.warn("Not enough cores available for Job. Overbooking random slaves.");
-		Collections.shuffle(slots);
+		if(slots.size() < this.subformulas.size()) {
+			logger.error("Not enough cores available for Job. Job failed.");
+			abort();			
+		}
 		
+		Collections.shuffle(slots);
 		String slotStr = "";
 		for(Slave s : slots)
 			slotStr += s.getHostName() + " ";
@@ -226,13 +230,13 @@ public class Job {
 		System.gc();
 	}
 	
-	public long totalMillis() {
+	public synchronized long totalMillis() {
 		// if(this.status != Job.COMPLETE)
 		// return -1;
 		return this.getStoppedAt().getTime() - this.getStartedAt().getTime();
 	}
 
-	public long totalSecs() {
+	public synchronized long totalSecs() {
 		// if(this.status != Job.COMPLETE)
 		// return -1;
 		return (this.getStoppedAt().getTime() - this.getStartedAt().getTime()) / 1000;

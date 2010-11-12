@@ -12,7 +12,7 @@ import org.apache.log4j.Logger;
 public abstract class Heuristic {
 
 	protected Qbf qbf;
-	protected static Logger logger = Logger.getLogger(Qbf.class);
+	protected static Logger logger = Logger.getLogger(Heuristic.class);
 	
 	public Heuristic(Qbf qbf) {
 		this.qbf = qbf;

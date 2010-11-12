@@ -16,7 +16,6 @@ import org.apache.log4j.Logger;
 // slaves to be solved there.
 public class TransmissionQbf implements Serializable {
 	private SimpleNode root = null;
-	private static int idCounter = 0;
 	private String id;
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();

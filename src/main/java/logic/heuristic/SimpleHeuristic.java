@@ -15,7 +15,11 @@ public class SimpleHeuristic extends Heuristic {
 	}
 
 	public LinkedHashSet<Integer> getVariableOrder() {
+		logger.info("Generating variable order...");
+		long start = System.currentTimeMillis();
 		traverse(qbf.root);
+		long end = System.currentTimeMillis();
+		logger.info("Variable order generated. Took " + (end-start)/1000 + " seconds.");
 		return ret;
 	}
 	

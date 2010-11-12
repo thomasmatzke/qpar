@@ -9,6 +9,7 @@ import java.util.Vector;
 import main.java.QPar;
 import main.java.logic.heuristic.DependencyNode;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 // All nodes in the formula tree are derived from SimpleNode.
@@ -237,13 +238,13 @@ public class SimpleNode implements Node, Serializable {
 	 * @return A String in qpro format
 	 */
 	public String traverse() {
-		Node child;
-		String tmp = "";
-		String[] tmpList;
+//		Node child;
+//		String tmp = "";
+//		String[] tmpList;
 		String traversedTree = "";
-		String partialTree = "";
-		String negatedPartialTree = "";
-		String enclosedPartialTree = "";
+//		String partialTree = "";
+//		String negatedPartialTree = "";
+//		String enclosedPartialTree = "";
 		Vector<Integer> posLiterals = new Vector<Integer>();
 		Vector<Integer> negLiterals = new Vector<Integer>();
 		SimpleNode tmpNode = null;
@@ -369,7 +370,8 @@ public class SimpleNode implements Node, Serializable {
 				// even more reducable
 				if (parentNode.getClass().getName().equals(
 						"main.java.logic.parser.ASTInput")) {
-					logger.debug("RETURNING FALSE");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("RETURNING FALSE");
 					return false;
 				}
 
@@ -383,7 +385,8 @@ public class SimpleNode implements Node, Serializable {
 
 				// not x, set the parent to not x
 				if (parentNode.getOp().equals("!")) {
-					logger.debug("NEGATION occured");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("NEGATION occured");
 					parentNode.setOp("");
 					if (nodeType == NodeType.FALSE) {
 						parentNode.setNodeType(NodeType.TRUE);
@@ -411,7 +414,8 @@ public class SimpleNode implements Node, Serializable {
 				// with
 				// the sibling
 				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.TRUE)) {
-					logger.debug("AND TRUE occured");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("AND TRUE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
 					// find sibling
@@ -429,7 +433,8 @@ public class SimpleNode implements Node, Serializable {
 					parentNode.jjtSetParent(null);
 					// remove current nodes parent
 					jjtSetParent(null);
-					logger.debug("AND TRUE occured end");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("AND TRUE occured end");
 					return reducable;
 				}
 
@@ -437,7 +442,8 @@ public class SimpleNode implements Node, Serializable {
 				// with
 				// the sibling
 				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.FALSE)) {
-					logger.debug("OR FALSE occured");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("OR FALSE occured");
 					// get grandparent
 					grandparentNode = parentNode.jjtGetParent();
 					// find sibling
@@ -455,19 +461,22 @@ public class SimpleNode implements Node, Serializable {
 					parentNode.jjtSetParent(null);
 					// remove current nodes parent
 					jjtSetParent(null);
-					logger.debug("OR FALSE occured end");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("OR FALSE occured end");
 					return reducable;
 				}
 
 				// true | x = true, so set the parent node to true and make it a
 				// leaf
 				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.TRUE)) {
-					logger.debug("OR TRUE occured");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("OR TRUE occured");
 					parentNode.setOp("");
 					parentNode.setTruthValue("TRUE");
 					parentNode.deleteChildren();
 					jjtSetParent(null);
-					logger.debug("OR TRUE occured end");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("OR TRUE occured end");
 					return reducable;
 				}
 			}

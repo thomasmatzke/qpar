@@ -1,10 +1,7 @@
 package main.java.logic.heuristic;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
-import main.java.logic.parser.SimpleNode;
 import main.java.master.MasterDaemon;
 
 import org.apache.log4j.Logger;

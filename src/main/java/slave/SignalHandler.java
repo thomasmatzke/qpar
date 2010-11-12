@@ -24,7 +24,7 @@ public class SignalHandler implements sun.misc.SignalHandler {
 		Hashtable<String, Solver> threads = SlaveDaemon.getThreads();
 		for(Entry<String, Solver> entry : threads.entrySet()) {
 			entry.getValue().kill();
-			SlaveDaemon.master.sendFormulaAbortedMessage(entry.getKey());
+			SlaveDaemon.master.sendErrorMessage(entry.getKey(), "Cought Signal " + sig.getName());
 		}
 		
 		if(SlaveDaemon.master.isConnected()) {

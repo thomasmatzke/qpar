@@ -24,7 +24,6 @@ import main.java.logic.TransmissionQbf;
 import main.java.master.Console.Shell;
 import main.java.messages.AbortMessage;
 import main.java.messages.ErrorMessage;
-import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.FormulaMessage;
 import main.java.messages.InformationMessage;
 import main.java.messages.InformationRequestMessage;
@@ -164,6 +163,7 @@ public class Slave implements MessageListener, Runnable {
 
 	public void abortFormulaComputation(String tqbfId) {
 		this.sendAbortMessage(tqbfId);
+		this.runningComputations.remove(tqbfId);
 	}
 
 	public void computeFormula(TransmissionQbf tqbf, Job job) {
@@ -185,13 +185,6 @@ public class Slave implements MessageListener, Runnable {
 
 	public Vector<String> getToolIds() {
 		return toolIds;
-	}
-
-	private void handleFormulaAbortedMessage(FormulaAbortedMessage m) {
-		logger.info("Receiving FormulaAbortedMessage from " + this.getHostName());
-		this.runningComputations.remove(m.getTqbfId());
-		logger.info("Removed tqbf(" + m.getTqbfId()
-				+ ") from running computations.");
 	}
 
 	private void handleErrorMessage(ErrorMessage t) {
@@ -249,9 +242,7 @@ public class Slave implements MessageListener, Runnable {
 					+ e);
 		}
 		logger.debug("Received message of type " + t.getClass().toString());
-		if (t instanceof FormulaAbortedMessage) {
-			handleFormulaAbortedMessage((FormulaAbortedMessage) t);
-		} else if (t instanceof InformationMessage) {
+		if (t instanceof InformationMessage) {
 			handleInformationMessage((InformationMessage) t);
 		} else if (t instanceof ResultMessage) {
 			handleResultMessage((ResultMessage) t);
@@ -308,8 +299,7 @@ public class Slave implements MessageListener, Runnable {
 					+ producer_snd.getDestination());
 			producer_snd.send(session.createObjectMessage(o));
 		} catch (JMSException e) {
-			logger.error("Error while sending Objectmessage...\n"
-					+ e);
+			logger.error("Error while sending Objectmessage..."	+ e);
 		}
 	}
 

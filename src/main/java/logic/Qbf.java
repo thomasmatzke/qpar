@@ -3,28 +3,22 @@ package main.java.logic;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Stack;
 import java.util.Vector;
 
 import main.java.QPar;
 import main.java.logic.heuristic.DependencyNode;
 import main.java.logic.heuristic.Heuristic;
-import main.java.logic.heuristic.CondensedDependencyNode;
 import main.java.logic.parser.ParseException;
 import main.java.logic.parser.Qbf_parser;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.TokenMgrError;
-import main.java.master.MasterDaemon;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -62,7 +56,7 @@ public class Qbf {
 		this.id = idCounter;
 		
 		Qbf_parser parser;
-		
+		long start = System.currentTimeMillis();
 		try {
 			parser = new Qbf_parser(new FileInputStream(filename));
 		}
@@ -93,20 +87,22 @@ public class Qbf {
 			logger.error(e);
 			return;
 		}
+		long end = System.currentTimeMillis();
 		logger.info("Existential quantified Variables: " + eVars);
 		logger.info("Number of e.q.vs: " + eVars.size());
 		logger.info("Universally quantified Variables: " + aVars);
 		logger.info("Number of u.q.vs: " + aVars.size());
 		logger.info("All variables: " + vars);
 		logger.info("Number of all v.: " + vars.size());
-		logger.debug("Finished reading a QBF from " + filename);
+		logger.info("Finished parsing QBF from " + filename + ", Took: " + (end-start)/1000 + " seconds.");
 		
 		logger.info("Generating dependency graph...");
-		long start = System.currentTimeMillis();
+		start = System.currentTimeMillis();
 		dependencyGraphRoot = this.root.dependencyTree()[0];
-		long end = System.currentTimeMillis();
+		end = System.currentTimeMillis();
 		logger.info("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
-		logger.debug("Dependencyree: \n" + dependencyGraphRoot.dump());
+		if(QPar.logLevel == Level.DEBUG)
+			logger.debug("Dependencyree: \n" + dependencyGraphRoot.dump());
 	}
 
 	/**
@@ -117,11 +113,11 @@ public class Qbf {
 	* @return A list of n TransmissionQbfs, each a subformula of the whole QBF
 	*/
 	public synchronized List<TransmissionQbf> splitQbf(int n, Heuristic h) {
+		logger.info("Splitting into " + n + " subformulas...");
+		long start = System.currentTimeMillis();
 		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
 		logger.info("Heuristic returned variable-assignment order: " + Arrays.toString(order));
-		
-		logger.info("Splitting into " + n + " subformulas...");
-		
+			
 		int leafCtr = 1;
 		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
 		decisionRoot = new DTNode(null);
@@ -175,6 +171,8 @@ public class Qbf {
 			tqbfs.add(tqbf);
 		}
 		assert(tqbfs.size() == n);
+		long end = System.currentTimeMillis();
+		logger.info("Formula splitted. Took " + (end-start)/1000 + " seconds.");
 		return tqbfs;
 	}
 

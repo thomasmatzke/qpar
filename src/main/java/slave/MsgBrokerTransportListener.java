@@ -19,6 +19,7 @@ public class MsgBrokerTransportListener implements TransportListener {
 	@Override
 	public void onException(IOException e) {
 		logger.error(e);
+		logger.error("Killing all running solver instances...");
 		SlaveDaemon.master.connected = false;
 		for(Solver thread : SlaveDaemon.threads.values()) {
 			thread.kill();

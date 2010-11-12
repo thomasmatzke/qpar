@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -17,7 +16,6 @@ import javax.jms.Session;
 import main.java.QPar;
 import main.java.messages.AbortMessage;
 import main.java.messages.ErrorMessage;
-import main.java.messages.FormulaAbortedMessage;
 import main.java.messages.FormulaMessage;
 import main.java.messages.InformationMessage;
 import main.java.messages.InformationRequestMessage;
@@ -42,7 +40,7 @@ public class Master {
 
 	static Logger logger = Logger.getLogger(Master.class);
 	
-	private Connection connection;
+	private ActiveMQConnection connection;
 
 	private MessageConsumer consumer_rcv;
 
@@ -84,14 +82,13 @@ public class Master {
 		try {
 			while(!connected) {
 				try {
-					connection = connectionFactory.createConnection();
-					((ActiveMQConnection)connection).addTransportListener(new MsgBrokerTransportListener());
+					connection = (ActiveMQConnection) connectionFactory.createConnection();
+					connection.addTransportListener(new MsgBrokerTransportListener());
 					connection.start();
 					session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 					connected = true;
 				} catch (Exception e) {
-					logger.error("Error while connecting to MessageBroker: \n"
-							+ e);
+					logger.error("Error while connecting to MessageBroker: " + e);
 					logger.error("Trying again in 5 secs...");
 					Thread.sleep(5000);
 				}
@@ -217,7 +214,7 @@ public class Master {
 		try {
 			t = ((ObjectMessage) m).getObject();
 		} catch (JMSException e) {
-			logger.error("Error while retrieving Object from Message... \n" + e);
+			logger.error("Error while retrieving Object from Message... " + e);
 		}
 		logger.debug("Received message of type " + t.getClass().toString());
 		if (t instanceof AbortMessage) {
@@ -245,18 +242,6 @@ public class Master {
 			logger.error("Shutdown failed. Exiting...");
 			System.exit(0);
 		}
-	}
-
-	/**
-	 * On completed termination of the threads associated with a qbf, this method
-	 * sends a success-message to the master
-	 * @param tqbfId
-	 */
-	public void sendFormulaAbortedMessage(String tqbfId) {
-		logger.info("Sending AbortConfirmMessage... tqbfID: " + tqbfId);
-		FormulaAbortedMessage msg = new FormulaAbortedMessage(tqbfId);
-		sendObject(msg, producer_snd);
-		logger.info("AbortConfirmMessage sent.");
 	}
 
 	/**
@@ -336,9 +321,10 @@ public class Master {
 		while (run) {
 			try {
 				msg = consumer_rcv.receive(1000);
+			} catch(javax.jms.IllegalStateException ill) {
+				SlaveDaemon.master.connect(SlaveDaemon.master_str);
 			} catch (JMSException e) {
-				logger.error("Error while consuming Slavemessage...\n"
-						+ e);
+				logger.error("Error while consuming Slavemessage..." + e);
 			}
 			if (msg != null) {
 				onMessage(msg);

@@ -1,7 +1,6 @@
 package main.java.logic.heuristic;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import main.java.logic.heuristic.DependencyNode.NodeType;
 import main.java.master.MasterDaemon;

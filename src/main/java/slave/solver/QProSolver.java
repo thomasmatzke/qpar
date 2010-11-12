@@ -13,6 +13,7 @@ import main.java.slave.Master;
 import main.java.slave.SlaveDaemon;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -66,11 +67,26 @@ public class QProSolver implements Solver {
 	public void run() {
 		prepare();
 		ProcessBuilder pb = new ProcessBuilder("qpro");
+		
+		// Get the id from our formula so we can nullify it after qproization 
+		// -> for cleanup by garbage collector
+		String tqbfId = this.formula.getId();
 		try {
 			qpro_process = pb.start();
 			logger.debug("qpro started");
 			PrintWriter stdin = new PrintWriter(qpro_process.getOutputStream());
 			this.inputString = toInputString(this.formula);
+			this.formula = null;
+			System.gc();
+			if(inputString.equals("true")) {
+				logger.info("Result for Subformula(" + tqbfId + ") was " + new Boolean(true) );
+				master.sendResultMessage(tqbfId, new Boolean(true));
+				return;
+			}else if(inputString.equals("false")){
+				master.sendResultMessage(tqbfId, new Boolean(false));
+				logger.info("Result for Subformula(" + tqbfId + ") was " + new Boolean(false) );
+				return;
+			}
 			stdin.print(inputString);
 			stdin.flush();
 			InputStreamReader isr = new InputStreamReader(qpro_process.getInputStream());
@@ -82,33 +98,34 @@ public class QProSolver implements Solver {
 
 			// If qpro returns 1 the subformula is satisfiable
 			if(readString.startsWith("1")) {
-				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(true) );
-				master.sendResultMessage(formula.getId(), new Boolean(true));				
+				logger.info("Result for Subformula(" + tqbfId + ") was " + new Boolean(true) );
+				master.sendResultMessage(tqbfId, new Boolean(true));				
 
 			// IF qpro returns 0 the subformula is unsatisfiable
 			} else if (readString.startsWith("0")) {
-				master.sendResultMessage(formula.getId(), new Boolean(false));
-				logger.info("Result for Subformula(" + this.formula.getId() + ") was " + new Boolean(false) );
+				master.sendResultMessage(tqbfId, new Boolean(false));
+				logger.info("Result for Subformula(" + tqbfId + ") was " + new Boolean(false) );
 			
 			// We have been killed by the master
 			} else if (this.killed == true) {
-				master.sendFormulaAbortedMessage(formula.getId());
+				//do nothing
 				
 			// anything else is an error 
 			} else {
 				logger.error(	"Unexpected result from solver.\n" +
 								"	Return String: " + readString + "\n" +
-								"	TQbfId:		 : " + formula.getId() + "\n");
-				logger.debug("Formulastring: \n" + this.inputString);
-				master.sendErrorMessage(formula.getId(), "Unexpected result from solver(" + readString + "). Aborting Formula.");
+								"	TQbfId:		 : " + tqbfId + "\n");
+				if(QPar.logLevel == Level.DEBUG)
+					logger.debug("Formulastring: \n" + this.inputString);
+				master.sendErrorMessage(tqbfId, "Unexpected result from solver(" + readString + "). Aborting Formula.");
 			}
 		} catch (IOException e) {
 			logger.error("IO Error while getting result from solver: " + e);
-			master.sendErrorMessage(formula.getId(), e.toString());
+			master.sendErrorMessage(tqbfId, e.toString());
 		} catch (InterruptedException e) {
 			logger.error(e);
 		}
-		SlaveDaemon.getThreads().remove(formula.getId());
+		SlaveDaemon.getThreads().remove(tqbfId);
 	}
 	
 	/**
@@ -119,12 +136,12 @@ public class QProSolver implements Solver {
 	public static String toInputString(TransmissionQbf t) {
 		Vector<Integer> eVars = new Vector<Integer>();
 		Vector<Integer> aVars = new Vector<Integer>();
-		Vector<Integer> vars = new Vector<Integer>();
+//		Vector<Integer> vars = new Vector<Integer>();
 		Vector<Integer> orphanedVars = new Vector<Integer>();
 		int i = 0;
 		String traversedTree = "";
 		
-		vars = t.getVars();
+//		vars = t.getVars();
 		eVars = t.getEVars();
 		aVars = t.getAVars();
 
@@ -147,12 +164,14 @@ public class QProSolver implements Solver {
 		if (t.rootIsTruthNode()) {
 			if (t.rootGetTruthValue()) {
 				// a formula evaluating to true
-				logger.debug("reduced to death, sending fake true formula");
-				return "QBF\n3\nq\ne 2\na 3\nd\n2\n3\n/d\n/q\nQBF\n";
+				//logger.debug("reduced to death, sending fake true formula");
+				//return "QBF\n3\nq\ne 2\na 3\nd\n2\n3\n/d\n/q\nQBF\n";
+				return "true";
 			}
 			// a formula evaluating to false
-				logger.debug("reduced to death, sending fake false formula");
-			return "QBF\n3\nq\ne 2\na 3\nc\n2\n3\n/c\n/q\nQBF\n";
+			//logger.debug("reduced to death, sending fake false formula");
+			//return "QBF\n3\nq\ne 2\na 3\nc\n2\n3\n/c\n/q\nQBF\n";
+			return "false";
 		}
 		logger.debug("check finnished");
 		
@@ -213,16 +232,16 @@ public class QProSolver implements Solver {
 		//return reindexVariables(traversedTree, vars);
 	}
 	
-	private static String reindexVariables(String s, Vector<Integer> vars) {
-		String replaced = s;
-		assert(new HashSet<Integer>(vars).size() == vars.size()); // uniqueness check
-		
-		for(int i = 0; i < vars.size(); i++) {
-			String oldVariable = " " + vars.get(i).toString() + " ";
-			String newVariable = " " + (Integer.toString(i+2)) + " ";
-			logger.info(oldVariable +"->"+ newVariable);
-			replaced = replaced.replaceAll(oldVariable, newVariable);
-		}
-		return replaced;
-	}
+//	private static String reindexVariables(String s, Vector<Integer> vars) {
+//		String replaced = s;
+//		assert(new HashSet<Integer>(vars).size() == vars.size()); // uniqueness check
+//		
+//		for(int i = 0; i < vars.size(); i++) {
+//			String oldVariable = " " + vars.get(i).toString() + " ";
+//			String newVariable = " " + (Integer.toString(i+2)) + " ";
+//			logger.info(oldVariable +"->"+ newVariable);
+//			replaced = replaced.replaceAll(oldVariable, newVariable);
+//		}
+//		return replaced;
+//	}
 }
