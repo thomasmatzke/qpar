@@ -57,13 +57,10 @@ public class Qbf {
 		
 		Qbf_parser parser;
 		long start = System.currentTimeMillis();
-		try {
-			parser = new Qbf_parser(new FileInputStream(filename));
-		}
-		catch (FileNotFoundException e) {
-			logger.error("File not found: " + filename);
-			return;
-		}
+		
+		parser = new Qbf_parser(new FileInputStream(filename));
+		
+		
 		parser.ReInit(new FileInputStream(filename), null);
 
 		// parse the formula, get various vectors of vars
@@ -88,12 +85,12 @@ public class Qbf {
 			return;
 		}
 		long end = System.currentTimeMillis();
-		logger.info("Existential quantified Variables: " + eVars);
-		logger.info("Number of e.q.vs: " + eVars.size());
-		logger.info("Universally quantified Variables: " + aVars);
-		logger.info("Number of u.q.vs: " + aVars.size());
-		logger.info("All variables: " + vars);
-		logger.info("Number of all v.: " + vars.size());
+		logger.debug("Existential quantified Variables: " + eVars);
+		logger.debug("Number of e.q.vs: " + eVars.size());
+		logger.debug("Universally quantified Variables: " + aVars);
+		logger.debug("Number of u.q.vs: " + aVars.size());
+		logger.debug("All variables: " + vars);
+		logger.debug("Number of all v.: " + vars.size());
 		logger.info("Finished parsing QBF from " + filename + ", Took: " + (end-start)/1000 + " seconds.");
 		
 		logger.info("Generating dependency graph...");

@@ -3,14 +3,16 @@ package main.java.master;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
+import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
@@ -18,8 +20,11 @@ import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Console.Shell;
+import main.java.rmi.Result;
+import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.Logger;
+
 
 public class Job {
 
@@ -36,7 +41,7 @@ public class Job {
 
 	private Object handleResultLock = new Object();
 	// tqbfs -> slaves
-	public volatile Map<String, Slave> formulaDesignations = new HashMap<String, Slave>();
+	public volatile Map<String, SlaveRemote> formulaDesignations = new HashMap<String, SlaveRemote>();
 	private String heuristic, id, inputFileString, outputFileString, solver;
 	private int usedCores = 0, resultCtr = 0;
 	private volatile Status status;
@@ -91,21 +96,25 @@ public class Job {
 	public synchronized void abort() {
 		if (this.status != Status.RUNNING)
 			return;
-		logger.info("Aborting Job " + this.id + "...\n");
+		logger.info("Aborting Job " + this.id + "...");
 		logger.info("Aborting Formulas. Sending AbortFormulaMessages to slaves...");
-		abortComputations();
+		try {
+			abortComputations();
+		} catch (RemoteException e) {
+			logger.error(e);
+		}
 		this.status = Status.ERROR;
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 		logger.info("AbortMessages sent.");
 	}
 
-	private void abortComputations() {
-		for (Map.Entry<String, Slave> entry : this.formulaDesignations
+	private void abortComputations() throws RemoteException {
+		for (Map.Entry<String, SlaveRemote> entry : this.formulaDesignations
 				.entrySet()) {
-			Slave s = entry.getValue();
+			SlaveRemote s = entry.getValue();
 			String tqbfId = entry.getKey();
-			s.abortFormulaComputation(tqbfId);
+			s.abortFormula(tqbfId);
 		}
 	}
 
@@ -135,8 +144,8 @@ public class Job {
 			tableModel.fireTableDataChanged();
 		this.formula = new Qbf(inputFileString);
 		
-		int availableCores = Slave.getCoresForSolver(this.solver);
-		Vector<Slave> slaves = Slave.getSlavesWithSolver(this.solver);
+		int availableCores = Master.getCoresWithSolver(this.solver);
+		ArrayList<SlaveRemote> slaves = Master.getSlavesWithSolver(this.solver);
 	
 		logger.debug("Available Cores: " + availableCores + ", Used Cores: " + usedCores);
 		this.subformulas = formula.splitQbf(Math.min(availableCores, usedCores), 
@@ -149,8 +158,8 @@ public class Job {
 					"	Cores(used): " + usedCores + "\n" +
 					"	Slaves:      " + slaves.size());
 		
-		ArrayList<Slave> slots = new ArrayList<Slave>();
-		for(Slave s : slaves) {
+		ArrayList<SlaveRemote> slots = new ArrayList<SlaveRemote>();
+		for(SlaveRemote s : slaves) {
 			for(int i = 0; i < s.getCores(); i++) {
 				slots.add(s);
 			}
@@ -162,7 +171,7 @@ public class Job {
 		
 		Collections.shuffle(slots);
 		String slotStr = "";
-		for(Slave s : slots)
+		for(SlaveRemote s : slots)
 			slotStr += s.getHostName() + " ";
 		logger.info("Computationslots generated: " + slotStr.trim());
 		
@@ -171,10 +180,11 @@ public class Job {
 			synchronized(this) {
 				if(this.status != Status.RUNNING)
 					return;
-				Slave s = slots.get(slotIndex);
+				sub.jobId = this.getId();
+				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
 				formulaDesignations.put(sub.getId(), s);
-				s.computeFormula(sub, this);
+				s.computeFormula(sub, this.solver);
 				if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
 					slotIndex = 0;
 			}
@@ -195,7 +205,11 @@ public class Job {
 			return;
 		this.setStatus(Status.COMPLETE);
 		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
-		this.abortComputations();
+		try {
+			this.abortComputations();
+		} catch (RemoteException e) {
+			logger.error(e);
+		}
 		this.setResult(result);
 		this.setStoppedAt(new Date());
 
@@ -214,8 +228,8 @@ public class Job {
 		}
 
 		if (Shell.getWaitfor_jobid().equals(this.getId())) {
-			synchronized (MasterDaemon.getShellThread()) {
-				MasterDaemon.getShellThread().notify();
+			synchronized (Master.getShellThread()) {
+				Master.getShellThread().notify();
 			}
 		}
 		if (Job.getTableModel() != null)
@@ -273,11 +287,25 @@ public class Job {
 					// Received all subformulas but still no result...something is wrong
 					logger.fatal("Merging broken!");
 					logger.fatal("Dumping decisiontree: \n" + formula.decisionRoot.dump());
-					MasterDaemon.bailOut();
+					System.exit(-1);
 				}
 			}
 			
 		}
+	}
+	
+	public void handleResult(Result r) {
+		if(r.type != Result.Type.ERROR) {
+			handleResult(r.tqbfId, r.result);
+			return;
+		}
+		
+		logger.error("Slave returned error for subformula: " + r.tqbfId);
+		if(r.exception != null)
+			logger.error("Exception occured in Slave: " + r.exception);
+		if(r.errorMessage != null)
+			logger.error("Solver returned: " + r.errorMessage);
+		abort();		
 	}
 
 	public Qbf getFormula() {
@@ -309,7 +337,9 @@ public class Job {
 	}
 
 	public Status getStatus() {
-		if((this.status == Status.RUNNING) && (startedAt.getTime() + timeout) < new Date().getTime()) {
+		if((this.timeout != 0) && (this.status == Status.RUNNING) && (startedAt.getTime() + timeout) < new Date().getTime()) {
+			logger.info("Timeout triggered. Aborting...");
+			logger.error(Arrays.toString(Thread.currentThread().getStackTrace()));
 			this.abort();
 			this.status = Status.TIMEOUT;
 		}
@@ -350,6 +380,13 @@ public class Job {
 
 	public void setStatus(Status status) {
 		this.status = status;
+		if (Job.getTableModel() != null) {
+			SwingUtilities.invokeLater(new Runnable(){
+					public void run() {
+						Job.getTableModel().fireTableDataChanged();
+					}
+			});
+		}
 	}
 
 	public void setStoppedAt(Date stoppedAt) {

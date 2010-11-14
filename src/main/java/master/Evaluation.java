@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
  */
 public class Evaluation {
 
-	static 	Logger 	logger = Logger.getLogger(MasterDaemon.class);
+	static 	Logger 	logger = Logger.getLogger(Master.class);
 	private File 	directory, referenceFile;
 	private String 	heuristicId, solverId, referenceFileName = "qpro_results.txt";
 	private long	timeout;
@@ -74,10 +74,10 @@ public class Evaluation {
 				}
 			} catch(FileNotFoundException e) {
 				logger.error("Error while reading formula file: " + e);
-				MasterDaemon.bailOut();
+				System.exit(-1);
 			} catch (IOException e) {
 				logger.error(e);
-				MasterDaemon.bailOut();
+				System.exit(-1);
 			}			
 		}
 	}

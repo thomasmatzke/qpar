@@ -2,8 +2,6 @@ package main.java.logic.heuristic;
 
 import java.util.ArrayList;
 
-import main.java.master.MasterDaemon;
-
 import org.apache.log4j.Logger;
 
 public class DependencyNode {
@@ -86,7 +84,7 @@ public class DependencyNode {
 						 (this.type == children.get(1).type) && children.get(1).homogenousSubtree());
 			default:
 				logger.fatal("A DependencyNode must not have more than 3 childnodes.");
-				MasterDaemon.bailOut();
+				System.exit(-1);
 				return false;
 		}
 				
@@ -115,7 +113,7 @@ public class DependencyNode {
 				// Cant be. homogenousSubtree would have returned already
 				assert(false);
 				logger.fatal("Algorithm fail... Contact Author.");
-				MasterDaemon.bailOut();
+				System.exit(-1);
 				return null;
 			case 1:
 				CondensedDependencyNode n = new CondensedDependencyNode(this.type);
@@ -141,7 +139,7 @@ public class DependencyNode {
 			default:
 				assert(false);
 				logger.fatal("A DependencyNode must not have more than 3 childnodes.");
-				MasterDaemon.bailOut();
+				System.exit(-1);
 				return null;
 		}
 		
@@ -171,7 +169,7 @@ public class DependencyNode {
 			default:
 				assert(false);
 				logger.fatal("A DependencyNode must not have more than 3 childnodes.");
-				MasterDaemon.bailOut();
+				System.exit(-1);
 				return null;
 		}
 	}

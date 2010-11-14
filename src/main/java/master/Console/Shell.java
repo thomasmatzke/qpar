@@ -8,6 +8,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.UnknownHostException;
+import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
@@ -19,14 +21,14 @@ import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Evaluation;
 import main.java.master.Job;
 import main.java.master.Mailer;
-import main.java.master.MasterDaemon;
-import main.java.master.Slave;
+import main.java.master.Master;
+import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.Logger;
 
 public class Shell implements Runnable{
 
-	private static Logger 	logger = Logger.getLogger(MasterDaemon.class);	
+	private static Logger 	logger = Logger.getLogger(Shell.class);	
 	private String 			prompt 			= ">";
 	private BufferedReader 	in;
 	private boolean 		run				= true;
@@ -173,8 +175,12 @@ public class Shell implements Runnable{
 	 * Syntax: SHUTDOWNALLSLAVES
 	 */
 	private void shutdownallslaves() {
-		for(Slave s : Slave.getSlaves().values()) {
-			s.shutdown();
+		for(SlaveRemote s : Master.getSlaves().values()) {
+			try {
+				s.shutdown();
+			} catch (RemoteException e) {
+				logger.error(e);
+			}
 		}
 		try {
 			Thread.sleep(1000);
@@ -321,8 +327,12 @@ public class Shell implements Runnable{
 	 * Syntax: KILLALLSLAVES
 	 */
 	private void killallslaves() {
-		for(Slave s : Slave.getSlaves().values()) {
-			s.kill("User request");
+		for(SlaveRemote s : Master.getSlaves().values()) {
+			try {
+				s.kill("User request");
+			} catch (RemoteException e) {
+				logger.error(e);
+			}
 		}
 		try {
 			Thread.sleep(1000);
@@ -337,14 +347,21 @@ public class Shell implements Runnable{
 		
 		try{
 			waitfor_jobid = token.nextToken();
+			if(Job.getJobs().get(waitfor_jobid) == null) {
+				logger.error("No job with id " + waitfor_jobid);
+				return;
+			}
+			if(Job.getJobs().get(waitfor_jobid).getStatus() == Job.Status.ERROR)
+				return;
+			
 		} catch(NoSuchElementException e) {
 			puts("Syntax: WAITFORRESULT jobid");
 			return;
 		}
 		
 		try {
-			synchronized(MasterDaemon.getShellThread()) {
-				MasterDaemon.getShellThread().wait();
+			synchronized(Master.getShellThread()) {
+				Master.getShellThread().wait();
 			}
 		} catch (InterruptedException e) {}
 		
@@ -375,13 +392,17 @@ public class Shell implements Runnable{
 		setWaitfor_cores(cores);
 		
 		while(true) {
-			if(waitfor_count > 0 && waitfor_cores <= waitfor_count) {
-				return;
+			try {
+				if(waitfor_cores <= Master.getCoresWithSolver(solverId)) {
+					return;
+				}
+			} catch (RemoteException e1) {
+				logger.error(e1);
 			}
 				
 			try {
-				synchronized(MasterDaemon.getShellThread()) {
-					MasterDaemon.getShellThread().wait();
+				synchronized(Master.getShellThread()) {
+					Master.getShellThread().wait();
 				}
 			} catch (InterruptedException e) {}
 		}
@@ -422,7 +443,11 @@ public class Shell implements Runnable{
 	private void killslave(StringTokenizer token) {
 		if(token.hasMoreTokens()) {
 			String hostname = token.nextToken();
-			Slave.getSlaves().get(hostname).kill("User command");
+			try {
+				Master.getSlaves().get(hostname).kill("User command");
+			} catch (RemoteException e) {
+				logger.error(e);
+			}
 		} else {
 			puts("Syntax: KILLSLAVE hostname");
 		}		
@@ -443,8 +468,14 @@ public class Shell implements Runnable{
 	 */
 	private void viewslaves() {
 		puts("HOSTNAME\tCORES\tCURRENT_JOBS");
-		for(Slave s : Slave.getSlaves().values()) {
-			puts(s.getHostName() + "\t" + s.getCores() + "\t" + Util.join(s.getCurrentJobs(), ","));
+		for(SlaveRemote s : Master.getSlaves().values()) {
+			try {
+				puts(s.getHostName() + "\t" + s.getCores() + "\t" + Util.join(s.getCurrentJobs(), ","));
+			} catch (RemoteException e) {
+				logger.error(e);
+			} catch (UnknownHostException e) {
+				logger.error(e);
+			}
 		}
 	}
 
@@ -466,12 +497,15 @@ public class Shell implements Runnable{
 	 */
 	private void startjob(StringTokenizer token) {
 		if(token.hasMoreTokens()) {
+			Job j = Job.getJobs().get(token.nextToken());
 			try {
-				Job.getJobs().get(token.nextToken()).start();
+				j.start();
 			} catch(FileNotFoundException e) {
 				logger.error("Error while reading formula file: " + e);
+				j.setStatus(Job.Status.ERROR);
 			} catch (IOException e) {
 				logger.error(e);
+				j.setStatus(Job.Status.ERROR);
 			}
 		} else {
 			puts("Syntax: STARTJOB jobid");

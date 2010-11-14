@@ -3,7 +3,6 @@ package main.java.logic.heuristic;
 import java.util.ArrayList;
 
 import main.java.logic.heuristic.DependencyNode.NodeType;
-import main.java.master.MasterDaemon;
 
 import org.apache.log4j.Logger;
 
@@ -101,7 +100,7 @@ public class CondensedDependencyNode {
 			default:
 				assert(false);
 				logger.fatal("A DependencyNode must not have more than 3 childnodes.");
-				MasterDaemon.bailOut();
+				System.exit(-1);
 				return null;
 		}
 	}

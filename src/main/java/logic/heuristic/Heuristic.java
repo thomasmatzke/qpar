@@ -5,14 +5,16 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import main.java.QPar;
 import main.java.logic.Qbf;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 public abstract class Heuristic {
 
 	protected Qbf qbf;
-	protected static Logger logger = Logger.getLogger(Heuristic.class);
+	static Logger logger = Logger.getLogger(Heuristic.class);
 	
 	public Heuristic(Qbf qbf) {
 		this.qbf = qbf;
@@ -42,11 +44,11 @@ public abstract class Heuristic {
 	protected ArrayList<Set<Integer>> getDecisionGroups() {
 		ArrayList<Set<Integer>> groups = new ArrayList<Set<Integer>>();
 		CondensedDependencyNode condensedRoot = qbf.dependencyGraphRoot.condense();
-		logger.debug("Condensed Tree: \n" + condensedRoot.dump());
+		if(QPar.logLevel == Level.DEBUG)
+			logger.debug("Condensed Tree: \n" + condensedRoot.dump());
 		
 		int maxDepth = 0;
 		for(CondensedDependencyNode c : condensedRoot.allSubnodes()) {
-			logger.info(c.getDepth());
 			if(c.getDepth() == 0)
 				continue;
 			

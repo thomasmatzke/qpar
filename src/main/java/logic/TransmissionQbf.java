@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 public class TransmissionQbf implements Serializable {
 	private SimpleNode root = null;
 	private String id;
+	public String jobId;
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();
 	private Vector<Integer> vars = new Vector<Integer>();

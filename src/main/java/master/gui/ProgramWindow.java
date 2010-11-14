@@ -5,6 +5,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.IOException;
+import java.rmi.RemoteException;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
@@ -22,8 +24,8 @@ import javax.swing.ListSelectionModel;
 
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Job;
-import main.java.master.MasterDaemon;
-import main.java.master.Slave;
+import main.java.master.Master;
+import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -51,7 +53,7 @@ public class ProgramWindow extends JFrame {
 	private JButton startJobButton = null;
 	private JButton viewJobButton = null;
 
-	static Logger logger = Logger.getLogger(MasterDaemon.class);
+	static Logger logger = Logger.getLogger(Master.class);
 	{
 		logger.setLevel(Level.INFO);
 	}
@@ -248,7 +250,13 @@ public class ProgramWindow extends JFrame {
 			newJobButton.setText("New Job");
 			newJobButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					Set<String> solvers = Slave.getAllAvaliableSolverIds();
+					Set<String> solvers;
+					try {
+						solvers = Master.getAllAvaliableSolverIds();
+					} catch (RemoteException e1) {
+						logger.error(e1);
+						solvers = new HashSet<String>();
+					}
 					if(solvers.size() < 1) {
 						JOptionPane.showMessageDialog(null, "There are currently no slaves registered. " +
 								"Slaves have to register their solver-options with the Master to create a new job.");
@@ -334,7 +342,7 @@ public class ProgramWindow extends JFrame {
 			slavesTable.setModel(model);
 			slavesTable.setFillsViewportHeight(true);
 			slavesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-			Slave.setTableModel(model);
+			Master.slaveTableModel = model;
 		}
 		return slavesTable;
 	}
@@ -393,8 +401,12 @@ public class ProgramWindow extends JFrame {
 
 	private void killSelectedSlave() {
 		int row = getSlavesTable().getSelectedRow();
-		Slave slave = Slave.getSlaves().get(row);
-		slave.kill("User command");
+		SlaveRemote slave = Master.getSlaves().get(row);
+		try {
+			slave.kill("User command");
+		} catch (RemoteException e) {
+			logger.error(e);
+		}
 	}
 
 }
