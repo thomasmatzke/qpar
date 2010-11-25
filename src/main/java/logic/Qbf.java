@@ -143,7 +143,7 @@ public class Qbf {
 			leafCtr++;
 		} while(leafCtr < n);
 		
-		//logger.info("\n" + decisionRoot.dump());
+		logger.info("\n" + decisionRoot.dump());
 		
 		assert(leaves.size() == n);
 		

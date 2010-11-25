@@ -16,7 +16,6 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 
 import main.java.QPar;
-import main.java.Util;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Evaluation;
 import main.java.master.Job;
@@ -24,6 +23,7 @@ import main.java.master.Mailer;
 import main.java.master.Master;
 import main.java.rmi.SlaveRemote;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 public class Shell implements Runnable{
@@ -470,7 +470,7 @@ public class Shell implements Runnable{
 		puts("HOSTNAME\tCORES\tCURRENT_JOBS");
 		for(SlaveRemote s : Master.getSlaves().values()) {
 			try {
-				puts(s.getHostName() + "\t" + s.getCores() + "\t" + Util.join(s.getCurrentJobs(), ","));
+				puts(s.getHostName() + "\t" + s.getCores() + "\t" + StringUtils.join(s.getCurrentJobs(), ","));
 			} catch (RemoteException e) {
 				logger.error(e);
 			} catch (UnknownHostException e) {

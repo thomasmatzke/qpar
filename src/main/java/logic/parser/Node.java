@@ -6,44 +6,47 @@ package main.java.logic.parser;
    machinery for constructing the parent and child relationships
    between nodes. */
 
+import java.util.ArrayList;
 import java.util.Vector;
 
-public interface Node {
-	public String 	op = "";
-	public String	truthValue = "";
-	public int		var = -1;	
-	public int		id = 0;
-	public boolean	reducable = false;
-	public NodeType nodeType = null;
+import main.java.logic.parser.SimpleNode.NodeType;
 
-	public enum NodeType {
-		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
-	}
+public interface Node {
+//	public String 	op = "";
+//	//public String	truthValue = "";
+//	public int		var = -1;	
+//	public int		id = 0;
+//	public boolean	reducable = false;
+//	public NodeType nodeType = null;
+
+//	public enum NodeType {
+//		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
+//	}
 	
 	// custom(ized) methods
 	public double getTruthProbability();
-	public void		assignTruthValue(int v, boolean b);
+	public ArrayList<SimpleNode>		assignTruthValue(int v, boolean b);
 	public boolean	checkConnectionToRoot();
 	public void		deleteChildren();
 	public void		dump(String prefix);
 	// public boolean	findNodes(Vector<Integer> v); // was replaced by findVar(int v)
 	public int		getId();
-	public String	getOp();
+//	public String	getOp();
 	public String	getTruthValue();
 	public int		getVar();
 	public int		getNodeVariable();
 	public boolean	reduce();
 	public boolean	replaceChild(Node oldNode, Node newNode);
-	public void		setOp(String o);
-	public void		setTruthValue(String t);
+//	public void		setOp(String o);
+//	public void		setTruthValue(String t);
 	public void		setVar(int v);
 	public void		setNodeType(main.java.logic.parser.SimpleNode.NodeType n);
 	public main.java.logic.parser.SimpleNode.NodeType getNodeType();
 	public String	traverse();
-	public boolean	findVar(int v);
-	public String getEnclosedFormula(String op);
-	public Vector<Integer> getPositiveLiterals(String op, Vector<Integer> v);
-	public Vector<Integer> getNegativeLiterals(String op, Vector<Integer> v);
+//	public boolean	findVar(int v);
+	public String getEnclosedFormula(NodeType op);
+	public Vector<Integer> getPositiveLiterals(SimpleNode.NodeType op, Vector<Integer> v);
+	public Vector<Integer> getNegativeLiterals(SimpleNode.NodeType op, Vector<Integer> v);
   /** This method is called after the node has been made the current
     node, it indicates that child nodes can now be added to it. */
   public void jjtOpen();

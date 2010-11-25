@@ -201,7 +201,7 @@ public class Slave implements SlaveRemote, Serializable {
 	}
 
 	@Override
-	synchronized public void computeFormula(TransmissionQbf formula, String solverId)
+	public void computeFormula(TransmissionQbf formula, String solverId)
 			throws RemoteException {
 		Runtime.getRuntime().gc();
 		logger.info("Starting computation of formula " + formula.getId());
@@ -209,7 +209,7 @@ public class Slave implements SlaveRemote, Serializable {
 		s.setTransmissionQbf(formula);
 		s.prepare();
 		threads.put(formula.getId(), s);
-		new Thread(s).start();
+		s.getThread().start();
 	}
 
 	@Override

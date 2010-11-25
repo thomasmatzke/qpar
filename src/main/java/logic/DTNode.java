@@ -40,7 +40,7 @@ public class DTNode {
 	}
 	
 	public String toString() {
-		return type.toString();
+		return type.toString() + "(" + this.leftChild + ", " + this.rightChild + ")";
 	}
 	
 	public int getDepth() {
@@ -58,7 +58,7 @@ public class DTNode {
 		if(parent == null)
 			return;
 		DTNode sibling = null;
-
+//logger.info("reducing " + this);
 		if (getParent().getRightChild() != this) {
 			sibling = getParent().getRightChild();
 		} else {
@@ -92,12 +92,17 @@ public class DTNode {
 			} else if(this.type == DTNodeType.FALSE) {
 				if (sibling.hasTruthValue()) {
 					parent.setTruthValue(sibling.getTruthValue() || this.getTruthValue());
+//logger.info("sibling truthvalue: " + (sibling.getTruthValue()));
+//logger.info("this truthvalue: " + (this.getTruthValue()));
 					parent.setLeftChild(null);
 					parent.setRightChild(null);
 					sibling.setParent(null);
 				}
 			}
+		} else {
+			assert(false);
 		}
+//logger.info("reduced to " + this);
 		parent.reduce();
 	}
 
@@ -193,18 +198,18 @@ public class DTNode {
 
 	public void setTruthValue(boolean result) {
 		if(result)
-			this.setType(DTNode.DTNodeType.TRUE);
+			this.setType(DTNodeType.TRUE);
 		else
-			this.setType(DTNode.DTNodeType.FALSE);
+			this.setType(DTNodeType.FALSE);
 	}
 
 	public boolean getTruthValue() {
-		if(this.type == DTNode.DTNodeType.TRUE)
+		if(this.type == DTNodeType.TRUE)
 			return true;
-		else if((this.type == DTNode.DTNodeType.FALSE))
+		else if((this.type == DTNodeType.FALSE))
 			return false;
 		else
 			assert(false);
-		return false;
+		throw new RuntimeException();
 	}
 }

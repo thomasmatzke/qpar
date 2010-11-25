@@ -79,7 +79,8 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
       jj_consume_token(AND);
                 jjtree.closeNodeScope(jjtn000, true);
                 jjtc000 = false;
-                jjtn000.op = "&";
+//                jjtn000.op = "&";
+                jjtn000.nodeType = NodeType.AND;
     } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);
@@ -96,7 +97,8 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
       jj_consume_token(OR);
                jjtree.closeNodeScope(jjtn000, true);
                jjtc000 = false;
-               jjtn000.op = "|";
+//               jjtn000.op = "|";
+               jjtn000.nodeType = NodeType.OR;
     } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);
@@ -164,7 +166,8 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
           jjtree.openNodeScope(jjtn001);
       try {
         Not();
-                        jjtn001.op = "!"; jjtn001.nodeType = NodeType.NOT;
+//                        jjtn001.op = "!"; 
+                        jjtn001.nodeType = NodeType.NOT;
         Exp();
       } catch (Throwable jjte001) {
           if (jjtc001) {
@@ -249,11 +252,13 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case OR:
             jj_consume_token(OR);
-                                     jjtn003.op = "|"; jjtn003.nodeType = NodeType.OR;
+//                                     jjtn003.op = "|"; 
+                                     jjtn003.nodeType = NodeType.OR;
             break;
           case AND:
             jj_consume_token(AND);
-                                     jjtn003.op = "&"; jjtn003.nodeType = NodeType.AND;
+//                                     jjtn003.op = "&"; 
+                                     jjtn003.nodeType = NodeType.AND;
             break;
           default:
             jj_la1[0] = jj_gen;

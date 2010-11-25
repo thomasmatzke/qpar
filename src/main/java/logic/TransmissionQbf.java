@@ -1,12 +1,16 @@
 package main.java.logic;
 
 import java.io.Serializable;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Vector;
 
 import main.java.QPar;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
+import main.java.slave.solver.OrphanVisitor;
 
 import org.apache.log4j.Logger;
 
@@ -24,14 +28,24 @@ public class TransmissionQbf implements Serializable {
 	public ArrayList<Integer> trueVars = new ArrayList<Integer>();
 	public ArrayList<Integer> falseVars = new ArrayList<Integer>();
 	static Logger logger = Logger.getLogger(TransmissionQbf.class);
-
-	/**
-	 * constructor
-	 */
-	public TransmissionQbf() {
-		logger.setLevel(QPar.logLevel);
+	
+	public ArrayDeque<SimpleNode> truthAssignedNodes = null;
+	
+	
+	public void reduceFast() {
+		ArrayDeque<SimpleNode> reducableNodes = new ArrayDeque<SimpleNode>();
+		
+		// The parents of the assignednodes are reducable, so lets get them
+		for(SimpleNode n : truthAssignedNodes) {
+			if(n.jjtGetParent() != null)
+				reducableNodes.add((SimpleNode)n.jjtGetParent());
+		}		
+		
+		Reducer r = new Reducer(reducableNodes);
+		r.reduce();
+		//this.root.dump(this.getId() + "  ");
 	}
-
+	
 	/**
 	 * Print the tree
 	 * @param s optional string to prefix the tree
@@ -56,6 +70,12 @@ public class TransmissionQbf implements Serializable {
 		return falseVars;
 	}
 
+	public Integer getMaxVar() {
+		ArrayList<Integer> vars = new ArrayList<Integer>(this.getAVars());
+		vars.addAll(this.getEVars());
+		return Collections.max(vars);
+	}
+	
 	/**
 	 * debug method that logs the content of a transmissionQbf
 	 */
@@ -124,12 +144,15 @@ public class TransmissionQbf implements Serializable {
 	 */
 	public void assignTruthValues() {
 		int i;
+		ArrayDeque<SimpleNode> assigned = new ArrayDeque<SimpleNode>();
 		for (i = 0; i < this.trueVars.size(); i++) {
-			root.assignTruthValue(this.trueVars.get(i), true);
+			assigned.addAll(root.assignTruthValue(this.trueVars.get(i), true));
 		}
 		for (i = 0; i < this.falseVars.size(); i++) {
-			root.assignTruthValue(this.falseVars.get(i), false);
+			assigned.addAll(root.assignTruthValue(this.falseVars.get(i), false));
 		}
+		
+		this.truthAssignedNodes = assigned;
 	}
 
 	/**
@@ -156,16 +179,17 @@ public class TransmissionQbf implements Serializable {
 	 * @return true if the first node after input has a truth value, false otherwise
 	 */
 	public boolean rootIsTruthNode() {
-
+		 
 		SimpleNode start = (SimpleNode)root.jjtGetChild(0);
-
-		while ((start.getNodeType() == NodeType.FORALL) || (start.getNodeType() == NodeType.EXISTS)) {
-			start = (SimpleNode)start.jjtGetChild(0);
-			}
-
-		if (start.getTruthValue().equals(""))
-			return false;
-		return true;
+		return start.isTruthNode();
+//
+//		while ((start.getNodeType() == NodeType.FORALL) || (start.getNodeType() == NodeType.EXISTS)) {
+//			start = (SimpleNode)start.jjtGetChild(0);
+//			}
+//
+//		if (start.getTruthValue().equals(""))
+//			return false;
+//		return true;
 	}
 
 	/**
@@ -182,19 +206,31 @@ public class TransmissionQbf implements Serializable {
 	 * returns a vector of vars from aVars & eVars that don't appear in the tree
 	 * @return a vector of orphaned quantified vars
 	 */	
-	public Vector<Integer> getOrphanedVars() {
-		Vector<Integer> orphanedVars = new Vector<Integer>();
-		Vector<Integer> quantifiedVars = new Vector<Integer>();
-
-		quantifiedVars.addAll(aVars);
+//	public Vector<Integer> getOrphanedVars() {
+//		Vector<Integer> orphanedVars = new Vector<Integer>();
+//		Vector<Integer> quantifiedVars = new Vector<Integer>();
+//
+//		quantifiedVars.addAll(aVars);
+//		quantifiedVars.addAll(eVars);
+//		
+//		for (int i = 0; i < quantifiedVars.size(); i++) {
+//			if (!root.findVar(quantifiedVars.get(i))) {
+//				orphanedVars.add(quantifiedVars.get(i));
+//			}
+//		}
+//		return orphanedVars;
+//	}
+	
+	public void eliminateOrphanedVars() {
+		ArrayList<Integer> quantifiedVars = new ArrayList<Integer>(aVars);
 		quantifiedVars.addAll(eVars);
 		
-		for (int i = 0; i < quantifiedVars.size(); i++) {
-			if (!root.findVar(quantifiedVars.get(i))) {
-				orphanedVars.add(quantifiedVars.get(i));
-			}
-		}
-		return orphanedVars;
+		OrphanVisitor v = new OrphanVisitor(quantifiedVars);
+		v.visit(this.getRootNode());
+		ArrayList<Integer> orphans = v.getOrpahns();
+//		logger.info("Eliminating vars(" + orphans.size() + "): " + orphans);
+		aVars.removeAll(orphans);
+		eVars.removeAll(orphans);
 	}
 
 	// getter/setter, too self-explanatory for javadoc :)

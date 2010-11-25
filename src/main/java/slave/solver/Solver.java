@@ -33,5 +33,7 @@ public interface Solver extends Runnable {
 	public void run();
 
 	public TransmissionQbf getTransmissionQbf();
+	
+	public Thread getThread();
 
 }

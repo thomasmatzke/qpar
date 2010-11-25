@@ -4,9 +4,11 @@ package main.java.logic.parser;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Vector;
 
 import main.java.QPar;
+import main.java.logic.Visitor;
 import main.java.logic.heuristic.DependencyNode;
 
 import org.apache.log4j.Level;
@@ -16,10 +18,7 @@ import org.apache.log4j.Logger;
 public class SimpleNode implements Node, Serializable {
 
 	static Logger logger = Logger.getLogger(SimpleNode.class);
-	static { 
-		logger.setLevel(QPar.logLevel);
-	}
-	
+		
 	protected Object value;
 	protected Qbf_parser parser;
 	protected Node parent;
@@ -28,8 +27,8 @@ public class SimpleNode implements Node, Serializable {
 
 	public int id;				
 	public int var = -1;			// -1 = not a var node
-	public String op = "";			// "" = not an operator node
-	public String truthValue = "";	// "" = not truth assigned
+//	public String op = "";			// "" = not an operator node
+//	public String truthValue = "";	// "" = not truth assigned
 	public enum NodeType {
 		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
 	}
@@ -38,7 +37,6 @@ public class SimpleNode implements Node, Serializable {
 	 * constructor
 	 */
 	public SimpleNode() {
-		logger.setLevel(QPar.logLevel);
 	}
 
 	public void setNodeType(NodeType nt) {
@@ -56,7 +54,12 @@ public class SimpleNode implements Node, Serializable {
 	public void setNodeVariable(int v) {
 		this.var = v;
 	}
-
+	
+	public void accept(Visitor v) {
+		v.visit(this);
+	}
+	
+	
 	/**
 	 * assign a truth value to a specific var
 	 * 
@@ -65,27 +68,28 @@ public class SimpleNode implements Node, Serializable {
 	 * @param b
 	 *            the truth value to assign
 	 */
-	public void assignTruthValue(int v, boolean b) {
+	public ArrayList<SimpleNode> assignTruthValue(int v, boolean b) {
 		int numChildren = this.jjtGetNumChildren();
-
+		
+		ArrayList<SimpleNode> assigned = new ArrayList<SimpleNode>();
 		// not in a leaf node, nothing to set
 		if (nodeType != NodeType.VAR) {
 			for (int i = 0; i < numChildren; i++) {
-				jjtGetChild(i).assignTruthValue(v, b);
+				assigned.addAll(jjtGetChild(i).assignTruthValue(v, b));
 			}
 		}
 		// in the right leaf node now
 		else {
 			if ((var == v) && (nodeType == NodeType.VAR)) {
+				assigned.add(this);
 				if (b) {
-					truthValue = "TRUE"; // TODO remove later
 					nodeType = NodeType.TRUE;
 				} else {
-					truthValue = "FALSE"; // TODO remove later
 					nodeType = NodeType.FALSE;
 				}
 			}
 		}
+		return assigned;
 	}
 
 	/**
@@ -117,7 +121,7 @@ public class SimpleNode implements Node, Serializable {
 	 * @param v
 	 *            A vector of all already collected negative literals
 	 */
-	public Vector<Integer> getPositiveLiterals(String op, Vector<Integer> v) {
+	public Vector<Integer> getPositiveLiterals(NodeType op, Vector<Integer> v) {
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
 			// if the child is a var node, just add the var number
 			if ((this.jjtGetChild(i)).getNodeType() == NodeType.VAR) {
@@ -126,7 +130,7 @@ public class SimpleNode implements Node, Serializable {
 
 			// nested con/disjunction, go deeper in the tree and collect
 			// literals there
-			if (this.jjtGetChild(i).getOp().equals(op)) {
+			if (this.jjtGetChild(i).getNodeType() == op) {
 				v = (this.jjtGetChild(i).getPositiveLiterals(op, v));
 			}
 		}
@@ -143,16 +147,16 @@ public class SimpleNode implements Node, Serializable {
 	 * @param v
 	 *            A vector of all already collected positive literals
 	 */
-	public Vector<Integer> getNegativeLiterals(String op, Vector<Integer> v) {
+	public Vector<Integer> getNegativeLiterals(NodeType op, Vector<Integer> v) {
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
 			// if the child is a var node, just add the var number
-			if (this.jjtGetChild(i).getOp().equals("!")) {
+			if (this.jjtGetChild(i).getNodeType() == NodeType.NOT) {
 				v.add(this.jjtGetChild(i).jjtGetChild(0).getNodeVariable());
 			}
 
 			// nested con/disjunction, go deeper in the tree and collect
 			// literals there
-			if (this.jjtGetChild(i).getOp().equals(op)) {
+			if (this.jjtGetChild(i).getNodeType() == op) {
 				v = (this.jjtGetChild(i).getNegativeLiterals(op, v));
 			}
 		}
@@ -166,10 +170,10 @@ public class SimpleNode implements Node, Serializable {
 	 * @param op
 	 *            ICH KENN MICH GRAD SELBST NICHT MEHR AUS :) TODO
 	 */
-	public String getEnclosedFormula(String op) {
+	public String getEnclosedFormula(NodeType op) {
 		String tmp = "";
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
-			if (this.jjtGetChild(i).getOp().equals(op)) {
+			if (this.jjtGetChild(i).getNodeType() == op) {
 				tmp += this.jjtGetChild(i).traverse();
 			} else if ((this.jjtGetChild(i).getNodeType() == NodeType.EXISTS) || 
 			           (this.jjtGetChild(i).getNodeType() == NodeType.FORALL)) {
@@ -248,7 +252,7 @@ public class SimpleNode implements Node, Serializable {
 		Vector<Integer> posLiterals = new Vector<Integer>();
 		Vector<Integer> negLiterals = new Vector<Integer>();
 		SimpleNode tmpNode = null;
-
+		
 		if (nodeType == NodeType.EXISTS) {
 			NodeType nt = jjtGetParent().getNodeType(); 	
 			if (nt != NodeType.FORALL)
@@ -298,8 +302,8 @@ public class SimpleNode implements Node, Serializable {
 			 *    traversedTree += "\n";
 			 */
 			traversedTree += "c\n";
-			posLiterals = (this.getPositiveLiterals("&", posLiterals));
-			negLiterals = (this.getNegativeLiterals("&", negLiterals));
+			posLiterals = (this.getPositiveLiterals(NodeType.AND, posLiterals));
+			negLiterals = (this.getNegativeLiterals(NodeType.AND, negLiterals));
 
 			for (int var : posLiterals)
 				traversedTree += var + " ";
@@ -309,7 +313,7 @@ public class SimpleNode implements Node, Serializable {
 				traversedTree += var + " ";
 			traversedTree += "\n";
 
-			traversedTree += this.getEnclosedFormula("|");
+			traversedTree += this.getEnclosedFormula(NodeType.OR);
 
 			traversedTree += "/c\n";
 		}
@@ -320,8 +324,8 @@ public class SimpleNode implements Node, Serializable {
 			 *    traversedTree += "\n";
 			 */
 			traversedTree += "d\n";
-			posLiterals = (this.getPositiveLiterals("|", posLiterals));
-			negLiterals = (this.getNegativeLiterals("|", negLiterals));
+			posLiterals = (this.getPositiveLiterals(NodeType.OR, posLiterals));
+			negLiterals = (this.getNegativeLiterals(NodeType.OR, negLiterals));
 
 			for (int var : posLiterals)
 				traversedTree += var + " ";
@@ -331,7 +335,7 @@ public class SimpleNode implements Node, Serializable {
 				traversedTree += var + " ";
 			traversedTree += "\n";
 
-			traversedTree += this.getEnclosedFormula("&");
+			traversedTree += this.getEnclosedFormula(NodeType.AND);
 
 			traversedTree += "/d\n";
 		}
@@ -384,10 +388,10 @@ public class SimpleNode implements Node, Serializable {
 				reducable = true;
 
 				// not x, set the parent to not x
-				if (parentNode.getOp().equals("!")) {
+				if (parentNode.getNodeType() == NodeType.NOT) {
 					if(QPar.logLevel == Level.DEBUG)
 						logger.debug("NEGATION occured");
-					parentNode.setOp("");
+//					parentNode.setOp("");
 					if (nodeType == NodeType.FALSE) {
 						parentNode.setNodeType(NodeType.TRUE);
 					} else {
@@ -401,12 +405,13 @@ public class SimpleNode implements Node, Serializable {
 				// false & x = false, so set parent to false and make it a leaf
 				// node
 				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.FALSE)) {
-					logger.debug("AND FALSE occured");
-					parentNode.setOp("");
-					parentNode.setTruthValue("FALSE");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("AND FALSE occured");
+//					parentNode.setTruthValue("FALSE");
 					parentNode.deleteChildren();
 					jjtSetParent(null);
-					logger.debug("AND FALSE occured end");
+					if(QPar.logLevel == Level.DEBUG)
+						logger.debug("AND FALSE occured end");
 					return reducable;
 				}
 
@@ -471,8 +476,8 @@ public class SimpleNode implements Node, Serializable {
 				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.TRUE)) {
 					if(QPar.logLevel == Level.DEBUG)
 						logger.debug("OR TRUE occured");
-					parentNode.setOp("");
-					parentNode.setTruthValue("TRUE");
+//					parentNode.setOp("");
+//					parentNode.setTruthValue("TRUE");
 					parentNode.deleteChildren();
 					jjtSetParent(null);
 					if(QPar.logLevel == Level.DEBUG)
@@ -484,6 +489,12 @@ public class SimpleNode implements Node, Serializable {
 		return reducable;
 	}
 
+	public boolean isTruthNode() {
+		return this.nodeType == NodeType.FALSE || this.nodeType == NodeType.TRUE;
+	}
+		
+	
+	
 	/**
 	 * removes all children of a node by setting the childrens parent to null
 	 * and cleaning the children[] array. Hopefully the garbage collector will
@@ -522,40 +533,66 @@ public class SimpleNode implements Node, Serializable {
 	 *            the var to search for
 	 * @return true if at least one occurance, false otherwise
 	 */
-	public boolean findVar(int v) {
-		int i;
-		boolean found = false;
-
-		// as long as we are in any non-VAR nodes, call the childrens findVar()
-		if (this.nodeType != NodeType.VAR) {
-			for (i = 0; i < this.jjtGetNumChildren(); i++) {
-				found = found || this.jjtGetChild(i).findVar(v);
-			}
-		} else {
-			// if we're in a VAR node with the right variable value, we've
-			// found our node
-			if (this.var == v) {
-				found = true;
-			}
-		}
-		return found;
-	}
+//	public boolean findVar(int v) {
+//		int i;
+//		boolean found = false;
+//
+//		// as long as we are in any non-VAR nodes, call the childrens findVar()
+//		if (this.nodeType != NodeType.VAR) {
+//			for (i = 0; i < this.jjtGetNumChildren(); i++) {
+//				found = found || this.jjtGetChild(i).findVar(v);
+//			}
+//		} else {
+//			// if we're in a VAR node with the right variable value, we've
+//			// found our node
+//			if (this.var == v) {
+//				found = true;
+//			}
+//		}
+//		return found;
+//	}
 
 	// mostly auto-generated stuff from here plus some simple getter/setter
 	// methods
-	public void setTruthValue(String t) {
-		this.truthValue = t;
-		if (t.equals("TRUE")) {
-			nodeType = NodeType.TRUE;
-		} else if (t.equals("FALSE")){
-			nodeType = NodeType.FALSE;
+//	public void setTruthValue(String t) {
+////		this.truthValue = t;
+//		if (t.equals("TRUE")) {
+//			this.setNodeType(NodeType.TRUE);
+//		} else if (t.equals("FALSE")){
+//			this.setNodeType(NodeType.FALSE);
+//		}
+//	}
+	
+	public void setTruthValue(boolean t) {
+		if (t) {
+			this.setNodeType(NodeType.TRUE);
+		} else {
+			this.setNodeType(NodeType.FALSE);
 		}
 	}
 
-	public String getTruthValue() {
-		return truthValue;
+	public boolean getTruth() {
+		if (this.getNodeType() == NodeType.TRUE) {
+			return true;
+		} else if (this.getNodeType() == NodeType.FALSE){
+			return false;
+		} else {
+			assert(false);
+			throw new RuntimeException();
+		}
 	}
-
+	
+	public String getTruthValue() {
+		if (this.getNodeType() == NodeType.TRUE) {
+			return "TRUE";
+		} else if (this.getNodeType() == NodeType.FALSE){
+			return "FALSE";
+		} else {
+			assert(false);
+			throw new RuntimeException();
+		}
+	}
+	
 	public void setVar(int v) {
 		assert((nodeType == NodeType.VAR) || (nodeType == NodeType.FORALL) || (nodeType == NodeType.EXISTS));
 		this.var = v;
@@ -566,7 +603,7 @@ public class SimpleNode implements Node, Serializable {
 	}
 
 	public void setOp(String o) {
-		this.op = o;
+//		this.op = o;
 		if (o == "&") {
 			nodeType = NodeType.AND;
 		} else if (o == "|") {
@@ -576,9 +613,9 @@ public class SimpleNode implements Node, Serializable {
 		} 
 	}
 
-	public String getOp() {
-		return op;
-	}
+//	public String getOp() {
+//		return op;
+//	}
 
 	public int getId() {
 		return id;
@@ -619,6 +656,7 @@ public class SimpleNode implements Node, Serializable {
 			children = c;
 		}
 		children[i] = n;
+		assert(children.length < 3);
 	}
 
 	public Node jjtGetChild(int i) {
@@ -645,8 +683,12 @@ public class SimpleNode implements Node, Serializable {
 	 */
 
 	public String toString() {
-		return Qbf_parserTreeConstants.jjtNodeName[id] + " (op= " + op
-				+ ", var= " + var + " " + truthValue + ", type= " + nodeType + " )";
+		String desc;
+		if(this.getNodeType() == NodeType.VAR)
+			desc = this.getNodeType() + "(" + var + ")";
+		else
+			desc = this.getNodeType().toString();
+		return desc;
 	}
 
 	public String toString(String prefix) {
@@ -672,10 +714,10 @@ public class SimpleNode implements Node, Serializable {
 
 	public double getTruthProbability() {
 		if (children != null) {
-			if(this.getOp().equals("|")){
+			if(this.getNodeType() == NodeType.OR){
 				assert (children.length == 2);
 				return 1-((1-children[0].getTruthProbability())*(1-children[1].getTruthProbability()));
-			} else if(this.getOp().equals("&")){
+			} else if(this.getNodeType() == NodeType.AND){
 				assert (children.length == 2);
 				return (children[0].getTruthProbability() * children[1].getTruthProbability());
 			} else {

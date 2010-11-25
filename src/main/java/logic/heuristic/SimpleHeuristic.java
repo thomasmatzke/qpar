@@ -30,7 +30,7 @@ public class SimpleHeuristic extends Heuristic {
 	}
 
 	public void traverse(SimpleNode n) {
-		switch(n.nodeType) {
+		switch(n.getNodeType()) {
 			case START:
 				assert(n.jjtGetNumChildren() == 1);
 				traverse((SimpleNode)n.jjtGetChild(0));

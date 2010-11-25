@@ -6,10 +6,10 @@ import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
 
-import main.java.Util;
 import main.java.master.Master;
 import main.java.rmi.SlaveRemote;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 public class SlavesTableModel extends AbstractTableModel {
@@ -44,7 +44,7 @@ public class SlavesTableModel extends AbstractTableModel {
 				case 1:
 					return slave.getCores();
 				case 2:
-					return Util.join(slave.getCurrentJobs(), ",");
+					return StringUtils.join(slave.getCurrentJobs(), ",");
 				default:
 					return null;
 			}

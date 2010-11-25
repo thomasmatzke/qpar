@@ -275,10 +275,11 @@ public class Job {
 				return;
 			}
 			resultCtr++;
+//logger.info("dttree pre merge: " + formula.decisionRoot.dump());
 			boolean solved = formula.mergeQbf(tqbfId, result);
 			logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
-					+ getId());
-			
+					+ getId() + " (" + result + ")");
+//logger.info("dttree post merge: " + formula.decisionRoot.dump());
 			this.formulaDesignations.remove(tqbfId);
 			if (solved)
 				fireJobCompleted(formula.getResult());
@@ -296,7 +297,7 @@ public class Job {
 	
 	public void handleResult(Result r) {
 		if(r.type != Result.Type.ERROR) {
-			handleResult(r.tqbfId, r.result);
+			handleResult(r.tqbfId, r.type == Result.Type.TRUE ? true : false);
 			return;
 		}
 		
