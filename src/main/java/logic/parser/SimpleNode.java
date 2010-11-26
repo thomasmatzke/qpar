@@ -407,7 +407,7 @@ public class SimpleNode implements Node, Serializable {
 				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.FALSE)) {
 					if(QPar.logLevel == Level.DEBUG)
 						logger.debug("AND FALSE occured");
-//					parentNode.setTruthValue("FALSE");
+					parentNode.setTruthValue(false);
 					parentNode.deleteChildren();
 					jjtSetParent(null);
 					if(QPar.logLevel == Level.DEBUG)
@@ -477,7 +477,7 @@ public class SimpleNode implements Node, Serializable {
 					if(QPar.logLevel == Level.DEBUG)
 						logger.debug("OR TRUE occured");
 //					parentNode.setOp("");
-//					parentNode.setTruthValue("TRUE");
+					parentNode.setTruthValue(true);
 					parentNode.deleteChildren();
 					jjtSetParent(null);
 					if(QPar.logLevel == Level.DEBUG)

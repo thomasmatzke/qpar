@@ -1,12 +1,12 @@
 #MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
 #EVALUATE testing/NPNCNF2008 2 qpro 60
-#EVALUATE testing/boole 4 qpro 60
+#EVALUATE testing/boole 3 qpro 60
 
 waitforslave 6 qpro
 #newjob testing/NPNCNF2008/assertion11_0_10-bin.qbf testing/NPNCNF2008/assertion11_0_10-bin.txt qpro rand 2
 #newjob testing/NPNCNF2008/ring5_4-bin.qbf testing/NPNCNF2008/ring5_4-bin.qbf.txt qpro simple 2
 #newjob testing/NPNCNF2008/008-020-03-04-000.ncf-bin.qbf testing/NPNCNF2008/008-020-03-04-000.ncf-bin.txt qpro rand 2
-newjob testing\boole\counter8_2-bin.qbf testing\boole\counter8_2-bin.qbf.txt qpro litcount 2
+newjob testing\boole\counter7_2-bin.qbf testing\counter7_2-bin.qbf.txt qpro litcount 2
 startjob 1
 waitforresult 1
 killallslaves

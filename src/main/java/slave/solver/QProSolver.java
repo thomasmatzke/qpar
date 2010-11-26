@@ -177,17 +177,17 @@ logger.info("UNSYNCHRONIZE ME!");
 
 		// can be used to check if there's really some formula in t
 		// t.checkQbf();
-t.dump(t.getId()+" PRE ");
+//t.dump(t.getId()+" PRE ");
 		// assign the truth values
 		logger.debug("assigning truth values started");
 		t.assignTruthValues();
 		logger.debug("assigning truth values finished");
-t.dump(t.getId()+"POSTASSIGN ");
+//t.dump(t.getId()+"POSTASSIGN ");
 		// reduce the tree
 		logger.debug("reducing started");
 //		t.reduceTree();
 		t.reduceFast();
-t.dump(t.getId()+"POSTREDUCE ");
+//t.dump(t.getId()+"POSTREDUCE ");
 		logger.debug("reducing finished");
 
 		// maybe reducing the tree left us with a truth node only, then we have
@@ -223,15 +223,13 @@ t.dump(t.getId()+"POSTREDUCE ");
 		logger.debug("check for orphaned quantified vars finished");
 
 		// t.dump("DEBUG");
-		// t.checkQbf();
-		
+//		t.checkQbf();
+//t.getRootNode().dump("NARF");		
 		logger.debug("max var: " + t.getMaxVar());
 
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
-		
-logger.info("new input: \n" + traversedTree);
-	    
+			    
 		traversedTree += "QBF\n" + (t.getMaxVar()) + "\n";
 		
 		// traversedTree += "\nq";

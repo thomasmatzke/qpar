@@ -38,7 +38,7 @@ public interface Node {
 	public boolean	reduce();
 	public boolean	replaceChild(Node oldNode, Node newNode);
 //	public void		setOp(String o);
-//	public void		setTruthValue(String t);
+	public void		setTruthValue(boolean t);
 	public void		setVar(int v);
 	public void		setNodeType(main.java.logic.parser.SimpleNode.NodeType n);
 	public main.java.logic.parser.SimpleNode.NodeType getNodeType();
