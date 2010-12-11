@@ -9,31 +9,28 @@ import main.java.logic.TransmissionQbf;
  * @author thomasm
  * 
  */
-public interface Solver extends Runnable {
+public abstract class Solver implements Runnable {
 
-	// What was that for?
-	// public static Hashtable<String, Solver> idToToolMap = new
-	// Hashtable<String, Solver>();
-
-	/**
-	 * Setter to hand the qbf-formula to the solver
-	 */
-	public void setTransmissionQbf(TransmissionQbf formula);
-
-	/**
-	 * Called before the thread is run with Thread.start()
-	 */
-	public void prepare();
-
-	/**
-	 * Called when the slave receives a kill-message or an abort-message
-	 */
-	public void kill();
-
-	public void run();
-
-	public TransmissionQbf getTransmissionQbf();
+	protected TransmissionQbf formula;
+	protected Thread thread;
 	
-	public Thread getThread();
+	public abstract void kill();
 
+	public abstract void run();
+
+	public TransmissionQbf getTransmissionQbf() {
+		return this.formula;
+	}
+	
+	public void setTransmissionQbf(TransmissionQbf formula) {
+		this.formula = formula;
+	}
+	
+	public Thread getThread() {
+		return this.thread;
+	}
+
+	public void setThread(Thread t) {
+		this.thread = t;		
+	}
 }

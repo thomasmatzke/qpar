@@ -207,7 +207,6 @@ public class Slave implements SlaveRemote, Serializable {
 		logger.info("Starting computation of formula " + formula.getId());
 		Solver s = SolverFactory.getSolver(solverId);
 		s.setTransmissionQbf(formula);
-		s.prepare();
 		threads.put(formula.getId(), s);
 		s.getThread().start();
 	}

@@ -52,7 +52,7 @@ public class Reducer {
 		// TODO: possible to eliminate this check?
 		if(!node.checkConnectionToRoot())
 			return null;
-logger.info("Reducing node " + node +" with children " + Arrays.toString(node.children));
+//logger.info("Reducing node " + node +" with children " + Arrays.toString(node.children));
 		SimpleNode newNode = null;
 		if(node.jjtGetNumChildren() == 2)
 			newNode = evaluate(node, (SimpleNode)node.jjtGetChild(0), (SimpleNode)node.jjtGetChild(1));
@@ -73,7 +73,7 @@ logger.info("Reducing node " + node +" with children " + Arrays.toString(node.ch
 		}
 		newParentChildren.add(newNode);
 		parentNode.children = newParentChildren.toArray(new SimpleNode[newParentChildren.size()]);
-logger.info("Reduced to: " + newNode);
+//logger.info("Reduced to: " + newNode);
 		
 		// Disconnect ourself from parent node
 		node.jjtSetParent(null);

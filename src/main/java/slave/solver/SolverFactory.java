@@ -32,9 +32,9 @@ public class SolverFactory {
 	 */
 	public static Solver getSolver(String id) {
 		if (id.equals("qpro")) {
-			QProSolver q = new QProSolver();
+			Solver q = new QProSolver();
 			Thread t = new Thread(q);
-			q.thread = t;
+			q.setThread(t);
 			return q;
 		}
 		return null;

@@ -10,7 +10,6 @@
 	<classpathentry kind="lib" path="lib/mail.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.0-beta.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.8.2.jar"/>
-	<classpathentry kind="con" path="org.eclipse.tptp.platform.instrumentation.ui.ContainerInitializer/Build to Manage Libraries"/>
 	<classpathentry kind="lib" path="F:/thomasm/uni/praktikum_logik/QPar/lib/commons-lang3-3.0-beta.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

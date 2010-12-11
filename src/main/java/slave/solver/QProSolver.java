@@ -22,18 +22,16 @@ import org.apache.log4j.Logger;
  * @author thomasm
  * 
  */
-public class QProSolver implements Solver {
+public class QProSolver extends Solver {
 
 	static Logger logger = Logger.getLogger(QProSolver.class);
 
 	public static final String toolId = "qpro";
 	private Process qpro_process;
-	private TransmissionQbf formula;
+	
 	private String inputString = null;
 	private boolean killed = false;
-	public Thread thread;
-	
-	
+		
 	/**
 	 * Kills the qpro-process
 	 */
@@ -43,21 +41,10 @@ public class QProSolver implements Solver {
 			qpro_process.destroy();
 	}
 
-	public void prepare() {
-	}
-
-	public void setTransmissionQbf(TransmissionQbf formula) {
-		this.formula = formula;
-	}
-
-	public TransmissionQbf getTransmissionQbf() {
-		return formula;
-	}
-
 	public void run() {
 		ProcessBuilder pb = new ProcessBuilder("qpro");
 		Result r = new Result();
-		r.tqbfId = formula.getId();
+		r.tqbfId = this.formula.getId();
 		r.jobId = formula.jobId;
 
 		// Get the id from our formula so we can nullify it after qproization
@@ -94,7 +81,6 @@ public class QProSolver implements Solver {
 			String readString = writer.toString();
 			logger.info("Waiting for qpro...");
 			qpro_process.waitFor();
-
 			// If qpro returns 1 the subformula is satisfiable
 			if (readString.startsWith("1")) {
 				logger.info("Result for Subformula(" + tqbfId + ") was "
@@ -167,8 +153,8 @@ logger.info("UNSYNCHRONIZE ME!");
 //		Vector<Integer> eVars = new Vector<Integer>();
 //		Vector<Integer> aVars = new Vector<Integer>();
 		// Vector<Integer> vars = new Vector<Integer>();
-		Vector<Integer> orphanedVars = new Vector<Integer>();
-		int i = 0;
+//		Vector<Integer> orphanedVars = new Vector<Integer>();
+//		int i = 0;
 		String traversedTree = "";
 
 		// vars = t.getVars();
@@ -247,7 +233,7 @@ logger.info("UNSYNCHRONIZE ME!");
 		traversedTree += "QBF\n";
 		logger.debug("traversing finished");
 
-		// logger.debug(traversedTree);
+		 logger.debug(traversedTree);
 
 		return traversedTree;
 		// return reindexVariables(traversedTree, vars);
@@ -257,6 +243,7 @@ logger.info("UNSYNCHRONIZE ME!");
 	public Thread getThread() {
 		return thread;
 	}
+
 
 	// private static String reindexVariables(String s, Vector<Integer> vars) {
 	// String replaced = s;
