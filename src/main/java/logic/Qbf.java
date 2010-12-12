@@ -117,12 +117,12 @@ public class Qbf {
 			
 		int leafCtr = 1;
 		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
-		decisionRoot = new DTNode(null);
+		decisionRoot = new DTNode(DTNode.DTNodeType.TQBF);
 		leaves.addFirst(decisionRoot);
 		
 		// Generate the tree
 		logger.info("Generating decision tree...");
-		do {
+		while(leafCtr < n) {
 			DTNode leaf 		= leaves.pollLast();
 			Integer splitVar 	= order[leaf.getDepth()]; 
 			if(aVars.contains(splitVar)) {
@@ -141,7 +141,7 @@ public class Qbf {
 			leaf.addChild(negChild); leaf.addChild(posChild);
 			leaves.addFirst(negChild); leaves.addFirst(posChild);
 			leafCtr++;
-		} while(leafCtr < n);
+		} 
 		
 		logger.info("\n" + decisionRoot.dump());
 		

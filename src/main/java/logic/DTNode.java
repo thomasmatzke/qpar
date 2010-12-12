@@ -58,7 +58,7 @@ public class DTNode {
 		if(parent == null)
 			return;
 		DTNode sibling = null;
-//logger.info("reducing " + this);
+		
 		if (getParent().getRightChild() != this) {
 			sibling = getParent().getRightChild();
 		} else {
@@ -92,8 +92,6 @@ public class DTNode {
 			} else if(this.type == DTNodeType.FALSE) {
 				if (sibling.hasTruthValue()) {
 					parent.setTruthValue(sibling.getTruthValue() || this.getTruthValue());
-//logger.info("sibling truthvalue: " + (sibling.getTruthValue()));
-//logger.info("this truthvalue: " + (this.getTruthValue()));
 					parent.setLeftChild(null);
 					parent.setRightChild(null);
 					sibling.setParent(null);

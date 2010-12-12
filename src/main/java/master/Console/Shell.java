@@ -222,7 +222,7 @@ public class Shell implements Runnable{
 	 */
 	private void evaluate(StringTokenizer token) {
 		File	directory			= null;
-		int 	cores				= 2;
+		int 	cores				= 1;
 		long 	timeout				= 60000;
 		String 	solverId			= "qpro";
 		Vector<String>	heuristics	= HeuristicFactory.getAvailableHeuristics();

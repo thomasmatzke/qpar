@@ -34,7 +34,7 @@ import sun.misc.Signal;
  * @author thomasm
  *
  */
-public class Slave implements SlaveRemote, Serializable {
+public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializable  {
 	static Logger logger = Logger.getLogger(Slave.class);
 		
 	public static boolean connected = false;
@@ -44,7 +44,7 @@ public class Slave implements SlaveRemote, Serializable {
 	public static MasterRemote master = null;
 	public static Slave instance;
 	
-	public Slave() throws InterruptedException {
+	public Slave() throws InterruptedException, RemoteException {
 		instance  = this;
 		logger.info("Starting Slave...");
 		SignalHandler handler = new SignalHandler(this);
@@ -75,8 +75,8 @@ public class Slave implements SlaveRemote, Serializable {
 		
 			try {
 				master = (MasterRemote)Naming.lookup(masterName);
-				SlaveRemote stub = (SlaveRemote) UnicastRemoteObject.exportObject(this, 0);
-				master.registerSlave(stub);
+				//SlaveRemote stub = (SlaveRemote) UnicastRemoteObject.exportObject(this, 0);
+				master.registerSlave(this);
 				connected = true;
 				break;
 			} catch (MalformedURLException e) {
@@ -100,7 +100,7 @@ public class Slave implements SlaveRemote, Serializable {
 	 * @param args
 	 * @throws InterruptedException 
 	 */
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, RemoteException {
 		ArgumentParser ap = new ArgumentParser(args);
 		// Basic console logging
 		BasicConfigurator.configure();
