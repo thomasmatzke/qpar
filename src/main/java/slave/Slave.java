@@ -36,16 +36,14 @@ import sun.misc.Signal;
  */
 public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializable  {
 	static Logger logger = Logger.getLogger(Slave.class);
-		
-	public static boolean connected = false;
 	public static ArrayList<String> availableSolvers = new ArrayList<String>();
 	public static String masterIp;
-	public static Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
-	public static MasterRemote master = null;
-	public static Slave instance;
 	
+	public boolean connected = false;
+	public Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
+	public MasterRemote master = null;
+		
 	public Slave() throws InterruptedException, RemoteException {
-		instance  = this;
 		logger.info("Starting Slave...");
 		SignalHandler handler = new SignalHandler(this);
 		Signal.handle(new Signal("INT"), handler);
@@ -59,7 +57,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 				
 		connect();
 		
-		new PingTimer(10);
+		new PingTimer(10, this);
 		
 		synchronized(this) {
 			wait();
@@ -113,7 +111,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 			else
 				usage();
 		}
-		logger.setLevel(QPar.logLevel);
+		Logger.getRootLogger().setLevel(QPar.logLevel);
 		
 		masterIp = ap.nextParam();
 		String solversString = ap.getOption("solvers");
@@ -156,8 +154,11 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		System.exit(-1);
 	}
 	
-	public static void addThread(String qbfId, Solver solver) {
-		threads.put(qbfId, solver);
+	public void addThread(String qbfId, Solver solver) {
+		this.threads.put(qbfId, solver);
+		try {
+			assert(threads.size() <= this.getCores());
+		} catch (RemoteException e) { logger.error(e); }
 	}
 
 	@Override
@@ -203,9 +204,8 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 	@Override
 	public void computeFormula(TransmissionQbf formula, String solverId)
 			throws RemoteException {
-		Runtime.getRuntime().gc();
 		logger.info("Starting computation of formula " + formula.getId());
-		Solver s = SolverFactory.getSolver(solverId);
+		Solver s = SolverFactory.getSolver(solverId, this);
 		s.setTransmissionQbf(formula);
 		threads.put(formula.getId(), s);
 		s.getThread().start();
@@ -233,6 +233,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 	public void killAllThreads() {
 		for(Solver s : threads.values()) {
 			s.kill();
+			threads.remove(s.getTransmissionQbf().getId());
 		}
 	}
 	

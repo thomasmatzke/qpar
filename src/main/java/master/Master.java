@@ -47,11 +47,8 @@ public class Master implements MasterRemote, Serializable {
 	private static ProgramWindow programWindow;
 	private static Thread shellthread;
 	private static Shell shell;
-
 	private static boolean startGui = false;
-	
 	private static HashMap<String, SlaveRemote> slaves = new HashMap<String, SlaveRemote>();
-
 	public static AbstractTableModel slaveTableModel;
 	
 	public static void removeSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
@@ -89,7 +86,7 @@ public class Master implements MasterRemote, Serializable {
 			else
 				usage();
 		}
-		logger.setLevel(QPar.logLevel);
+		Logger.getRootLogger().setLevel(QPar.logLevel);
 		new Master();
 	}
 

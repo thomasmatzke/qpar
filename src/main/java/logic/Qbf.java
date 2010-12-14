@@ -55,16 +55,13 @@ public class Qbf {
 		idCounter++;
 		this.id = idCounter;
 		
-		Qbf_parser parser;
 		long start = System.currentTimeMillis();
-		
-		parser = new Qbf_parser(new FileInputStream(filename));
-		
-		
-		parser.ReInit(new FileInputStream(filename), null);
-
 		// parse the formula, get various vectors of vars
 		try {
+			Qbf_parser parser = new Qbf_parser(new FileInputStream(filename));
+					
+			parser.ReInit(new FileInputStream(filename), null);
+	
 			logger.debug("Begin parsing...");
 			parser.Input();	
 			logger.debug("Succesful parse");
@@ -82,7 +79,7 @@ public class Qbf {
 		}
 		catch (TokenMgrError e) {
 			logger.error(e);
-			return;
+			throw e;
 		}
 		long end = System.currentTimeMillis();
 		logger.debug("Existential quantified Variables: " + eVars);
@@ -143,7 +140,7 @@ public class Qbf {
 			leafCtr++;
 		} 
 		
-		logger.info("\n" + decisionRoot.dump());
+//logger.info("\n" + decisionRoot.dump());
 		
 		assert(leaves.size() == n);
 		

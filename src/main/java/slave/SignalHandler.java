@@ -27,7 +27,7 @@ public class SignalHandler implements sun.misc.SignalHandler {
 	public void handle(Signal sig) {
 		logger.info("Cought Signal " + sig.getName());
 		logger.info("Killing workerthreads...");
-		for(Entry<String, Solver> entry : Slave.threads.entrySet()) {
+		for(Entry<String, Solver> entry : slaveDaemon.threads.entrySet()) {
 			
 			Result r = new Result();
 			r.type = Result.Type.ERROR;
@@ -36,14 +36,14 @@ public class SignalHandler implements sun.misc.SignalHandler {
 			r.errorMessage = "Cought Signal " + sig.getName();
 			entry.getValue().kill();
 			try {
-				Slave.master.returnResult(r);
+				slaveDaemon.master.returnResult(r);
 			} catch (RemoteException e) {
 				logger.error(e);
 			}
 		}
 		
 		try {
-			Slave.master.unregisterSlave(slaveDaemon);
+			slaveDaemon.master.unregisterSlave(slaveDaemon);
 		} catch (RemoteException e) {
 			logger.error(e);
 		} catch (UnknownHostException e) {

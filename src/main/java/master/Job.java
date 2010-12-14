@@ -39,7 +39,6 @@ public class Job {
 	private long timeout = 0;
 	private Qbf formula;
 
-	private Object handleResultLock = new Object();
 	// tqbfs -> slaves
 	public volatile Map<String, SlaveRemote> formulaDesignations = new HashMap<String, SlaveRemote>();
 	private String heuristic, id, inputFileString, outputFileString, solver;
@@ -107,6 +106,7 @@ public class Job {
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 		logger.info("AbortMessages sent.");
+		this.freeResources();
 	}
 
 	private void abortComputations() throws RemoteException {
@@ -200,18 +200,18 @@ public class Job {
 		return result;
 	}
 
-	public synchronized void fireJobCompleted(boolean result) {
-		if(this.getStatus() == Status.COMPLETE)
+	synchronized public void fireJobCompleted(boolean result) {
+		if(this.getStatus() != Status.RUNNING)
 			return;
 		this.setStatus(Status.COMPLETE);
+		this.setStoppedAt(new Date());
 		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
 		try {
 			this.abortComputations();
 		} catch (RemoteException e) {
 			logger.error(e);
 		}
-		this.setResult(result);
-		this.setStoppedAt(new Date());
+		this.setResult(result);		
 
 		// Write the results to a file
 		// But only if we want that. In case of a evaluation
@@ -244,13 +244,13 @@ public class Job {
 		System.gc();
 	}
 	
-	public synchronized long totalMillis() {
+	public long totalMillis() {
 		// if(this.status != Job.COMPLETE)
 		// return -1;
 		return this.getStoppedAt().getTime() - this.getStartedAt().getTime();
 	}
 
-	public synchronized long totalSecs() {
+	public long totalSecs() {
 		// if(this.status != Job.COMPLETE)
 		// return -1;
 		return (this.getStoppedAt().getTime() - this.getStartedAt().getTime()) / 1000;
@@ -269,33 +269,30 @@ public class Job {
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
 
-	public void handleResult(String tqbfId, boolean result) {
-		synchronized(handleResultLock) {
-			if(this.status == Status.COMPLETE) {
-				return;
-			}
-			resultCtr++;
+	synchronized private void handleResult(String tqbfId, boolean result) {
+		if(this.status != Status.RUNNING) {
+			return;
+		}
+		resultCtr++;
 //logger.info("dttree pre merge: " + formula.decisionRoot.dump());
-			boolean solved = formula.mergeQbf(tqbfId, result);
-			logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
-					+ getId() + " (" + result + ")");
+		boolean solved = formula.mergeQbf(tqbfId, result);
+		logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
+				+ getId() + " (" + result + ")");
 //logger.info("dttree post merge: " + formula.decisionRoot.dump());
-			this.formulaDesignations.remove(tqbfId);
-			if (solved)
-				fireJobCompleted(formula.getResult());
-			else {
-				if(resultCtr == subformulas.size()) {
-					// Received all subformulas but still no result...something is wrong
-					logger.fatal("Merging broken!");
-					logger.fatal("Dumping decisiontree: \n" + formula.decisionRoot.dump());
-					System.exit(-1);
-				}
+		this.formulaDesignations.remove(tqbfId);
+		if (solved)
+			fireJobCompleted(formula.getResult());
+		else {
+			if(resultCtr == subformulas.size()) {
+				// Received all subformulas but still no result...something is wrong
+				logger.fatal("Merging broken!");
+				logger.fatal("Dumping decisiontree: \n" + formula.decisionRoot.dump());
+				System.exit(-1);
 			}
-			
 		}
 	}
 	
-	public void handleResult(Result r) {
+	synchronized public void handleResult(Result r) {
 		if(r.type != Result.Type.ERROR) {
 			handleResult(r.tqbfId, r.type == Result.Type.TRUE ? true : false);
 			return;

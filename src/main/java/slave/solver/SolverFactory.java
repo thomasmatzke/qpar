@@ -2,6 +2,8 @@ package main.java.slave.solver;
 
 import java.util.Vector;
 
+import main.java.slave.Slave;
+
 /**
  * A solver-factory
  * 
@@ -30,9 +32,9 @@ public class SolverFactory {
 	 * @param id
 	 * @return
 	 */
-	public static Solver getSolver(String id) {
+	public static Solver getSolver(String id, Slave slave) {
 		if (id.equals("qpro")) {
-			Solver q = new QProSolver();
+			Solver q = new QProSolver(slave);
 			Thread t = new Thread(q);
 			q.setThread(t);
 			return q;

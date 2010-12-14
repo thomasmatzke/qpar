@@ -24,14 +24,16 @@ import org.apache.log4j.Logger;
  */
 public class QProSolver extends Solver {
 
-	static Logger logger = Logger.getLogger(QProSolver.class);
-
 	public static final String toolId = "qpro";
 	private Process qpro_process;
 	
 	private String inputString = null;
 	private boolean killed = false;
-		
+	
+	public QProSolver(Slave slave) {
+		super(slave);
+	}
+	
 	/**
 	 * Kills the qpro-process
 	 */
@@ -41,6 +43,15 @@ public class QProSolver extends Solver {
 			qpro_process.destroy();
 	}
 
+	protected void finalize() throws Throwable {
+	    try {
+	    	if (qpro_process != null)
+				qpro_process.destroy();
+	    } finally {
+	        super.finalize();
+	    }
+	}
+	
 	public void run() {
 		ProcessBuilder pb = new ProcessBuilder("qpro");
 		Result r = new Result();
@@ -56,11 +67,11 @@ public class QProSolver extends Solver {
 			if (inputString.equals("true")) {
 				logger.info("Result for Subformula(" + tqbfId + ") was true. Formula collapsed to root-node");
 				r.type = Result.Type.TRUE;
-				Slave.master.returnResult(r);
+				this.slave.master.returnResult(r);
 				return;
 			} else if (inputString.equals("false")) {
 				r.type = Result.Type.FALSE;
-				Slave.master.returnResult(r);
+				this.slave.master.returnResult(r);
 				logger.info("Result for Subformula(" + tqbfId + ") was false. Formula collapsed to root-node");
 				return;
 			}
@@ -86,18 +97,17 @@ public class QProSolver extends Solver {
 				logger.info("Result for Subformula(" + tqbfId + ") was "
 						+ new Boolean(true));
 				r.type = Result.Type.TRUE;
-				Slave.master.returnResult(r);
+				this.slave.master.returnResult(r);
 
 				// IF qpro returns 0 the subformula is unsatisfiable
 			} else if (readString.startsWith("0")) {
 				r.type = Result.Type.FALSE;
-				Slave.master.returnResult(r);
+				this.slave.master.returnResult(r);
 				logger.info("Result for Subformula(" + tqbfId + ") was "
 						+ new Boolean(false));
 
 				// We have been killed by the master
 			} else if (this.killed == true) {
-				// do nothing
 
 				// anything else is an error
 			} else {
@@ -110,7 +120,7 @@ public class QProSolver extends Solver {
 					r.type = Result.Type.ERROR;
 					r.errorMessage = "Unexpected result from solver(" + readString
 							+ "). Aborting Formula.";
-					Slave.master.returnResult(r);
+					this.slave.master.returnResult(r);
 				}
 			}
 		} catch (IOException e) {
@@ -119,7 +129,7 @@ public class QProSolver extends Solver {
 				r.type = Result.Type.ERROR;
 				r.exception = e;
 				try {
-					Slave.master.returnResult(r);
+					this.slave.master.returnResult(r);
 				} catch (RemoteException e1) {
 					logger.error(e);
 					System.exit(-1);
@@ -131,14 +141,16 @@ public class QProSolver extends Solver {
 				r.type = Result.Type.ERROR;
 				r.exception = e;
 				try {
-					Slave.master.returnResult(r);
+					this.slave.master.returnResult(r);
 				} catch (RemoteException e1) {
 					logger.error(e);
 					System.exit(-1);
 				}
 			}
 		}
-		Slave.threads.remove(tqbfId);
+		if (qpro_process != null)
+			qpro_process.destroy();
+		this.slave.threads.remove(tqbfId);
 	}
 
 	/**
@@ -148,8 +160,7 @@ public class QProSolver extends Solver {
 	 *            the QBF the slave gets from the master
 	 * @return a string representation of the tree in QPRO format
 	 */
-	synchronized private static String toInputString(TransmissionQbf t) {
-logger.info("UNSYNCHRONIZE ME!");
+	private static String toInputString(TransmissionQbf t) {
 //		Vector<Integer> eVars = new Vector<Integer>();
 //		Vector<Integer> aVars = new Vector<Integer>();
 		// Vector<Integer> vars = new Vector<Integer>();
@@ -232,8 +243,6 @@ logger.info("UNSYNCHRONIZE ME!");
 		 */
 		traversedTree += "QBF\n";
 		logger.debug("traversing finished");
-
-		 logger.debug(traversedTree);
 
 		return traversedTree;
 		// return reindexVariables(traversedTree, vars);

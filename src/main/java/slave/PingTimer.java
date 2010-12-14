@@ -12,28 +12,31 @@ public class PingTimer extends TimerTask {
 	
 	int interval;
 	
-	public PingTimer(int interval) {
+	Slave slave = null;
+	
+	public PingTimer(int interval, Slave slave) {
+		this. slave = slave;
 		this.interval = interval;
 		Timer t = new Timer();
 		t.schedule(this, 0, interval * 1000);
 	}
-	
+		
 	@Override
 	public void run() {
 		// Make a call to the master. look for exceptions to see if
 		// the master died. the try to reconnect
 		
 		try {
-			Slave.master.ping();
+			slave.master.ping();
 		} catch (RemoteException e) {
-			if(Slave.connected){
+			if(slave.connected){
 				logger.error("Master probably dead: " + e);
 				logger.error("Killing threads...");
-				Slave.instance.killAllThreads();
-				Slave.connected = false;
+				slave.killAllThreads();
+				slave.connected = false;
 				logger.error("Reconnecting...");
 				try {
-					Slave.instance.connect();
+					slave.connect();
 				} catch (InterruptedException e1) {}
 			}
 		}

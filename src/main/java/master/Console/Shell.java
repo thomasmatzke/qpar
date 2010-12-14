@@ -258,11 +258,11 @@ public class Shell implements Runnable{
 		// Wait for #cores
 		waitforslaves(cores, solverId);
 
-		for(int c = 2; c <= cores; c++) {
+		for(int c = 1; c <= cores; c++) {
 			String line = "" + c + "\t";
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
 				Evaluation e = new Evaluation(directory, h, solverId, timeout, c);
-				result[c-2][heuristics.indexOf(h)] = e;
+				result[c-1][heuristics.indexOf(h)] = e;
 				e.evaluate();
 				line += e.toString() + "\t";
 			}
@@ -280,8 +280,8 @@ public class Shell implements Runnable{
 			Boolean compare = null;
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
 				correctnessReport += "Heuristic: " + h + "\n";
-				for(int c = 2; c <= cores; c++) {
-					Boolean current = result[c-2][heuristics.indexOf(h)].getResults().get(f);
+				for(int c = 1; c <= cores; c++) {
+					Boolean current = result[c-1][heuristics.indexOf(h)].getResults().get(f);
 					if(current == null) {
 						correctnessReport += "x";
 					} else if(current == true) {
