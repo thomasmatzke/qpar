@@ -99,21 +99,11 @@ public class QProSolver extends Solver {
 							
 				logger.info("Piping inputstring to qpro...");
 				osw.write(inputString);
-				logger.info("Flushing stdin writer...");
 				osw.flush();
 			}
 			
 			logger.info("Waiting for qpro...");
 			qpro_process.waitFor();
-			logger.info("waitFor returned...");
-						
-			//StringWriter writer = new StringWriter();
-			//IOUtils.copy(qpro_process.getInputStream(), writer);
-//			logger.info("Stream copied...");
-			//readString = writer.toString();
-//			StreamGobbler omNomNom = new StreamGobbler(qpro_process.getInputStream());
-//			new Thread(omNomNom).start();
-//			readString = omNomNom.readString;
 			
 			String line = "";
 			StringBuffer sb = new StringBuffer();
@@ -145,7 +135,7 @@ public class QProSolver extends Solver {
 
 			// We have been killed by the master
 			} else if (this.killed == true) {
-				logger.info("Thread was killed...");
+				
 				// anything else is an error
 			} else {
 				logger.error("Unexpected result from solver.\n"
