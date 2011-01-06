@@ -27,29 +27,30 @@ public class SignalHandler implements sun.misc.SignalHandler {
 	public void handle(Signal sig) {
 		logger.info("Cought Signal " + sig.getName());
 		logger.info("Killing workerthreads...");
-		for(Entry<String, Solver> entry : slaveDaemon.threads.entrySet()) {
+		synchronized(slaveDaemon.threads) {
+			for(Entry<String, Solver> entry : slaveDaemon.threads.entrySet()) {
+				
+				Result r = new Result();
+				r.type = Result.Type.ERROR;
+				r.tqbfId = entry.getValue().getTransmissionQbf().getId();
+				r.jobId = entry.getValue().getTransmissionQbf().jobId;
+				r.errorMessage = "Cought Signal " + sig.getName();
+				entry.getValue().kill();
+				try {
+					slaveDaemon.master.returnResult(r);
+				} catch (RemoteException e) {
+					logger.error(e);
+				}
+			}
 			
-			Result r = new Result();
-			r.type = Result.Type.ERROR;
-			r.tqbfId = entry.getValue().getTransmissionQbf().getId();
-			r.jobId = entry.getValue().getTransmissionQbf().jobId;
-			r.errorMessage = "Cought Signal " + sig.getName();
-			entry.getValue().kill();
 			try {
-				slaveDaemon.master.returnResult(r);
+				slaveDaemon.master.unregisterSlave(slaveDaemon);
 			} catch (RemoteException e) {
+				logger.error(e);
+			} catch (UnknownHostException e) {
 				logger.error(e);
 			}
 		}
-		
-		try {
-			slaveDaemon.master.unregisterSlave(slaveDaemon);
-		} catch (RemoteException e) {
-			logger.error(e);
-		} catch (UnknownHostException e) {
-			logger.error(e);
-		}
-		
 		logger.info("Shutting down...");
 		System.exit(0);
 	}

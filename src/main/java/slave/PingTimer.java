@@ -24,7 +24,7 @@ public class PingTimer extends TimerTask {
 	@Override
 	public void run() {
 		// Make a call to the master. look for exceptions to see if
-		// the master died. the try to reconnect
+		// the master died. then try to reconnect
 		
 		try {
 			slave.master.ping();

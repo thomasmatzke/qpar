@@ -1,10 +1,11 @@
 MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
 #EVALUATE testing/NPNCNF2008 2 qpro 60
-#EVALUATE testing/boole 4 6 qpro 60
+#EVALUATE testing/boole 3 5 qpro 60
+EVALUATE testing/cctgen 3 5 qpro 60
 
-EVALUATE testing/dme 1 5 qpro 60
+#EVALUATE testing/dme 1 5 qpro 60
 #EVALUATE testing/consistency 4 6 qpro 60
-#EVALUATE testing/counter 4 6 qpro 60
+#EVALUATE testing/counter 1 5 qpro 60
 #EVALUATE testing/ring 4 6 qpro 60
 #EVALUATE testing/ncf 4 6 qpro 60
 #EVALUATE testing/possibility 4 6 qpro 60

@@ -23,7 +23,7 @@ public interface SlaveRemote extends Remote {
 
 	public String getHostName() throws RemoteException, UnknownHostException;
 	
-	public boolean abortFormula(String tqbfId) throws RemoteException;
+	public void abortFormula(String tqbfId) throws RemoteException;
 	
 	public Hashtable<String, Solver> getThreads() throws RemoteException;
 	

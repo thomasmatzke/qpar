@@ -45,7 +45,7 @@ public class Job {
 	private int usedCores = 0, resultCtr = 0;
 	private volatile Status status;
 	private List<TransmissionQbf> subformulas;
-	private Date startedAt, stoppedAt;
+	private Date startedAt = null, stoppedAt = null;
 	
 	public Job() {
 		logger.setLevel(QPar.logLevel);
@@ -138,16 +138,20 @@ public class Job {
 	}
 
 	public void start() throws IOException {
-		this.startedAt = new Date();
+		
 		this.setStatus(Status.RUNNING);
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 		this.formula = new Qbf(inputFileString);
 		
-		int availableCores = Master.getCoresWithSolver(this.solver);
 		ArrayList<SlaveRemote> slaves = Master.getSlavesWithSolver(this.solver);
-	
+		int availableCores = 0;
+		for(SlaveRemote slave : slaves) {
+			availableCores += slave.getCores();
+		}
+		
 		logger.debug("Available Cores: " + availableCores + ", Used Cores: " + usedCores);
+		this.startedAt = new Date();
 		this.subformulas = formula.splitQbf(Math.min(availableCores, usedCores), 
 											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
 		
@@ -183,13 +187,35 @@ public class Job {
 				sub.jobId = this.getId();
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
+				new Thread(new TransportThread(s, sub, this.solver)).start();
 				formulaDesignations.put(sub.getId(), s);
-				s.computeFormula(sub, this.solver);
+				//s.computeFormula(sub, this.solver);
 				if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
 					slotIndex = 0;
 			}
 		}
 							
+	}
+	
+	class TransportThread implements Runnable {
+		TransmissionQbf sub = null;
+		String solver = null;
+		SlaveRemote s = null;
+		
+		public TransportThread(SlaveRemote s, TransmissionQbf sub, String solver) {
+			this.sub = sub;
+			this.solver = solver;
+			this.s = s;
+		}
+		
+		@Override
+		public void run() {
+			try {
+				s.computeFormula(sub, this.solver);
+			} catch (RemoteException e) {
+				logger.error(e);
+			}
+		}
 	}
 
 	public void setResult(boolean result) {
@@ -287,6 +313,7 @@ public class Job {
 				System.exit(-1);
 			}
 		}
+		
 	}
 	
 	synchronized public void handleResult(Result r) {
@@ -383,7 +410,9 @@ public class Job {
 	}
 
 	public void setStoppedAt(Date stoppedAt) {
-		this.stoppedAt = stoppedAt;
+		// Only allow this once, in case of an erroneous second call
+		if(this.stoppedAt == null)
+			this.stoppedAt = stoppedAt;
 	}
 
 	public static AbstractTableModel getTableModel() {

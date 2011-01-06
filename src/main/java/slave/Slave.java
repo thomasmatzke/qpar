@@ -155,10 +155,12 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 	}
 	
 	public void addThread(String qbfId, Solver solver) {
-		this.threads.put(qbfId, solver);
-		try {
-			assert(threads.size() <= this.getCores());
-		} catch (RemoteException e) { logger.error(e); }
+		synchronized(this.threads) {
+			this.threads.put(qbfId, solver);
+			try {
+				assert(threads.size() <= this.getCores());
+			} catch (RemoteException e) { logger.error(e); }
+		}
 	}
 
 	@Override
@@ -207,34 +209,43 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		logger.info("Starting computation of formula " + formula.getId());
 		Solver s = SolverFactory.getSolver(solverId, this);
 		s.setTransmissionQbf(formula);
-		threads.put(formula.getId(), s);
-		s.getThread().start();
+		synchronized(threads) {
+			threads.put(formula.getId(), s);
+			s.getThread().start();
+		}
 	}
 
 	@Override
-	public boolean abortFormula(String tqbfId) {
+	public void abortFormula(String tqbfId) {
 		logger.info("Aborting formula " + tqbfId);
-		Solver s = threads.get(tqbfId);
-		s.kill();
-		threads.remove(tqbfId);
-		return true;
+		synchronized(threads) {
+			Solver s = threads.get(tqbfId);
+			if(s == null)
+				return;			
+			s.kill();
+			threads.remove(tqbfId);
+		}
 	}
 
 	@Override
 	public String[] getCurrentJobs() throws RemoteException {
 		ArrayList<String> jobIds = new ArrayList<String>();
-		for(Solver s : threads.values()) {
-			if(!jobIds.contains(s.getTransmissionQbf().jobId)) {
-				jobIds.add(s.getTransmissionQbf().jobId);
+		synchronized(threads) {
+			for(Solver s : threads.values()) {
+				if(!jobIds.contains(s.getTransmissionQbf().jobId)) {
+					jobIds.add(s.getTransmissionQbf().jobId);
+				}
 			}
 		}
 		return jobIds.toArray(new String[jobIds.size()]);
 	}
 	
 	public void killAllThreads() {
-		for(Solver s : threads.values()) {
-			s.kill();
-			threads.remove(s.getTransmissionQbf().getId());
+		synchronized(threads) {
+			for(Solver s : threads.values()) {
+				s.kill();
+				threads.remove(s.getTransmissionQbf().getId());
+			}
 		}
 	}
 	

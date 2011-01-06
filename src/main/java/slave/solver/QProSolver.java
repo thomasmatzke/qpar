@@ -1,13 +1,16 @@
 package main.java.slave.solver;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.rmi.RemoteException;
 import java.util.Vector;
 
 import main.java.QPar;
+import main.java.StreamGobbler;
 import main.java.logic.TransmissionQbf;
 import main.java.rmi.Result;
 import main.java.slave.Slave;
@@ -75,31 +78,57 @@ public class QProSolver extends Solver {
 			this.formula = null;
 			System.gc();
 			
+			
+			InputStreamReader isr = null;
+			BufferedReader br = null;
+			OutputStreamWriter osw = null;
+			
 			synchronized (this) {
-				if(this.killed) {
-					this.slave.threads.remove(tqbfId);
-					return;
-				}
-				ProcessBuilder pb = new ProcessBuilder("qpro");
+				synchronized(slave.threads) {
+					if(this.killed) {
+						this.slave.threads.remove(tqbfId);
+						return;
+					}
+				}				
 				logger.info("Starting qpro process...");
+				ProcessBuilder pb = new ProcessBuilder("qpro");
 				qpro_process = pb.start();
-				PrintWriter stdin = new PrintWriter(
-						qpro_process.getOutputStream());
-				
+				isr = new InputStreamReader(qpro_process.getInputStream());
+				br = new BufferedReader(isr);
+				osw = new OutputStreamWriter(qpro_process.getOutputStream());
+							
 				logger.info("Piping inputstring to qpro...");
-				stdin.print(inputString);
-				stdin.flush();
+				osw.write(inputString);
+				logger.info("Flushing stdin writer...");
+				osw.flush();
 			}
 			
 			logger.info("Waiting for qpro...");
 			qpro_process.waitFor();
-			InputStreamReader isr = new InputStreamReader(
-					qpro_process.getInputStream());
-			StringWriter writer = new StringWriter();
-			IOUtils.copy(isr, writer);
-			readString = writer.toString();
+			logger.info("waitFor returned...");
+						
+			//StringWriter writer = new StringWriter();
+			//IOUtils.copy(qpro_process.getInputStream(), writer);
+//			logger.info("Stream copied...");
+			//readString = writer.toString();
+//			StreamGobbler omNomNom = new StreamGobbler(qpro_process.getInputStream());
+//			new Thread(omNomNom).start();
+//			readString = omNomNom.readString;
 			
+			String line = "";
+			StringBuffer sb = new StringBuffer();
+
+			for(int i = 0; i<2; i++) {
+				line = br.readLine();
+				logger.info("Read line: " + line);
+				sb.append(line);
+				sb.append(System.getProperty("line.separator")); // BufferedReader strips the EOL character so we add a new one!
+			}
+			readString = sb.toString();
+			osw.close();
+			isr.close();
 			
+			logger.info("Result aquired...");
 			// If qpro returns 1 the subformula is satisfiable
 			if (readString.startsWith("1")) {
 				logger.info("Result for Subformula(" + tqbfId + ") was "
@@ -114,22 +143,20 @@ public class QProSolver extends Solver {
 				logger.info("Result for Subformula(" + tqbfId + ") was "
 						+ new Boolean(false));
 
-				// We have been killed by the master
+			// We have been killed by the master
 			} else if (this.killed == true) {
-
+				logger.info("Thread was killed...");
 				// anything else is an error
 			} else {
-				if (!killed) {
-					logger.error("Unexpected result from solver.\n"
-							+ "	Return String: " + readString + "\n"
-							+ "	TQbfId:		 : " + tqbfId + "\n");
-					if (QPar.logLevel == Level.DEBUG)
-						logger.debug("Formulastring: \n" + this.inputString);
-					r.type = Result.Type.ERROR;
-					r.errorMessage = "Unexpected result from solver("
-							+ readString + "). Aborting Formula.";
-					this.slave.master.returnResult(r);
-				}
+				logger.error("Unexpected result from solver.\n"
+						+ "	Return String: " + readString + "\n"
+						+ "	TQbfId:		 : " + tqbfId + "\n");
+				if (QPar.logLevel == Level.DEBUG)
+					logger.debug("Formulastring: \n" + this.inputString);
+				r.type = Result.Type.ERROR;
+				r.errorMessage = "Unexpected result from solver("
+						+ readString + "). Aborting Formula.";
+				this.slave.master.returnResult(r);
 			}
 		} catch (IOException e) {
 			if (!killed) {
@@ -199,7 +226,6 @@ public class QProSolver extends Solver {
 		// to give qpro a formula evaluating to that truth value
 		logger.debug("check if reduced to a single truth value");
 		if (t.rootIsTruthNode()) {
-			logger.info("totally reduced to " + t.rootGetTruthValue());
 			if (t.rootGetTruthValue()) {
 				// a formula evaluating to true
 				// logger.debug("reduced to death, sending fake true formula");
