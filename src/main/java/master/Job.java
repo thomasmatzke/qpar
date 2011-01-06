@@ -92,8 +92,8 @@ public class Job {
 		return jobs;
 	}
 
-	public synchronized void abort() {
-		if (this.status != Status.RUNNING)
+	synchronized public void abort() {
+		if (this.getStatus() != Status.RUNNING)
 			return;
 		logger.info("Aborting Job " + this.id + "...");
 		logger.info("Aborting Formulas. Sending AbortFormulaMessages to slaves...");
@@ -102,7 +102,7 @@ public class Job {
 		} catch (RemoteException e) {
 			logger.error(e);
 		}
-		this.status = Status.ERROR;
+		this.setStatus(Status.ERROR);
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 		logger.info("AbortMessages sent.");
@@ -128,7 +128,7 @@ public class Job {
 								"	Job Id:         " + this.id + "\n" +
 								"	Timeout (secs): " + timeout/1000 + "\n");
 					this.abort();
-					this.status = Status.TIMEOUT;
+					this.setStatus(Status.TIMEOUT);
 					break;
 				}
 			} catch (InterruptedException e) {
@@ -139,7 +139,7 @@ public class Job {
 
 	public void start() throws IOException {
 		this.startedAt = new Date();
-		this.status = Status.RUNNING;
+		this.setStatus(Status.RUNNING);
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 		this.formula = new Qbf(inputFileString);
@@ -178,7 +178,7 @@ public class Job {
 		int slotIndex = 0;
 		for(TransmissionQbf sub : subformulas) {
 			synchronized(this) {
-				if(this.status != Status.RUNNING)
+				if(this.getStatus() != Status.RUNNING)
 					return;
 				sub.jobId = this.getId();
 				SlaveRemote s = slots.get(slotIndex);
@@ -269,10 +269,7 @@ public class Job {
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
 
-	synchronized private void handleResult(String tqbfId, boolean result) {
-		if(this.status != Status.RUNNING) {
-			return;
-		}
+	private void handleResult(String tqbfId, boolean result) {
 		resultCtr++;
 //logger.info("dttree pre merge: " + formula.decisionRoot.dump());
 		boolean solved = formula.mergeQbf(tqbfId, result);
@@ -293,6 +290,10 @@ public class Job {
 	}
 	
 	synchronized public void handleResult(Result r) {
+		if(this.getStatus() != Status.RUNNING) {
+			return;
+		}
+		
 		if(r.type != Result.Type.ERROR) {
 			handleResult(r.tqbfId, r.type == Result.Type.TRUE ? true : false);
 			return;
@@ -334,13 +335,7 @@ public class Job {
 		return startedAt;
 	}
 
-	public Status getStatus() {
-		if((this.timeout != 0) && (this.status == Status.RUNNING) && (startedAt.getTime() + timeout) < new Date().getTime()) {
-			logger.info("Timeout triggered. Aborting...");
-			logger.error(Arrays.toString(Thread.currentThread().getStackTrace()));
-			this.abort();
-			this.status = Status.TIMEOUT;
-		}
+	synchronized public Status getStatus() {
 		return status;
 	}
 
@@ -376,7 +371,7 @@ public class Job {
 		this.startedAt = startedAt;
 	}
 
-	public void setStatus(Status status) {
+	synchronized public void setStatus(Status status) {
 		this.status = status;
 		if (Job.getTableModel() != null) {
 			SwingUtilities.invokeLater(new Runnable(){

@@ -218,11 +218,12 @@ public class Shell implements Runnable{
 	
 
 	/**
-	 * Syntax: EVALUATE directory_path_to_formulas cores solverId timeout [reference_file]
+	 * Syntax: EVALUATE directory_path_to_formulas cores_min cores_max solverId timeout [reference_file]
 	 */
 	private void evaluate(StringTokenizer token) {
 		File	directory			= null;
-		int 	cores				= 1;
+		int 	cores_min			= 1;
+		int 	cores_max			= 1;
 		long 	timeout				= 60000;
 		String 	solverId			= "qpro";
 		Vector<String>	heuristics	= HeuristicFactory.getAvailableHeuristics();
@@ -231,7 +232,8 @@ public class Shell implements Runnable{
 		
 		try {
 			directory 			= new File(token.nextToken());
-			cores				= Integer.parseInt(token.nextToken());
+			cores_min			= Integer.parseInt(token.nextToken());
+			cores_max			= Integer.parseInt(token.nextToken());
 			solverId			= token.nextToken();
 			timeout				= Integer.parseInt(token.nextToken()) * 1000;
 			if(token.hasMoreTokens())
@@ -244,7 +246,8 @@ public class Shell implements Runnable{
 						"Started: " + new Date() + 
 						"Solver: \t" + solverId + "\n" +
 						"Timeout: \t" + timeout + "\n" +
-						"Cores: \t" + cores + "\n" +
+						"Cores Min: \t" + cores_min + "\n" +
+						"Cores Max: \t" + cores_max + "\n" +
 						"Directory: \t" + directory + "\n\n" +
 						"cores\t";
 	
@@ -253,16 +256,16 @@ public class Shell implements Runnable{
 		}
 		report = report.trim() + "\n";
 				
-		Evaluation[][]	result	= new Evaluation[cores][heuristics.size()];
+		Evaluation[][]	result	= new Evaluation[cores_max-cores_min+1][heuristics.size()];
 		
 		// Wait for #cores
-		waitforslaves(cores, solverId);
+		waitforslaves(cores_max, solverId);
 
-		for(int c = 1; c <= cores; c++) {
+		for(int c = cores_min; c <= cores_max; c++) {
 			String line = "" + c + "\t";
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
 				Evaluation e = new Evaluation(directory, h, solverId, timeout, c);
-				result[c-1][heuristics.indexOf(h)] = e;
+				result[c-cores_min][heuristics.indexOf(h)] = e;
 				e.evaluate();
 				line += e.toString() + "\t";
 			}
@@ -280,8 +283,8 @@ public class Shell implements Runnable{
 			Boolean compare = null;
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
 				correctnessReport += "Heuristic: " + h + "\n";
-				for(int c = 1; c <= cores; c++) {
-					Boolean current = result[c-1][heuristics.indexOf(h)].getResults().get(f);
+				for(int c = 0; c <= cores_max-cores_min; c++) {
+					Boolean current = result[c][heuristics.indexOf(h)].getResults().get(f);
 					if(current == null) {
 						correctnessReport += "x";
 					} else if(current == true) {
@@ -293,7 +296,7 @@ public class Shell implements Runnable{
 					if(compare == null && current != null) {
 						compare = current;
 					} else if(compare != null && current != null && compare != current) {
-						logger.error("Correctness error detected: File: " + f + ", Cores: " + c + ", Heuristic: " + h);
+						logger.error("Correctness error detected: File: " + f + ", Cores: " + cores_min + c + ", Heuristic: " + h);
 						correctness = false;
 					}
 				}

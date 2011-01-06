@@ -192,7 +192,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 	}
 
 	@Override
-	public synchronized void shutdown() throws RemoteException {
+	synchronized public void shutdown() throws RemoteException {
 		logger.info("Shutting down host...");
 		new Thread() {
             @Override
@@ -212,11 +212,12 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 	}
 
 	@Override
-	synchronized public void abortFormula(String tqbfId) {
+	public boolean abortFormula(String tqbfId) {
 		logger.info("Aborting formula " + tqbfId);
 		Solver s = threads.get(tqbfId);
 		s.kill();
 		threads.remove(tqbfId);
+		return true;
 	}
 
 	@Override

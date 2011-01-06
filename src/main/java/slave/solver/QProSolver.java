@@ -26,72 +26,80 @@ public class QProSolver extends Solver {
 
 	public static final String toolId = "qpro";
 	private Process qpro_process;
-	
+
 	private String inputString = null;
 	private boolean killed = false;
-	
+
 	public QProSolver(Slave slave) {
 		super(slave);
 	}
-	
+
 	/**
 	 * Kills the qpro-process
 	 */
-	public void kill() {
+	synchronized public void kill() {
 		this.killed = true;
 		if (qpro_process != null)
 			qpro_process.destroy();
+
 	}
 
-	protected void finalize() throws Throwable {
-	    try {
-	    	if (qpro_process != null)
-				qpro_process.destroy();
-	    } finally {
-	        super.finalize();
-	    }
-	}
-	
 	public void run() {
-		ProcessBuilder pb = new ProcessBuilder("qpro");
+		String readString = null;
 		Result r = new Result();
 		r.tqbfId = this.formula.getId();
 		r.jobId = formula.jobId;
-
-		// Get the id from our formula so we can nullify it after qproization
+		// Get the id from our formula so we can nullify it after
+		// qproization
 		// -> for cleanup by garbage collector
 		String tqbfId = this.formula.getId();
+		
 		try {
+			
 			logger.info("Generating qpro input...");
 			this.inputString = toInputString(this.formula);
 			if (inputString.equals("true")) {
-				logger.info("Result for Subformula(" + tqbfId + ") was true. Formula collapsed to root-node");
+				logger.info("Result for Subformula(" + tqbfId
+						+ ") was true. Formula collapsed to root-node");
 				r.type = Result.Type.TRUE;
 				this.slave.master.returnResult(r);
 				return;
 			} else if (inputString.equals("false")) {
 				r.type = Result.Type.FALSE;
 				this.slave.master.returnResult(r);
-				logger.info("Result for Subformula(" + tqbfId + ") was false. Formula collapsed to root-node");
+				logger.info("Result for Subformula(" + tqbfId
+						+ ") was false. Formula collapsed to root-node");
 				return;
 			}
-			
-			logger.info("Starting qpro process...");
-			qpro_process = pb.start();
-			PrintWriter stdin = new PrintWriter(qpro_process.getOutputStream());
+
 			this.formula = null;
 			System.gc();
 			
-			logger.info("Piping inputstring to qpro...");
-			stdin.print(inputString);
-			stdin.flush();
-			InputStreamReader isr = new InputStreamReader(qpro_process
-					.getInputStream());
-			StringWriter writer = new StringWriter();
-			IOUtils.copy(isr, writer);
-			String readString = writer.toString();
+			synchronized (this) {
+				if(this.killed) {
+					this.slave.threads.remove(tqbfId);
+					return;
+				}
+				ProcessBuilder pb = new ProcessBuilder("qpro");
+				logger.info("Starting qpro process...");
+				qpro_process = pb.start();
+				PrintWriter stdin = new PrintWriter(
+						qpro_process.getOutputStream());
+				
+				logger.info("Piping inputstring to qpro...");
+				stdin.print(inputString);
+				stdin.flush();
+			}
+			
 			logger.info("Waiting for qpro...");
 			qpro_process.waitFor();
+			InputStreamReader isr = new InputStreamReader(
+					qpro_process.getInputStream());
+			StringWriter writer = new StringWriter();
+			IOUtils.copy(isr, writer);
+			readString = writer.toString();
+			
+			
 			// If qpro returns 1 the subformula is satisfiable
 			if (readString.startsWith("1")) {
 				logger.info("Result for Subformula(" + tqbfId + ") was "
@@ -111,20 +119,20 @@ public class QProSolver extends Solver {
 
 				// anything else is an error
 			} else {
-				if(!killed){
+				if (!killed) {
 					logger.error("Unexpected result from solver.\n"
 							+ "	Return String: " + readString + "\n"
 							+ "	TQbfId:		 : " + tqbfId + "\n");
 					if (QPar.logLevel == Level.DEBUG)
 						logger.debug("Formulastring: \n" + this.inputString);
 					r.type = Result.Type.ERROR;
-					r.errorMessage = "Unexpected result from solver(" + readString
-							+ "). Aborting Formula.";
+					r.errorMessage = "Unexpected result from solver("
+							+ readString + "). Aborting Formula.";
 					this.slave.master.returnResult(r);
 				}
 			}
 		} catch (IOException e) {
-			if(!killed){
+			if (!killed) {
 				logger.error("IO Error while getting result from solver: " + e);
 				r.type = Result.Type.ERROR;
 				r.exception = e;
@@ -136,7 +144,7 @@ public class QProSolver extends Solver {
 				}
 			}
 		} catch (InterruptedException e) {
-			if(!killed){
+			if (!killed) {
 				logger.error(e);
 				r.type = Result.Type.ERROR;
 				r.exception = e;
@@ -161,30 +169,30 @@ public class QProSolver extends Solver {
 	 * @return a string representation of the tree in QPRO format
 	 */
 	private static String toInputString(TransmissionQbf t) {
-//		Vector<Integer> eVars = new Vector<Integer>();
-//		Vector<Integer> aVars = new Vector<Integer>();
+		// Vector<Integer> eVars = new Vector<Integer>();
+		// Vector<Integer> aVars = new Vector<Integer>();
 		// Vector<Integer> vars = new Vector<Integer>();
-//		Vector<Integer> orphanedVars = new Vector<Integer>();
-//		int i = 0;
+		// Vector<Integer> orphanedVars = new Vector<Integer>();
+		// int i = 0;
 		String traversedTree = "";
 
 		// vars = t.getVars();
-//		eVars = t.getEVars();
-//		aVars = t.getAVars();
+		// eVars = t.getEVars();
+		// aVars = t.getAVars();
 
 		// can be used to check if there's really some formula in t
 		// t.checkQbf();
-//t.dump(t.getId()+" PRE ");
+		// t.dump(t.getId()+" PRE ");
 		// assign the truth values
 		logger.debug("assigning truth values started");
 		t.assignTruthValues();
 		logger.debug("assigning truth values finished");
-//t.dump(t.getId()+"POSTASSIGN ");
+		// t.dump(t.getId()+"POSTASSIGN ");
 		// reduce the tree
 		logger.debug("reducing started");
-//		t.reduceTree();
+		// t.reduceTree();
 		t.reduceFast();
-//t.dump(t.getId()+"POSTREDUCE ");
+		// t.dump(t.getId()+"POSTREDUCE ");
 		logger.debug("reducing finished");
 
 		// maybe reducing the tree left us with a truth node only, then we have
@@ -209,26 +217,26 @@ public class QProSolver extends Solver {
 		// left in the tree after reducing. if not, remove them from aVars and
 		// eVars
 		logger.debug("check for orphaned quantified vars");
-//		orphanedVars = t.getOrphanedVars();
-//		for (i = 0; i < orphanedVars.size(); i++) {
-//			if (t.getAVars().contains(orphanedVars.get(i)))
-//				t.getAVars().remove(orphanedVars.get(i));
-//			if (t.getEVars().contains(orphanedVars.get(i)))
-//				t.getEVars().remove(orphanedVars.get(i));
-//		}
+		// orphanedVars = t.getOrphanedVars();
+		// for (i = 0; i < orphanedVars.size(); i++) {
+		// if (t.getAVars().contains(orphanedVars.get(i)))
+		// t.getAVars().remove(orphanedVars.get(i));
+		// if (t.getEVars().contains(orphanedVars.get(i)))
+		// t.getEVars().remove(orphanedVars.get(i));
+		// }
 		t.eliminateOrphanedVars();
 		logger.debug("check for orphaned quantified vars finished");
 
 		// t.dump("DEBUG");
-//		t.checkQbf();
-//t.getRootNode().dump("NARF");		
+		// t.checkQbf();
+		// t.getRootNode().dump("NARF");
 		logger.debug("max var: " + t.getMaxVar());
 
 		// traverse the tree to get a string in qpro format
 		logger.debug("traversing started");
-			    
+
 		traversedTree += "QBF\n" + (t.getMaxVar()) + "\n";
-		
+
 		// traversedTree += "\nq";
 		/*
 		 * if(aVars.size() > 0) traversedTree += "\na ";for (i=0; i <
@@ -253,12 +261,11 @@ public class QProSolver extends Solver {
 		return thread;
 	}
 
-
 	// private static String reindexVariables(String s, Vector<Integer> vars) {
 	// String replaced = s;
 	// assert(new HashSet<Integer>(vars).size() == vars.size()); // uniqueness
 	// check
-	//		
+	//
 	// for(int i = 0; i < vars.size(); i++) {
 	// String oldVariable = " " + vars.get(i).toString() + " ";
 	// String newVariable = " " + (Integer.toString(i+2)) + " ";
@@ -267,4 +274,13 @@ public class QProSolver extends Solver {
 	// }
 	// return replaced;
 	// }
+	
+	protected void finalize() throws Throwable {
+		try {
+			if (qpro_process != null)
+				qpro_process.destroy();
+		} finally {
+			super.finalize();
+		}
+	}
 }
