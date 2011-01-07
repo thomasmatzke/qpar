@@ -32,7 +32,8 @@ public class QProSolver extends Solver {
 
 	private String inputString = null;
 	private boolean killed = false;
-
+	public String tqbfId;
+	
 	public QProSolver(Slave slave) {
 		super(slave);
 	}
@@ -55,7 +56,7 @@ public class QProSolver extends Solver {
 		// Get the id from our formula so we can nullify it after
 		// qproization
 		// -> for cleanup by garbage collector
-		String tqbfId = this.formula.getId();
+		tqbfId = this.formula.getId();
 		
 		try {
 			
@@ -110,7 +111,6 @@ public class QProSolver extends Solver {
 
 			for(int i = 0; i<2; i++) {
 				line = br.readLine();
-				logger.info("Read line: " + line);
 				sb.append(line);
 				sb.append(System.getProperty("line.separator")); // BufferedReader strips the EOL character so we add a new one!
 			}
@@ -118,7 +118,6 @@ public class QProSolver extends Solver {
 			osw.close();
 			isr.close();
 			
-			logger.info("Result aquired...");
 			// If qpro returns 1 the subformula is satisfiable
 			if (readString.startsWith("1")) {
 				logger.info("Result for Subformula(" + tqbfId + ") was "

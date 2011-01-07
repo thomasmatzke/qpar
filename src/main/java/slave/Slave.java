@@ -244,8 +244,8 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		synchronized(threads) {
 			for(Solver s : threads.values()) {
 				s.kill();
-				threads.remove(s.getTransmissionQbf().getId());
 			}
+			threads = new Hashtable<String, Solver>();
 		}
 	}
 	
