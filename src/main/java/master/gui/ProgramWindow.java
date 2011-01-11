@@ -377,11 +377,7 @@ public class ProgramWindow extends JFrame {
 		int row = getJobsTable().getSelectedRow(); 
 		if(row != -1) {
 			Job job = Job.getJobs().get(row);
-			try {
-				job.start();
-			} catch (IOException e) {
-				logger.error("Error while reading formula file: " + e);
-			}
+			job.start();
 		}
 	}	
 	

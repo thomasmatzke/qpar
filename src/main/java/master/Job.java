@@ -3,6 +3,7 @@ package main.java.master;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +20,7 @@ import main.java.QPar;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 import main.java.logic.heuristic.HeuristicFactory;
-import main.java.master.Console.Shell;
+import main.java.master.console.Shell;
 import main.java.rmi.Result;
 import main.java.rmi.SlaveRemote;
 
@@ -118,42 +119,83 @@ public class Job {
 		}
 	}
 
-	public void startBlocking() throws IOException {
+	public void startBlocking() {
 		this.start();
 		while(this.getStatus() == Status.RUNNING) {
 			try {
 				Thread.sleep(500);
-				if((startedAt.getTime() + timeout) < new Date().getTime()) {
-					logger.info("Timeout reached. Aborting Job. \n" +
-								"	Job Id:         " + this.id + "\n" +
-								"	Timeout (secs): " + timeout/1000 + "\n");
-					this.abort();
-					this.setStatus(Status.TIMEOUT);
-					break;
-				}
-			} catch (InterruptedException e) {
-				logger.error(e);
+			} catch (InterruptedException e) {	}
+			
+			if((startedAt.getTime() + timeout) < new Date().getTime()) {
+				logger.info("Timeout reached. Aborting Job. \n" +
+							"	Job Id:         " + this.id + "\n" +
+							"	Timeout (secs): " + timeout/1000 + "\n");
+				this.abort();
+				this.setStatus(Status.TIMEOUT);
+				break;
 			}
 		}
 	}
 
-	public void start() throws IOException {
-		
+	public void start() {
+		int availableCores = 0;
 		this.setStatus(Status.RUNNING);
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
-		this.formula = new Qbf(inputFileString);
+		try {
+			this.formula = new Qbf(inputFileString);
+		} catch (IOException e) {
+			logger.error(e);
+			this.setStatus(Status.ERROR);
+			return;
+		}
 		
-		ArrayList<SlaveRemote> slaves = Master.getSlavesWithSolver(this.solver);
-		int availableCores = 0;
-		for(SlaveRemote slave : slaves) {
-			availableCores += slave.getCores();
+		ArrayList<SlaveRemote> slots = new ArrayList<SlaveRemote>();
+		ArrayList<SlaveRemote> slaves;
+		try {
+			slaves = Master.getSlavesWithSolver(this.solver);
+			
+			for(SlaveRemote slave : slaves) {
+				availableCores += slave.getCores();
+				for(int i = 0; i < slave.getCores(); i++) {
+					slots.add(slave);
+				}
+			}
+		} catch (RemoteException e) {
+			logger.error(e);
+			this.setStatus(Status.ERROR);
+			return;
 		}
 		
 		logger.debug("Available Cores: " + availableCores + ", Used Cores: " + usedCores);
+		
+		
+		Collections.shuffle(slots);
+		String slotStr = "";
+		try {
+			for(SlaveRemote s : slots)
+				slotStr += s.getHostName() + " ";
+		} catch (RemoteException e) {
+			logger.error(e);
+			this.setStatus(Status.ERROR);
+			return;
+		} catch (UnknownHostException e) {
+			logger.error(e);
+			this.setStatus(Status.ERROR);
+			return;
+		}
+				
+		logger.info("Computationslots generated: " + slotStr.trim());
+		
 		this.startedAt = new Date();
 		this.subformulas = formula.splitQbf(Math.min(availableCores, usedCores), 
 											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
+		
+		if(slots.size() < this.subformulas.size()) {
+			logger.error("Not enough cores available for Job. Job failed.");
+			this.setStatus(Status.ERROR);
+			return;		
+		}
 		
 		logger.info("Job started " + this.id + "...\n" +
 					"	Started at:  " + startedAt + "\n" +
@@ -161,24 +203,7 @@ public class Job {
 					"	Cores(avail):" + availableCores + "\n" +
 					"	Cores(used): " + usedCores + "\n" +
 					"	Slaves:      " + slaves.size());
-		
-		ArrayList<SlaveRemote> slots = new ArrayList<SlaveRemote>();
-		for(SlaveRemote s : slaves) {
-			for(int i = 0; i < s.getCores(); i++) {
-				slots.add(s);
-			}
-		}
-		if(slots.size() < this.subformulas.size()) {
-			logger.error("Not enough cores available for Job. Job failed.");
-			abort();			
-		}
-		
-		Collections.shuffle(slots);
-		String slotStr = "";
-		for(SlaveRemote s : slots)
-			slotStr += s.getHostName() + " ";
-		logger.info("Computationslots generated: " + slotStr.trim());
-		
+					
 		int slotIndex = 0;
 		for(TransmissionQbf sub : subformulas) {
 			synchronized(this) {
@@ -189,7 +214,6 @@ public class Job {
 				slotIndex += 1;
 				new Thread(new TransportThread(s, sub, this.solver)).start();
 				formulaDesignations.put(sub.getId(), s);
-				//s.computeFormula(sub, this.solver);
 				if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
 					slotIndex = 0;
 			}

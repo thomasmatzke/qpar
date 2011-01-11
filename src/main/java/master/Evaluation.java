@@ -3,7 +3,12 @@ package main.java.master;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.HashMap;
+
+import main.java.QPar;
 
 import org.apache.log4j.Logger;
 
@@ -50,35 +55,34 @@ public class Evaluation {
 	}
 	
 	public void evaluate() {
-			
 		for(File f : this.directory.listFiles()) {
 			if(f.getName().equals("evaluation.txt") || f.getName().equals(referenceFileName))
 				continue;
-			
-			Job job = Job.createJob(f.getAbsolutePath(), null, solverId, heuristicId, timeout, cores);
-						
 			try {
-				job.startBlocking();
+				Job job = Job.createJob(f.getAbsolutePath(), null, solverId, heuristicId, timeout, cores);
 							
+				job.startBlocking();
+				
 				if(job.getStatus() == Job.Status.COMPLETE) {
 					elapsedTotal += job.totalMillis();
 					results.put(f, job.getResult());
-				} else if(job.getStatus() == Job.Status.ERROR) {
-					elapsedTotal += timeout;
-					errors++;
 				} else if(job.getStatus() == Job.Status.TIMEOUT){ 
 					elapsedTotal += timeout;
 					timeouts++;
+				} else if(job.getStatus() == Job.Status.ERROR) {
+					elapsedTotal += timeout;
+					errors++;
 				} else {
 					assert(false);
 				}
-			} catch(FileNotFoundException e) {
-				logger.error("Error while reading formula file: " + e);
-				System.exit(-1);
-			} catch (IOException e) {
-				logger.error(e);
-				System.exit(-1);
-			}			
+			} catch(Throwable t) {
+				StringWriter result = new StringWriter();
+				PrintWriter writer = new PrintWriter(result);
+				t.printStackTrace(writer);
+				logger.error(result);
+				if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
+					Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Evaluation.evaluate())", result.toString());
+			}
 		}
 	}
 

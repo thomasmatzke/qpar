@@ -21,7 +21,7 @@ import javax.swing.table.AbstractTableModel;
 
 import main.java.ArgumentParser;
 import main.java.QPar;
-import main.java.master.Console.Shell;
+import main.java.master.console.Shell;
 import main.java.master.gui.ProgramWindow;
 import main.java.rmi.MasterRemote;
 import main.java.rmi.Result;
@@ -70,7 +70,7 @@ public class Master implements MasterRemote, Serializable {
 		return slaves;
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Throwable {
 
 		// Basic console logging
 		BasicConfigurator.configure();
@@ -87,10 +87,17 @@ public class Master implements MasterRemote, Serializable {
 				usage();
 		}
 		Logger.getRootLogger().setLevel(QPar.logLevel);
-		new Master();
+		
+		try {
+			new Master();
+		} catch (Throwable t) {
+			if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
+				Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Master.main())", t.toString());
+			throw t;
+		}
 	}
 
-	public Master() {
+	public Master() throws FileNotFoundException, RemoteException {
 		Registry registry = null;
 		// Start the registry
 		try {
@@ -102,13 +109,8 @@ public class Master implements MasterRemote, Serializable {
 		
 		// Start own interface
 		MasterRemote myInterface = this;
-		try {
-			UnicastRemoteObject.exportObject(this, 0);
-			registry.rebind("Master", myInterface);
-		} catch (RemoteException e) {
-			logger.fatal(e);
-			System.exit(-1);
-		}
+		UnicastRemoteObject.exportObject(this, 0);
+		registry.rebind("Master", myInterface);
 		
 		if (Master.startGui) {
 			javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -119,13 +121,9 @@ public class Master implements MasterRemote, Serializable {
 			});
 		} else {
 			if (ap.hasOption("i")) {
-				try {
-					shell = new Shell(new BufferedReader(new FileReader(ap
-							.getOption("i"))));
-				} catch (FileNotFoundException e) {
-					logger.fatal(e);
-					System.exit(-1);
-				}
+				shell = new Shell(new BufferedReader(new FileReader(ap
+						.getOption("i"))));
+				
 			} else {
 				shell = new Shell();
 			}
@@ -164,7 +162,13 @@ public class Master implements MasterRemote, Serializable {
 	@Override
 	public void registerSlave(SlaveRemote ref) throws RemoteException, UnknownHostException {
 		logger.info("Registering Slave. Hostname: " + ref.getHostName() + ", Cores: " + ref.getCores() + ", Solvers: " + ref.getSolvers());
-		Master.addSlave(ref);
+		if(QPar.isMailInfoComplete())
+			ref.setMailInfo(QPar.mailServer, QPar.mailUser, QPar.mailPass);
+		if(QPar.exceptionNotifierAddress != null)
+			ref.setExceptionNotifierAddress(QPar.exceptionNotifierAddress);
+		synchronized(slaves) {
+			Master.addSlave(ref);
+		}
 		synchronized(Master.getShellThread()) {
 			Master.getShellThread().notify();
 		}
@@ -178,9 +182,11 @@ public class Master implements MasterRemote, Serializable {
 
 	public static int getCoresWithSolver(String solver) throws RemoteException {
 		int c = 0;
-		for(SlaveRemote s : Master.getSlaves().values()) {
-			if(s.getSolvers().contains(solver))
-				c += s.getCores();
+		synchronized(slaves) {
+			for(SlaveRemote s : Master.getSlaves().values()) {
+				if(s.getSolvers().contains(solver))
+					c += s.getCores();
+			}
 		}
 		return c;
 	}

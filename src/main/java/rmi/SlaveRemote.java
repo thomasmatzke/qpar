@@ -29,4 +29,8 @@ public interface SlaveRemote extends Remote {
 	
 	public String[] getCurrentJobs() throws RemoteException;
 	
+	public void setMailInfo(String mailServer, String mailUser, String mailPass) throws RemoteException;
+	
+	public void setExceptionNotifierAddress(String address) throws RemoteException;
+	
 }

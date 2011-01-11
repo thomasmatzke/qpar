@@ -1,4 +1,4 @@
-package main.java.master.Console;
+package main.java.master.console;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -82,17 +82,22 @@ public class Shell implements Runnable{
 	public void run() {	
 		String line = "";
 		while(run) {
-			put(prompt);
-			line = read();
-			if(prompt.equals(""))
-				puts(line);
-			if(line == null)
-				return;
-			if(line.length() < 1) continue;
-			if(line.startsWith("#")) continue;
-			parseLine(line);
-
+			try {
+				put(prompt);
+				line = read();
+				if(prompt.equals(""))
+					puts(line);
+				if(line == null)
+					return;
+				if(line.length() < 1) continue;
+				if(line.startsWith("#")) continue;
+				parseLine(line);
+			} catch(Throwable t) {
+				if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
+					Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Shell.run())", t.toString());
+			}	
 		}
+		
 	}
 
 	private void parseLine(String line) {
@@ -501,15 +506,7 @@ public class Shell implements Runnable{
 	private void startjob(StringTokenizer token) {
 		if(token.hasMoreTokens()) {
 			Job j = Job.getJobs().get(token.nextToken());
-			try {
-				j.start();
-			} catch(FileNotFoundException e) {
-				logger.error("Error while reading formula file: " + e);
-				j.setStatus(Job.Status.ERROR);
-			} catch (IOException e) {
-				logger.error(e);
-				j.setStatus(Job.Status.ERROR);
-			}
+			j.start();
 		} else {
 			puts("Syntax: STARTJOB jobid");
 		}			

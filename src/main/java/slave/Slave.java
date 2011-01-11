@@ -73,7 +73,6 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		
 			try {
 				master = (MasterRemote)Naming.lookup(masterName);
-				//SlaveRemote stub = (SlaveRemote) UnicastRemoteObject.exportObject(this, 0);
 				master.registerSlave(this);
 				connected = true;
 				break;
@@ -91,6 +90,17 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 			logger.info("Could not connect. Trying again in 5 seconds...");		
 			Thread.sleep(5000);
 		}
+	}
+	
+	synchronized public void reconnect() {
+		if(connected)
+			return;
+		killAllThreads();
+		connected = false;
+		logger.error("Reconnecting...");
+		try {
+			connect();
+		} catch (InterruptedException e1) {}
 	}
 	
 	/**
@@ -260,6 +270,19 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 			logger.error(e);
 			return "";
 		}
+	}
+
+	@Override
+	public void setMailInfo(String mailServer, String mailUser, String mailPass) {
+		QPar.mailServer = mailServer;
+		QPar.mailUser = mailUser;
+		QPar.mailPass = mailPass;
+	}
+
+	@Override
+	public void setExceptionNotifierAddress(String address)
+			throws RemoteException {
+		QPar.exceptionNotifierAddress = address;
 	}
 	
 }

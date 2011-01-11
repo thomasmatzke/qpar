@@ -1,4 +1,4 @@
-package main.java.master.Console;
+package main.java.master.console;
 
 public enum Command {
 	NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, EVALUATE,

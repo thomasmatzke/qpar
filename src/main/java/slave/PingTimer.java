@@ -32,12 +32,7 @@ public class PingTimer extends TimerTask {
 			if(slave.connected){
 				logger.error("Master probably dead: " + e);
 				logger.error("Killing threads...");
-				slave.killAllThreads();
-				slave.connected = false;
-				logger.error("Reconnecting...");
-				try {
-					slave.connect();
-				} catch (InterruptedException e1) {}
+				slave.reconnect();
 			}
 		}
 		
