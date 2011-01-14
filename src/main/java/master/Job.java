@@ -40,6 +40,7 @@ public class Job {
 	private long timeout = 0;
 	private Qbf formula;
 
+	
 	// tqbfs -> slaves
 	public volatile Map<String, SlaveRemote> formulaDesignations = new HashMap<String, SlaveRemote>();
 	private String heuristic, id, inputFileString, outputFileString, solver;

@@ -19,7 +19,7 @@ import org.apache.log4j.Logger;
  */
 public class Evaluation {
 
-	static 	Logger 	logger = Logger.getLogger(Master.class);
+	static 	Logger 	logger = Logger.getLogger(Evaluation.class);
 	private File 	directory, referenceFile;
 	private String 	heuristicId, solverId, referenceFileName = "qpro_results.txt";
 	private long	timeout;

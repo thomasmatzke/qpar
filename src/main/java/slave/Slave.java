@@ -1,5 +1,6 @@
 package main.java.slave;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -12,6 +13,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Properties;
 import java.util.Scanner;
 
 import main.java.ArgumentParser;
@@ -45,6 +47,9 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		
 	public Slave() throws InterruptedException, RemoteException {
 		logger.info("Starting Slave...");
+		
+		QPar.loadConfig();
+	
 		SignalHandler handler = new SignalHandler(this);
 		Signal.handle(new Signal("INT"), handler);
 		Signal.handle(new Signal("TERM"), handler);
@@ -65,6 +70,8 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		System.exit(0);
 	}
 		
+	
+
 	public void connect() throws InterruptedException {
 		// Connect to master
 		String masterName = "rmi://" + masterIp + ":1099/Master";
@@ -93,10 +100,9 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 	}
 	
 	synchronized public void reconnect() {
-		if(connected)
-			return;
-		killAllThreads();
 		connected = false;
+		logger.error("Killing threads...");
+		killAllThreads();
 		logger.error("Reconnecting...");
 		try {
 			connect();

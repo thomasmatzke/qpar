@@ -51,7 +51,6 @@ public class QProSolver extends Solver {
 		this.killed = true;
 		if (qproProcess != null)
 			qproProcess.destroy();
-		assert(qproProcess == null);
 	}
 
 	public void run() {

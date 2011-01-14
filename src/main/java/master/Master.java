@@ -72,6 +72,8 @@ public class Master implements MasterRemote, Serializable {
 	
 	public static void main(String[] args) throws Throwable {
 
+		QPar.loadConfig();
+		
 		// Basic console logging
 		BasicConfigurator.configure();
 
