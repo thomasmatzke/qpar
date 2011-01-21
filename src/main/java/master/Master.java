@@ -71,9 +71,8 @@ public class Master implements MasterRemote, Serializable {
 	}
 	
 	public static void main(String[] args) throws Throwable {
-
-		QPar.loadConfig();
-		
+		Logger.getRootLogger().setLevel(QPar.logLevel);
+				
 		// Basic console logging
 		BasicConfigurator.configure();
 
@@ -88,7 +87,9 @@ public class Master implements MasterRemote, Serializable {
 			else
 				usage();
 		}
-		Logger.getRootLogger().setLevel(QPar.logLevel);
+		
+		QPar.loadConfig();
+		
 		
 		try {
 			new Master();

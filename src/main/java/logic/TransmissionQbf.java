@@ -1,5 +1,10 @@
 package main.java.logic;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -248,6 +253,20 @@ public class TransmissionQbf implements Serializable {
 	
 	public void setRootNode(SimpleNode n) {
 		this.root = n;
+	}
+	
+	public TransmissionQbf deepClone() throws IOException, ClassNotFoundException {
+		TransmissionQbf clonedObj = null;
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream(baos);
+		oos.writeObject(this);
+		oos.close();
+
+		ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+		ObjectInputStream ois = new ObjectInputStream(bais);
+		clonedObj = (TransmissionQbf) ois.readObject();
+		ois.close();
+		return clonedObj;
 	}
 }	
 

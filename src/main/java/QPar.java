@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
 public class QPar {
 	static Logger logger = Logger.getLogger(QPar.class);
 	
-	public static Level logLevel = Level.ERROR;
+	public static Level logLevel = Level.INFO;
 	public static String exceptionNotifierAddress = null;
 	public static String mailServer = null;
 	public static String mailUser = null;
@@ -31,9 +31,9 @@ public class QPar {
 		} catch (IOException e) {
 			logger.warn("Config file not found.");
 		}
-		QPar.mailPass = properties.getProperty("mailPass");
-		QPar.mailPass = properties.getProperty("mailUser");
-		QPar.mailPass = properties.getProperty("mailServer");
+		QPar.mailPass 	= properties.getProperty("mailPass");
+		QPar.mailUser 	= properties.getProperty("mailUser");
+		QPar.mailServer = properties.getProperty("mailServer");
 		QPar.exceptionNotifierAddress = properties.getProperty("exceptionNotifierAddress");
 	}
 	

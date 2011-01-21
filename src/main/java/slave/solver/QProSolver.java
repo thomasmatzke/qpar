@@ -238,12 +238,14 @@ public class QProSolver extends Solver {
 		// eVars
 		t.eliminateOrphanedVars();
 
+		
+		
 		// traverse the tree to get a string in qpro format
 		traversedTree += "QBF\n" + (t.getMaxVar()) + "\n";
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
 		traversedTree += "QBF\n";
 		logger.debug("traversing finished");
-
+		
 		return traversedTree;
 	}
 

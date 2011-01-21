@@ -139,6 +139,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 			}
 		} else {
 			availableSolvers.add("qpro");
+			availableSolvers.add("simple");
 		}
 		
 		new Slave();

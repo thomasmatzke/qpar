@@ -218,8 +218,7 @@ public class Job {
 				if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
 					slotIndex = 0;
 			}
-		}
-							
+		}		
 	}
 	
 	class TransportThread implements Runnable {
