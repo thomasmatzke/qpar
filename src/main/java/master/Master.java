@@ -79,7 +79,7 @@ public class Master implements MasterRemote, Serializable {
 		ap = new ArgumentParser(args);
 		Master.startGui = ap.hasOption("gui");
 		if (ap.hasOption("log")) {
-			String lvl = ap.getOption("log");
+		 	String lvl = ap.getOption("log");
 			if (lvl.equals("debug"))
 				QPar.logLevel = Level.DEBUG;
 			else if (lvl.equals("info"))

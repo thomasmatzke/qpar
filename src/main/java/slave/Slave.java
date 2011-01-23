@@ -79,6 +79,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		while(!connected){
 		
 			try {
+				logger.info("Connecting to " + masterName);
 				master = (MasterRemote)Naming.lookup(masterName);
 				master.registerSlave(this);
 				connected = true;
