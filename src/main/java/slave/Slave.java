@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
+import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
@@ -59,7 +60,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		if (masterIp == null) {
 			usage();
 		}
-				
+		
 		connect();
 		
 		new PingTimer(10, this);
@@ -79,8 +80,9 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		while(!connected){
 		
 			try {
-				logger.info("Connecting to " + masterName);
+				logger.info("Looking up " + masterName + "...");
 				master = (MasterRemote)Naming.lookup(masterName);
+				logger.info("Registering with Master...");
 				master.registerSlave(this);
 				connected = true;
 				break;

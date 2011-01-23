@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.rmi.Naming;
+import java.rmi.RMISecurityManager;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -72,7 +73,7 @@ public class Master implements MasterRemote, Serializable {
 	
 	public static void main(String[] args) throws Throwable {
 		Logger.getRootLogger().setLevel(QPar.logLevel);
-				
+			
 		// Basic console logging
 		BasicConfigurator.configure();
 
