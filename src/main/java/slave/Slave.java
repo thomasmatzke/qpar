@@ -40,15 +40,15 @@ import sun.misc.Signal;
 public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializable  {
 	static Logger logger = Logger.getLogger(Slave.class);
 	public static ArrayList<String> availableSolvers = new ArrayList<String>();
-	public static String masterIp;
+	String masterIp;
 	
 	public boolean connected = false;
 	public Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	public MasterRemote master = null;
-		
-	public Slave() throws InterruptedException, RemoteException {
+	
+	public Slave(String masterIp) throws InterruptedException, RemoteException {
 		logger.info("Starting Slave...");
-		
+				
 		QPar.loadConfig();
 	
 		SignalHandler handler = new SignalHandler(this);
@@ -58,16 +58,23 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 					
 		logger.info("Available Solvers are: " + availableSolvers);
 		if (masterIp == null) {
-			usage();
+			// so no ip was set...listen for the beacon...
+			try {
+				new Thread(new BeaconListener(this)).start();
+				// Wait til we found a signal
+				synchronized(this) { wait(); }
+			} catch (UnknownHostException e) {
+				logger.error(e);
+			} catch (IOException e) {
+				logger.error(e);
+			}
 		}
 		
 		connect();
 		
 		new PingTimer(10, this);
 		
-		synchronized(this) {
-			wait();
-		}
+		synchronized(this) { wait(); }
 		System.exit(0);
 	}
 		
@@ -112,41 +119,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 		} catch (InterruptedException e1) {}
 	}
 	
-	/**
-	 * Program execution entry point
-	 * @param args
-	 * @throws InterruptedException 
-	 */
-	public static void main(String[] args) throws InterruptedException, RemoteException {
-		ArgumentParser ap = new ArgumentParser(args);
-		// Basic console logging
-		BasicConfigurator.configure();
-		if(ap.hasOption("log")) {
-			String lvl = ap.getOption("log");
-			if(lvl.equals("debug"))
-				QPar.logLevel = Level.DEBUG;
-			else if(lvl.equals("info"))
-				QPar.logLevel = Level.INFO;
-			else
-				usage();
-		}
-		Logger.getRootLogger().setLevel(QPar.logLevel);
-		
-		masterIp = ap.nextParam();
-		String solversString = ap.getOption("solvers");
-		if(solversString != null) {
-			Scanner s = new Scanner(solversString).useDelimiter(",");
-			while(s.hasNext()) {
-				String cur = s.next();
-				availableSolvers.add(cur);
-			}
-		} else {
-			availableSolvers.add("qpro");
-			availableSolvers.add("simple");
-		}
-		
-		new Slave();
-	}
+	
 		
 	public static void shutdownHost() {
 	    String shutdownCommand = "";
@@ -293,6 +266,42 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializa
 	public void setExceptionNotifierAddress(String address)
 			throws RemoteException {
 		QPar.exceptionNotifierAddress = address;
+	}
+	
+	/**
+	 * Program execution entry point
+	 * @param args
+	 * @throws InterruptedException 
+	 */
+	public static void main(String[] args) throws InterruptedException, RemoteException {
+		ArgumentParser ap = new ArgumentParser(args);
+		// Basic console logging
+		BasicConfigurator.configure();
+		if(ap.hasOption("log")) {
+			String lvl = ap.getOption("log");
+			if(lvl.equals("debug"))
+				QPar.logLevel = Level.DEBUG;
+			else if(lvl.equals("info"))
+				QPar.logLevel = Level.INFO;
+			else
+				usage();
+		}
+		Logger.getRootLogger().setLevel(QPar.logLevel);
+				
+		String solversString = ap.getOption("solvers");
+		if(solversString != null) {
+			Scanner s = new Scanner(solversString).useDelimiter(",");
+			while(s.hasNext()) {
+				String cur = s.next();
+				availableSolvers.add(cur);
+			}
+		} else {
+			availableSolvers.add("qpro");
+			availableSolvers.add("simple");
+		}
+		
+		new Slave(ap.nextParam());
+					
 	}
 	
 }

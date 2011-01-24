@@ -67,7 +67,17 @@ public class QProSolver extends Solver {
 			if(r.type != null)
 				return;
 			System.gc();
+			try {
 			startQpro();
+			} catch (IOException e) {
+				if (!killed) {
+					logger.error("IO Error while getting result from solver: " + e);
+					r.type = Result.Type.ERROR;
+					r.exception = e;
+					this.slave.master.returnResult(r);
+				}
+				return;
+			}
 			waitForQpro();
 			if (qproProcess == null)
 				return;
@@ -181,36 +191,24 @@ public class QProSolver extends Solver {
 		
 	}
 
-	private void startQpro() throws RemoteException {
+	private void startQpro() throws IOException {
 		synchronized (this) {
-			try {
-
-				synchronized(slave.threads) {
-					if(this.killed) {
-						this.slave.threads.remove(tqbfId);
-						return;
-					}
-				}				
-				logger.info("Starting qpro process...");
-				ProcessBuilder pb = new ProcessBuilder("qpro");
-				qproProcess = pb.start();
-				isr = new InputStreamReader(qproProcess.getInputStream());
-				br = new BufferedReader(isr);
-				osw = new OutputStreamWriter(qproProcess.getOutputStream());
-
-				logger.info("Piping inputstring to qpro...");
-				osw.write(inputString);
-				osw.flush();
-
-			} catch (IOException e) {
-				if (!killed) {
-					logger.error("IO Error while getting result from solver: " + e);
-					r.type = Result.Type.ERROR;
-					r.exception = e;
-					this.slave.master.returnResult(r);
+			synchronized(slave.threads) {
+				if(this.killed) {
+					this.slave.threads.remove(tqbfId);
+					return;
 				}
-				return;
-			}
+			}				
+			logger.info("Starting qpro process...");
+			ProcessBuilder pb = new ProcessBuilder("qpro");
+			qproProcess = pb.start();
+			isr = new InputStreamReader(qproProcess.getInputStream());
+			br = new BufferedReader(isr);
+			osw = new OutputStreamWriter(qproProcess.getOutputStream());
+
+			logger.info("Piping inputstring to qpro...");
+			osw.write(inputString);
+			osw.flush();
 		}
 	}
 

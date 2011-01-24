@@ -22,7 +22,7 @@ public class SolverFactory {
 		if (solvers == null) {
 			solvers = new Vector<String>();
 			solvers.add("qpro");
-//			solvers.add("simple");
+			solvers.add("simple");
 		}
 		return solvers;
 	}
@@ -40,12 +40,12 @@ public class SolverFactory {
 			q.setThread(t);
 			return q;
 		}
-/*		if (id.equals("simple")) {
+		if (id.equals("simple")) {
 			Solver q = new SimpleSolver(slave);
 			Thread t = new Thread(q);
 			q.setThread(t);
 			return q;
-		}*/
+		}
 		return null;
 	}
 

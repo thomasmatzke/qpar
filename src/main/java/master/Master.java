@@ -71,35 +71,7 @@ public class Master implements MasterRemote, Serializable {
 		return slaves;
 	}
 	
-	public static void main(String[] args) throws Throwable {
-		Logger.getRootLogger().setLevel(QPar.logLevel);
-			
-		// Basic console logging
-		BasicConfigurator.configure();
-
-		ap = new ArgumentParser(args);
-		Master.startGui = ap.hasOption("gui");
-		if (ap.hasOption("log")) {
-		 	String lvl = ap.getOption("log");
-			if (lvl.equals("debug"))
-				QPar.logLevel = Level.DEBUG;
-			else if (lvl.equals("info"))
-				QPar.logLevel = Level.INFO;
-			else
-				usage();
-		}
-		
-		QPar.loadConfig();
-		
-		
-		try {
-			new Master();
-		} catch (Throwable t) {
-			if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
-				Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Master.main())", t.toString());
-			throw t;
-		}
-	}
+	
 
 	public Master() throws FileNotFoundException, RemoteException {
 		Registry registry = null;
@@ -214,5 +186,36 @@ public class Master implements MasterRemote, Serializable {
 
 	@Override
 	public void ping() throws RemoteException {}
+	
+	public static void main(String[] args) throws Throwable {
+		Logger.getRootLogger().setLevel(QPar.logLevel);
+			
+		// Basic console logging
+		BasicConfigurator.configure();
+
+		ap = new ArgumentParser(args);
+		Master.startGui = ap.hasOption("gui");
+		if (ap.hasOption("log")) {
+		 	String lvl = ap.getOption("log");
+			if (lvl.equals("debug"))
+				QPar.logLevel = Level.DEBUG;
+			else if (lvl.equals("info"))
+				QPar.logLevel = Level.INFO;
+			else
+				usage();
+		}
+		
+		QPar.loadConfig();
+		
+		new Thread(new MulticastBeacon()).start();
+		
+		try {
+			new Master();
+		} catch (Throwable t) {
+			if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
+				Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Master.main())", t.toString());
+			throw t;
+		}
+	}
 
 }

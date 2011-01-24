@@ -112,11 +112,14 @@ public class Job {
 	}
 
 	private void abortComputations() throws RemoteException {
-		for (Map.Entry<String, SlaveRemote> entry : this.formulaDesignations
-				.entrySet()) {
-			SlaveRemote s = entry.getValue();
-			String tqbfId = entry.getKey();
-			s.abortFormula(tqbfId);
+		synchronized(this.formulaDesignations) {
+			for (Map.Entry<String, SlaveRemote> entry : this.formulaDesignations
+					.entrySet()) {
+				SlaveRemote s = entry.getValue();
+				String tqbfId = entry.getKey();
+				logger.info("Aborting Formula " + tqbfId + "...");
+				s.abortFormula(tqbfId);
+			}
 		}
 	}
 
@@ -214,7 +217,9 @@ public class Job {
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
 				new Thread(new TransportThread(s, sub, this.solver)).start();
-				formulaDesignations.put(sub.getId(), s);
+				synchronized(this.formulaDesignations) {
+					formulaDesignations.put(sub.getId(), s);
+				}
 				if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
 					slotIndex = 0;
 			}
@@ -326,7 +331,9 @@ public class Job {
 		logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
 				+ getId() + " (" + result + ")");
 //logger.info("dttree post merge: " + formula.decisionRoot.dump());
-		this.formulaDesignations.remove(tqbfId);
+		synchronized(this.formulaDesignations) {
+			this.formulaDesignations.remove(tqbfId);
+		}
 		if (solved)
 			fireJobCompleted(formula.getResult());
 		else {
