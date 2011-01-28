@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
@@ -19,6 +20,7 @@ import main.java.QPar;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Evaluation;
 import main.java.master.Job;
+import main.java.master.LogarithmicEvaluationSuite;
 import main.java.master.Mailer;
 import main.java.master.Master;
 import main.java.rmi.SlaveRemote;
@@ -93,6 +95,8 @@ public class Shell implements Runnable{
 				if(line.startsWith("#")) continue;
 				parseLine(line);
 			} catch(Throwable t) {
+				logger.fatal(t);
+				t.printStackTrace();
 				if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
 					Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Shell.run())", t.toString());
 			}	
@@ -104,6 +108,9 @@ public class Shell implements Runnable{
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase()))
 		{
+			case LOGEVAL:
+				logeval(token);
+				break;
 			case MAIL_EVALUATION_REPORT:
 				set_report_address(token);
 				break;
@@ -161,6 +168,28 @@ public class Shell implements Runnable{
 		
 	}
 	
+	private void logeval(StringTokenizer token) {
+		String	directory				= null;
+		int 	cores_min				= 1;
+		int 	cores_max				= 1;
+		long 	timeout					= 60000;
+		String 	solverId				= "qpro";
+		
+		try {
+			directory 			= token.nextToken();
+			cores_min			= Integer.parseInt(token.nextToken());
+			cores_max			= Integer.parseInt(token.nextToken());
+			solverId			= token.nextToken();
+			timeout				= Integer.parseInt(token.nextToken()) * 1000;
+		} catch(NoSuchElementException e) {
+			puts("Syntax: LOGEVAL directory_path_to_formulas coresMin coresMax solverId timeout");
+			return;
+		}
+		
+		LogarithmicEvaluationSuite eval = new LogarithmicEvaluationSuite(directory, cores_min, cores_max, timeout, solverId);
+		eval.run();
+	}
+
 	/**
 	 * Syntax: MAIL_EVALUATION_REPORT my@email.com 
 	 * @param token
@@ -223,7 +252,7 @@ public class Shell implements Runnable{
 	
 
 	/**
-	 * Syntax: EVALUATE directory_path_to_formulas cores_min cores_max solverId timeout [reference_file]
+	 * Syntax: EVALUATE directory_path_to_formulas cores_min cores_max solverId timeout
 	 */
 	private void evaluate(StringTokenizer token) {
 		File	directory			= null;
@@ -231,8 +260,7 @@ public class Shell implements Runnable{
 		int 	cores_max			= 1;
 		long 	timeout				= 60000;
 		String 	solverId			= "qpro";
-		Vector<String>	heuristics	= HeuristicFactory.getAvailableHeuristics();
-		String	referenceFileName 	= "qpro_results.txt";
+		ArrayList<String>	heuristics	= HeuristicFactory.getAvailableHeuristics();
 		boolean correctness			= true;
 		
 		try {
@@ -241,10 +269,8 @@ public class Shell implements Runnable{
 			cores_max			= Integer.parseInt(token.nextToken());
 			solverId			= token.nextToken();
 			timeout				= Integer.parseInt(token.nextToken()) * 1000;
-			if(token.hasMoreTokens())
-				referenceFileName	= token.nextToken();
 		} catch(NoSuchElementException e) {
-			puts("Syntax: EVALUATE directory_path_to_formulas cores solverId timeout [reference_file]");
+			puts("Syntax: EVALUATE directory_path_to_formulas coresMin coresMax solverId timeout");
 			return;
 		}
 		String report = "Evaluation Report\n" +
@@ -282,7 +308,7 @@ public class Shell implements Runnable{
 		// Check correctness
 		String correctnessReport = "\n\nDetailed results:\n";
 		for(File f : directory.listFiles()) {
-			if(f.getName().equals("evaluation.txt") || f.getName().equals(referenceFileName))
+			if(f.getName().equals("evaluation.txt"))
 				continue;
 			correctnessReport += "File: " + f.getName() + "\n";
 			Boolean compare = null;
@@ -395,7 +421,7 @@ public class Shell implements Runnable{
 	 * @param cores
 	 * @param solverId
 	 */
-	private void waitforslaves(int cores, String solverId) {
+	public static void waitforslaves(int cores, String solverId) {
 		setWaitfor_solver(solverId);
 		setWaitfor_cores(cores);
 		

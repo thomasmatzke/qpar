@@ -1,5 +1,6 @@
 package main.java.logic.heuristic;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 import main.java.logic.Qbf;
@@ -7,11 +8,11 @@ import main.java.logic.Qbf;
 
 public class HeuristicFactory {
 
-	private static Vector<String> heuristics;
+	private static ArrayList<String> heuristics;
 	
-	public static Vector<String> getAvailableHeuristics() {
+	public static ArrayList<String> getAvailableHeuristics() {
 		if(heuristics == null) {
-			heuristics = new Vector<String>();
+			heuristics = new ArrayList<String>();
 			heuristics.add("simple");
 			heuristics.add("rand");
 			heuristics.add("litcount");

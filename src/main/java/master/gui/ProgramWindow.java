@@ -6,6 +6,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
@@ -262,7 +263,7 @@ public class ProgramWindow extends JFrame {
 								"Slaves have to register their solver-options with the Master to create a new job.");
 						return;
 					}
-					Vector<String> heuristics = HeuristicFactory
+					ArrayList<String> heuristics = HeuristicFactory
 							.getAvailableHeuristics();
 					CreateJobDialog dialog = new CreateJobDialog(frame, solvers
 							.toArray(new String[solvers.size()]), heuristics
