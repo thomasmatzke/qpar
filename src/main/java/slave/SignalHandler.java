@@ -44,7 +44,8 @@ public class SignalHandler implements sun.misc.SignalHandler {
 			}
 			
 			try {
-				slaveDaemon.master.unregisterSlave(slaveDaemon);
+				if(slaveDaemon.master != null)
+					slaveDaemon.master.unregisterSlave(slaveDaemon);
 			} catch (RemoteException e) {
 				logger.error(e);
 			} catch (UnknownHostException e) {
