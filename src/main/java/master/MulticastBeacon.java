@@ -60,7 +60,7 @@ public class MulticastBeacon implements Runnable {
 		for(NetworkInterface ifc : Collections.list(NetworkInterface.getNetworkInterfaces())) {
 		   if(ifc.isUp()) {
 		      for(InetAddress addr : Collections.list(ifc.getInetAddresses())) {
-		    	  if (!addr.isLoopbackAddress() && addr.isSiteLocalAddress()) {
+		    	  if (!addr.isLoopbackAddress() && (addr.getAddress().length <= 4)) {
 		    		  return addr;
 		    	  }
 		      }
