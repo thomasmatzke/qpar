@@ -18,6 +18,8 @@ import main.java.QPar;
 import main.java.logic.TransmissionQbf;
 import main.java.rmi.MasterRemote;
 import main.java.rmi.SlaveRemote;
+import main.java.rmi.ZipClientSocketFactory;
+import main.java.rmi.ZipServerSocketFactory;
 import main.java.slave.solver.Solver;
 import main.java.slave.solver.SolverFactory;
 
@@ -33,16 +35,18 @@ import sun.misc.Signal;
  * @author thomasm
  *
  */
-public class Slave extends UnicastRemoteObject implements SlaveRemote, Serializable  {
+public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	static Logger logger = Logger.getLogger(Slave.class);
 	public static ArrayList<String> availableSolvers = new ArrayList<String>();
-	String masterIp;
+	public String masterIp;
 	
 	public boolean connected = false;
 	public Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	public MasterRemote master = null;
 	
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
+		//super(0, new ZipClientSocketFactory(), new ZipServerSocketFactory() );
+		this.masterIp = masterIp;
 		logger.info("Starting Slave...");
 				
 		QPar.loadConfig();

@@ -133,7 +133,7 @@
     <target name="Slave">
         <java classname="main.java.slave.Slave" failonerror="true" fork="yes">
             <jvmarg line="-Xss5m -ea -Xms64m -Xmx256m"/>
-            <arg line="localhost  -log=info"/>
+            <arg line="localhost -log=info"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>

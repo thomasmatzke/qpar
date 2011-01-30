@@ -9,7 +9,6 @@ LOGEVAL testing/dme 1 4 qpro 60
 #EVALUATE testing/consistency 4 6 qpro 60
 #EVALUATE testing/counter 1 5 qpro 60
 #EVALUATE testing/ring 2 5 qpro 60
-#LOGEVAL testing/ncf 1 4 qpro 60
 #EVALUATE testing/possibility 4 6 qpro 60
 #EVALUATE testing/semaphore 4 6 qpro 60
 #EVALUATE testing/assertion 4 6 qpro 60
