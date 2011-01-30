@@ -27,6 +27,8 @@ import main.java.master.gui.ProgramWindow;
 import main.java.rmi.MasterRemote;
 import main.java.rmi.Result;
 import main.java.rmi.SlaveRemote;
+import main.java.rmi.ZipClientSocketFactory;
+import main.java.rmi.ZipServerSocketFactory;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -39,7 +41,7 @@ import org.apache.log4j.Logger;
  * @author thomasm
  * 
  */
-public class Master implements MasterRemote, Serializable {
+public class Master extends UnicastRemoteObject implements MasterRemote {
 
 	private static ArgumentParser ap;
 
@@ -74,6 +76,8 @@ public class Master implements MasterRemote, Serializable {
 	
 
 	public Master() throws FileNotFoundException, RemoteException {
+		//super(0, new ZipClientSocketFactory(), new ZipServerSocketFactory() );
+		
 		Registry registry = null;
 		// Start the registry
 		try {
@@ -85,7 +89,7 @@ public class Master implements MasterRemote, Serializable {
 		
 		// Start own interface
 		MasterRemote myInterface = this;
-		UnicastRemoteObject.exportObject(this, 0);
+		//UnicastRemoteObject.exportObject(this, 0);
 		registry.rebind("Master", myInterface);
 		
 		if (Master.startGui) {
