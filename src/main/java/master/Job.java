@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -216,6 +215,7 @@ public class Job {
 				sub.jobId = this.getId();
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
+				logger.info("Sending formula " + sub.getId() + " ...");
 				new Thread(new TransportThread(s, sub, this.solver)).start();
 				synchronized(this.formulaDesignations) {
 					formulaDesignations.put(sub.getId(), s);

@@ -1,6 +1,5 @@
 package main.java.slave.solver;
 
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;

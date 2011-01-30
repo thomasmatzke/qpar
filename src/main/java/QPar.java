@@ -4,9 +4,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import main.java.logic.Qbf;
-import main.java.master.Mailer;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 

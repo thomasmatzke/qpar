@@ -4,21 +4,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.rmi.RemoteException;
-import java.util.Vector;
-
 import main.java.QPar;
-import main.java.StreamGobbler;
 import main.java.logic.TransmissionQbf;
 import main.java.master.Mailer;
 import main.java.rmi.Result;
 import main.java.slave.Slave;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 
 /**
  * This class encapsulates the qpro-solver

@@ -4,7 +4,6 @@ package main.java.logic.parser;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Vector;
 
 import main.java.QPar;

@@ -26,7 +26,7 @@ public class LogarithmicEvaluationSuite {
 	private Date startedAt = null;
 	private Date stoppedAt = null;
 	
-	private boolean correctness	= true;
+	public boolean correctness	= true;
 	Evaluation[][]	result		= null; 
 	
 	private ArrayList<Integer> coreSet;

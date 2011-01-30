@@ -8,11 +8,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Vector;
 
-import main.java.QPar;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
 import main.java.slave.solver.OrphanVisitor;

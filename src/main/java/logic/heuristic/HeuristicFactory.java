@@ -1,8 +1,6 @@
 package main.java.logic.heuristic;
 
 import java.util.ArrayList;
-import java.util.Vector;
-
 import main.java.logic.Qbf;
 
 

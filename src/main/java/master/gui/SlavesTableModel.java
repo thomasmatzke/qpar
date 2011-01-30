@@ -62,7 +62,6 @@ public class SlavesTableModel extends AbstractTableModel {
 		fireTableCellUpdated(row, col);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Class<String> getColumnClass(int col) {
 		switch (col) {
