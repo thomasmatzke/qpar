@@ -42,6 +42,8 @@ public class Qbf_parser implements Serializable {
 	private Vector<Integer> aVars = new Vector<Integer>();
 	private Vector<Integer> vars  = new Vector<Integer>();
 	private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
+	private HashMap<String, Integer> varNames = new HashMap<String, Integer>();
+	private int nextVarInt = 2;
 	private SimpleNode root;
 
 	public Qbf_parser() {
@@ -87,7 +89,7 @@ TOKEN : { < RSP		: "]" > }
 TOKEN : { < EXISTS	: "exists" > }
 TOKEN : { < FORALL	: "forall" > }
 
-TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
+TOKEN : { < VAR		:(["a"-"z"])(["0"-"9"])+ > }
 
 // non-terminals
 // *	<input>		::= <exp> EOF
@@ -102,13 +104,13 @@ void Input() #Input:	// Node with one child (Exp())
 void And() #And:	// Node with two children (Exp(), Exp())
 {}
 {       
-	<AND> { jjtThis.op = "&"; } 
+	<AND> 
 }
 
 void Or() #Or:	// Node with two children (Exp(), Exp())
 {}
 {
-	<OR> { jjtThis.op = "|"; }
+	<OR> 
 }
 
 void Not():	// Node with one child (Exp())
@@ -136,14 +138,24 @@ void Var() #Var:
 	t = <VAR>
 	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
 		// adding it to a vector containing all variable numbers as well as to a
-		// vector with all exist- or allquantified variables (that's the reason
+		/// vector with all exist- or allquantified variables (that's the reason
 		// for the funny String s fallthrough) 
-		String varName = t.image.replaceAll("[a-z]*","");
-		int varNumber = Integer.valueOf(varName).intValue();
-		varNumber++;
-		jjtThis.var = varNumber;
+		//String varName = t.image.replaceAll("[a-z]*","");
+		//int varNumber = Integer.valueOf(varName).intValue();
+		int varNumber = 0;
+		
+		if (varNames.containsKey(t.image)) {
+			jjtThis.var = varNames.get(t.image);
+		}
+		else {
+			varNames.put(t.image,nextVarInt);
+			jjtThis.var = nextVarInt;
+			nextVarInt++;
+		}
+		
 		jjtThis.nodeType = NodeType.VAR;
-			
+		varNumber = jjtThis.var;
+
 		if (literalCount.get(varNumber) != null) {
 			literalCount.put(varNumber, literalCount.get(varNumber) + 1);
 		}
@@ -166,7 +178,7 @@ void Exp() #void:
 }
 {
 	(
-		Not() { jjtThis.op = "!"; jjtThis.nodeType = NodeType.NOT; }
+		Not() { jjtThis.nodeType = NodeType.NOT; }
 		Exp()
 	) #Logical(1)
 	|
@@ -174,16 +186,25 @@ void Exp() #void:
 		(
 			s = Quant()
 			<LSP>
+			(
 			t = <VAR>
 			(
 				{
-					String varName = t.image.replaceAll("[a-z]*","");
-					int varNumber = Integer.valueOf(varName).intValue();
-					varNumber++;
+					int varNumber = 0;
+		
+					if (varNames.containsKey(t.image)) {
+						jjtThis.var = varNames.get(t.image);
+					}
+					else {
+						varNames.put(t.image,nextVarInt);
+						jjtThis.var = nextVarInt;
+						nextVarInt++;
+					}
+		
+					varNumber = jjtThis.var;
 
 					if (s == "e") {
 						jjtThis.nodeType = NodeType.EXISTS;
-						jjtThis.var = varNumber;
 						if (!vars.contains(varNumber)) {
 							eVars.add(varNumber);
 						}
@@ -191,13 +212,13 @@ void Exp() #void:
 
 					if (s == "f") {
 						jjtThis.nodeType = NodeType.FORALL;
-						jjtThis.var = varNumber;
 						if (!vars.contains(varNumber)) {
 							aVars.add(varNumber);
 						}
 					} 		
 				}
 			)
+			)+
 			<RSP>
 		)
 		Exp()
@@ -208,9 +229,9 @@ void Exp() #void:
 		Exp()
 		(
 			(
-				"|" {jjtThis.op = "|"; jjtThis.nodeType = NodeType.OR; }
+				"|" { jjtThis.nodeType = NodeType.OR; }
 				|
-				"&" {jjtThis.op = "&"; jjtThis.nodeType = NodeType.AND; }
+				"&" { jjtThis.nodeType = NodeType.AND; }
 			)
 			Exp()
 		)?

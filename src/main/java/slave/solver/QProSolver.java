@@ -243,7 +243,7 @@ public class QProSolver extends Solver {
 		traversedTree += t.traverseTree(); // <- actual traversion happens here
 		traversedTree += "QBF\n";
 		logger.debug("traversing finished");
-		
+System.out.println(traversedTree);		
 		return traversedTree;
 	}
 

@@ -46,6 +46,8 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants, /*@
 	private Vector<Integer> aVars = new Vector<Integer>();
 	private Vector<Integer> vars  = new Vector<Integer>();
 	private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
+	private HashMap<String, Integer> varNames = new HashMap<String, Integer>();
+	private int nextVarInt = 2;
 	private SimpleNode root;
 
 	public Qbf_parser() {
@@ -91,7 +93,7 @@ TOKEN : { < RSP		: "]" > }
 TOKEN : { < EXISTS	: "exists" > }
 TOKEN : { < FORALL	: "forall" > }
 
-TOKEN : { < VAR		: (["a"-"z"])(["0"-"9"])+ > }
+TOKEN : { < VAR		:(["a"-"z"])(["0"-"9"])+ > }
 
 // non-terminals
 // *	<input>		::= <exp> EOF
@@ -139,11 +141,6 @@ void And()     :	// Node with two children (Exp(), Exp())
         try {
 /*@egen*/       
 	<AND>/*@bgen(jjtree)*/
-              {
-                jjtree.closeNodeScope(jjtn000, true);
-                jjtc000 = false;
-              }
-/*@egen*/ { jjtn000.op = "&"; }/*@bgen(jjtree)*/
         } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);
@@ -162,17 +159,12 @@ void Or()    :	// Node with two children (Exp(), Exp())
         try {
 /*@egen*/
 	<OR>/*@bgen(jjtree)*/
-             {
-               jjtree.closeNodeScope(jjtn000, true);
-               jjtc000 = false;
-             }
-/*@egen*/ { jjtn000.op = "|"; }/*@bgen(jjtree)*/
         } finally {
           if (jjtc000) {
             jjtree.closeNodeScope(jjtn000, true);
           }
         }
-/*@egen*/
+/*@egen*/ 
 }
 
 void Not():	// Node with one child (Exp())
@@ -211,14 +203,24 @@ void Var()     :
 /*@egen*/
 	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
 		// adding it to a vector containing all variable numbers as well as to a
-		// vector with all exist- or allquantified variables (that's the reason
+		/// vector with all exist- or allquantified variables (that's the reason
 		// for the funny String s fallthrough) 
-		String varName = t.image.replaceAll("[a-z]*","");
-		int varNumber = Integer.valueOf(varName).intValue();
-		varNumber++;
-		jjtn000.var = varNumber;
+		//String varName = t.image.replaceAll("[a-z]*","");
+		//int varNumber = Integer.valueOf(varName).intValue();
+		int varNumber = 0;
+		
+		if (varNames.containsKey(t.image)) {
+			jjtn000.var = varNames.get(t.image);
+		}
+		else {
+			varNames.put(t.image,nextVarInt);
+			jjtn000.var = nextVarInt;
+			nextVarInt++;
+		}
+		
 		jjtn000.nodeType = NodeType.VAR;
-			
+		varNumber = jjtn000.var;
+
 		if (literalCount.get(varNumber) != null) {
 			literalCount.put(varNumber, literalCount.get(varNumber) + 1);
 		}
@@ -254,7 +256,7 @@ void Exp()      :
         try {
 /*@egen*/
 	(
-		Not() { jjtn001.op = "!"; jjtn001.nodeType = NodeType.NOT; }
+		Not() { jjtn001.nodeType = NodeType.NOT; }
 		Exp()
 	)/*@bgen(jjtree)*/
         } catch (Throwable jjte001) {
@@ -289,16 +291,25 @@ void Exp()      :
 		(
 			s = Quant()
 			<LSP>
+			(
 			t = <VAR>
 			(
 				{
-					String varName = t.image.replaceAll("[a-z]*","");
-					int varNumber = Integer.valueOf(varName).intValue();
-					varNumber++;
+					int varNumber = 0;
+		
+					if (varNames.containsKey(t.image)) {
+						jjtn002.var = varNames.get(t.image);
+					}
+					else {
+						varNames.put(t.image,nextVarInt);
+						jjtn002.var = nextVarInt;
+						nextVarInt++;
+					}
+		
+					varNumber = jjtn002.var;
 
 					if (s == "e") {
 						jjtn002.nodeType = NodeType.EXISTS;
-						jjtn002.var = varNumber;
 						if (!vars.contains(varNumber)) {
 							eVars.add(varNumber);
 						}
@@ -306,13 +317,13 @@ void Exp()      :
 
 					if (s == "f") {
 						jjtn002.nodeType = NodeType.FORALL;
-						jjtn002.var = varNumber;
 						if (!vars.contains(varNumber)) {
 							aVars.add(varNumber);
 						}
 					} 		
 				}
 			)
+			)+
 			<RSP>
 		)
 		Exp()
@@ -350,9 +361,9 @@ void Exp()      :
 		Exp()
 		(
 			(
-				"|" {jjtn003.op = "|"; jjtn003.nodeType = NodeType.OR; }
+				"|" { jjtn003.nodeType = NodeType.OR; }
 				|
-				"&" {jjtn003.op = "&"; jjtn003.nodeType = NodeType.AND; }
+				"&" { jjtn003.nodeType = NodeType.AND; }
 			)
 			Exp()
 		)?

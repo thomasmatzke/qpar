@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # this script creates the batch commands to solve all formulas in the qbf
 # directory with QPar. Results will be written to the testing directory one file
 # per formula
