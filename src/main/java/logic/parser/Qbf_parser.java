@@ -11,6 +11,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
         private Vector<Integer> eVars = new Vector<Integer>();
         private Vector<Integer> aVars = new Vector<Integer>();
         private Vector<Integer> vars  = new Vector<Integer>();
+        private Vector<SimpleNode> nodesToExpand = new Vector<SimpleNode>();
         private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
         private HashMap<String, Integer> varNames = new HashMap<String, Integer>();
         private int nextVarInt = 2;
@@ -38,6 +39,41 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
 
         public SimpleNode getRootNode() {
                 return (SimpleNode)this.jjtree.rootNode();
+        }
+
+        // this expands quantifier nodes with more than one variable, e.g.:
+        //
+        // 	forall [v1 v2 v3] ... (in boole format)
+        //
+        // so that instead of one single FORALL node containing v1, v2, v3
+        // we have three connected nodes for them in our tree representation
+        // of the formula.
+        //
+        // this may be changed or left empty for other input formats.
+        public void doPostprocessing() {
+
+                for (SimpleNode n: nodesToExpand) {
+
+                        SimpleNode currentParent = (SimpleNode) n;
+                        // save the node that we need to connect at the end
+                        SimpleNode lastChild = (SimpleNode) n.jjtGetChild(0);
+                        n.deleteChildren();
+
+                        for (int var: n.getVarList()) {
+                                SimpleNode currentChild = new SimpleNode();
+                                currentChild.setNodeType(n.getNodeType());
+                                currentChild.setNodeVariable(var);
+
+                                currentParent.jjtAddChild((SimpleNode) currentChild, 0);
+                                currentChild.jjtSetParent((SimpleNode) currentParent);
+
+                                currentParent = currentChild;
+                        }
+
+                        currentParent.jjtAddChild((SimpleNode) lastChild, 0);
+                        lastChild.jjtSetParent((SimpleNode) currentParent);
+
+                }
         }
 
 // non-terminals
@@ -121,12 +157,6 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
       t = jj_consume_token(VAR);
           jjtree.closeNodeScope(jjtn000, true);
           jjtc000 = false;
-                // Stripping down the variable name to a number (e.g. "v123" -> 123 and
-                // adding it to a vector containing all variable numbers as well as to a
-                /// vector with all exist- or allquantified variables (that's the reason
-                // for the funny String s fallthrough) 
-                //String varName = t.image.replaceAll("[a-z]*","");
-                //int varNumber = Integer.valueOf(varName).intValue();
                 int varNumber = 0;
 
                 if (varNames.containsKey(t.image)) {
@@ -157,11 +187,45 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
     }
   }
 
+  final public Vector VarList(Vector varList, String s) throws ParseException {
+        Token t;
+    t = jj_consume_token(VAR);
+                if (!varNames.containsKey(t.image)) {
+                        varNames.put(t.image,nextVarInt);
+                        nextVarInt++;
+                }
+
+                if (s == "e") {
+                        if (!vars.contains(varNames.get(t.image))) {
+                                eVars.add(varNames.get(t.image));
+                        }
+                }
+
+                if (s == "f") {
+                        if (!vars.contains(varNames.get(t.image))) {
+                                aVars.add(varNames.get(t.image));
+                        }
+                }
+
+                varList.add(varNames.get(t.image));
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case VAR:
+      VarList(varList, s);
+      break;
+    default:
+      jj_la1[0] = jj_gen;
+      ;
+    }
+                {if (true) return varList;}
+    throw new Error("Missing return statement in function");
+  }
+
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
 // *				| <LP> <exp> <RP> | <VAR>
   final public void Exp() throws ParseException {
         String s = "";
         String op = "";
+        Vector<Integer> varList;
         Token t;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case NOT:
@@ -200,44 +264,20 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
       try {
         s = Quant();
         jj_consume_token(LSP);
-        label_1:
-        while (true) {
-          t = jj_consume_token(VAR);
-                                        int varNumber = 0;
+                          varList = new Vector<Integer>();
+        varList = VarList(varList, s);
+                                        jjtn002.var = varList.get(0);
+                                        varList.remove(0);
 
-                                        if (varNames.containsKey(t.image)) {
-                                                jjtn002.var = varNames.get(t.image);
-                                        }
-                                        else {
-                                                varNames.put(t.image,nextVarInt);
-                                                jjtn002.var = nextVarInt;
-                                                nextVarInt++;
+                                        if (varList.size() > 0) {
+                                                jjtn002.setVarList(varList);
+                                                nodesToExpand.add(jjtn002);
                                         }
 
-                                        varNumber = jjtn002.var;
-
-                                        if (s == "e") {
+                                        if (s == "e")
                                                 jjtn002.nodeType = NodeType.EXISTS;
-                                                if (!vars.contains(varNumber)) {
-                                                        eVars.add(varNumber);
-                                                }
-                                        }
-
-                                        if (s == "f") {
+                                        if (s == "f")
                                                 jjtn002.nodeType = NodeType.FORALL;
-                                                if (!vars.contains(varNumber)) {
-                                                        aVars.add(varNumber);
-                                                }
-                                        }
-          switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-          case VAR:
-            ;
-            break;
-          default:
-            jj_la1[0] = jj_gen;
-            break label_1;
-          }
-        }
         jj_consume_token(RSP);
         Exp();
       } catch (Throwable jjte002) {
@@ -371,7 +411,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
       jj_la1_init_0();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x4000,0x60,0x60,0x7180,0x3000,0x60,};
+      jj_la1_0 = new int[] {0x8000,0xc0,0xc0,0xe300,0x6000,0xc0,};
    }
 
   /** Constructor with InputStream. */
@@ -491,7 +531,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
   /** Generate ParseException. */
   public ParseException generateParseException() {
     jj_expentries.clear();
-    boolean[] la1tokens = new boolean[15];
+    boolean[] la1tokens = new boolean[16];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
@@ -505,7 +545,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
         }
       }
     }
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 16; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;

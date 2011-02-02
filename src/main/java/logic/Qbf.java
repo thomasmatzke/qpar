@@ -69,8 +69,15 @@ public class Qbf {
 			this.eVars = parser.getEVars();
 			this.aVars = parser.getAVars();
 			this.vars = parser.getVars();
+
 			root = parser.getRootNode();
-			root.dump("TREE");
+
+			//root.dump("> ");
+
+			parser.doPostprocessing();
+			
+			logger.debug("postprocessing...");
+			//root.dump("> ");
 		}
 		catch (ParseException e) {
 			logger.error("Parse error");			

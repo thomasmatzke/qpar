@@ -41,6 +41,7 @@ public class Qbf_parser implements Serializable {
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();
 	private Vector<Integer> vars  = new Vector<Integer>();
+	private Vector<SimpleNode> nodesToExpand = new Vector<SimpleNode>();
 	private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
 	private HashMap<String, Integer> varNames = new HashMap<String, Integer>();
 	private int nextVarInt = 2;
@@ -69,12 +70,48 @@ public class Qbf_parser implements Serializable {
 	public SimpleNode getRootNode() {
 		return (SimpleNode)this.jjtree.rootNode();
 	}
+
+	// this expands quantifier nodes with more than one variable, e.g.:
+	//
+	// 	forall [v1 v2 v3] ... (in boole format)
+	//
+	// so that instead of one single FORALL node containing v1, v2, v3
+	// we have three connected nodes for them in our tree representation
+	// of the formula.
+	//
+	// this may be changed or left empty for other input formats.
+        public void doPostprocessing() {
+
+                for (SimpleNode n: nodesToExpand) {
+
+                        SimpleNode currentParent = (SimpleNode) n;
+			// save the node that we need to connect at the end
+                        SimpleNode lastChild = (SimpleNode) n.jjtGetChild(0);
+			n.deleteChildren();
+
+                        for (int var: n.getVarList()) {                                
+				SimpleNode currentChild = new SimpleNode();
+				currentChild.setNodeType(n.getNodeType());
+				currentChild.setNodeVariable(var);
+				
+				currentParent.jjtAddChild((SimpleNode) currentChild, 0);
+				currentChild.jjtSetParent((SimpleNode) currentParent);
+
+				currentParent = currentChild;
+                        }
+
+			currentParent.jjtAddChild((SimpleNode) lastChild, 0);
+			lastChild.jjtSetParent((SimpleNode) currentParent);
+			
+                }
+        }
+
 }
 
 PARSER_END(Qbf_parser)
 
 SKIP : {" "}
-SKIP : {"\n" | "\r" | "\r\n" }
+SKIP : {"\n" | "\r" | "\r\n" | "\t"}
 
 // terminals
 TOKEN : { < AND		: "&" > }
@@ -136,12 +173,7 @@ void Var() #Var:
 }
 {
 	t = <VAR>
-	{	// Stripping down the variable name to a number (e.g. "v123" -> 123 and
-		// adding it to a vector containing all variable numbers as well as to a
-		/// vector with all exist- or allquantified variables (that's the reason
-		// for the funny String s fallthrough) 
-		//String varName = t.image.replaceAll("[a-z]*","");
-		//int varNumber = Integer.valueOf(varName).intValue();
+	{
 		int varNumber = 0;
 		
 		if (varNames.containsKey(t.image)) {
@@ -168,12 +200,46 @@ void Var() #Var:
 	}
 }
 
+Vector VarList(Vector varList, String s) #void:
+{
+	Token t;
+}
+{
+	t = <VAR>
+	{
+		if (!varNames.containsKey(t.image)) {
+			varNames.put(t.image,nextVarInt);
+			nextVarInt++;
+		}
+
+		if (s == "e") {
+			if (!vars.contains(varNames.get(t.image))) {
+				eVars.add(varNames.get(t.image));
+			}
+		}
+
+		if (s == "f") {
+			if (!vars.contains(varNames.get(t.image))) {
+				aVars.add(varNames.get(t.image));
+			}
+		} 	
+
+		varList.add(varNames.get(t.image));
+	}
+	(VarList(varList, s))?
+	
+	{
+		return varList;
+	}
+}
+
 // *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
 // *				| <LP> <exp> <RP> | <VAR>
 void Exp() #void:
 {
 	String s = "";
 	String op = "";
+	Vector<Integer> varList;
 	Token t;
 }
 {
@@ -186,39 +252,25 @@ void Exp() #void:
 		(
 			s = Quant()
 			<LSP>
-			(
-			t = <VAR>
+			//t = <VAR>
+			{ varList = new Vector<Integer>(); }
+			varList = VarList(varList, s)
 			(
 				{
-					int varNumber = 0;
-		
-					if (varNames.containsKey(t.image)) {
-						jjtThis.var = varNames.get(t.image);
-					}
-					else {
-						varNames.put(t.image,nextVarInt);
-						jjtThis.var = nextVarInt;
-						nextVarInt++;
-					}
-		
-					varNumber = jjtThis.var;
+					jjtThis.var = varList.get(0);
+					varList.remove(0);					
 
-					if (s == "e") {
+					if (varList.size() > 0) {
+						jjtThis.setVarList(varList);
+						nodesToExpand.add(jjtThis);
+					}
+
+					if (s == "e")
 						jjtThis.nodeType = NodeType.EXISTS;
-						if (!vars.contains(varNumber)) {
-							eVars.add(varNumber);
-						}
-					}
-
-					if (s == "f") {
-						jjtThis.nodeType = NodeType.FORALL;
-						if (!vars.contains(varNumber)) {
-							aVars.add(varNumber);
-						}
-					} 		
+					if (s == "f")
+						jjtThis.nodeType = NodeType.FORALL;	
 				}
 			)
-			)+
 			<RSP>
 		)
 		Exp()

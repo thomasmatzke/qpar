@@ -1,5 +1,5 @@
 waitforslave 2 qpro
-newjob eineqbf eineqbf.out qpro litcount 2
+newjob eineqbf eineqbf.out qpro simple 2
 startjob 1
 waitforresult 1
 killallslaves

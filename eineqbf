@@ -1,0 +1,8 @@
+forall [ a1 a2 ] (exists [ e1 e2 ] (
+	(
+		(e1 | a1)	
+		&
+		(e2 | a2)
+	)
+
+))

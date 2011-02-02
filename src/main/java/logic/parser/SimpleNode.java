@@ -24,6 +24,7 @@ public class SimpleNode implements Node, Serializable {
 	protected Node parent;
 	public Node[] children;
 	public NodeType nodeType = null;
+	private Vector<Integer> varList = null;
 
 	public int id;				
 	public int var = -1;			// -1 = not a var node
@@ -55,6 +56,14 @@ public class SimpleNode implements Node, Serializable {
 		this.var = v;
 	}
 	
+	public Vector<Integer> getVarList() {
+		return varList;
+	}
+
+	public void setVarList(Vector<Integer> vl) {
+		this.varList = vl;
+	}
+
 	public void accept(Visitor v) {
 		v.visit(this);
 	}
@@ -168,7 +177,7 @@ public class SimpleNode implements Node, Serializable {
 	 * 
 	 * @return A qpro formatted subformula
 	 * @param op
-	 *            ICH KENN MICH GRAD SELBST NICHT MEHR AUS :) TODO
+	 *            ICH KENN MICH GRAD SELBST NICHT MEHR AUS :)
 	 */
 	public String getEnclosedFormula(NodeType op) {
 		String tmp = "";
@@ -683,8 +692,11 @@ public class SimpleNode implements Node, Serializable {
 	 */
 
 	public String toString() {
+
 		String desc;
-		if(this.getNodeType() == NodeType.VAR)
+		if((this.getNodeType() == NodeType.VAR) ||
+			(this.getNodeType() == NodeType.EXISTS) ||
+			(this.getNodeType() == NodeType.FORALL))
 			desc = this.getNodeType() + "(" + var + ")";
 		else
 			desc = this.getNodeType().toString();

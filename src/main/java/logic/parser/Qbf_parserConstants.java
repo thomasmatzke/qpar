@@ -11,25 +11,25 @@ public interface Qbf_parserConstants {
   /** End of File. */
   int EOF = 0;
   /** RegularExpression Id. */
-  int AND = 5;
+  int AND = 6;
   /** RegularExpression Id. */
-  int OR = 6;
+  int OR = 7;
   /** RegularExpression Id. */
-  int NOT = 7;
+  int NOT = 8;
   /** RegularExpression Id. */
-  int LP = 8;
+  int LP = 9;
   /** RegularExpression Id. */
-  int RP = 9;
+  int RP = 10;
   /** RegularExpression Id. */
-  int LSP = 10;
+  int LSP = 11;
   /** RegularExpression Id. */
-  int RSP = 11;
+  int RSP = 12;
   /** RegularExpression Id. */
-  int EXISTS = 12;
+  int EXISTS = 13;
   /** RegularExpression Id. */
-  int FORALL = 13;
+  int FORALL = 14;
   /** RegularExpression Id. */
-  int VAR = 14;
+  int VAR = 15;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -41,6 +41,7 @@ public interface Qbf_parserConstants {
     "\"\\n\"",
     "\"\\r\"",
     "\"\\r\\n\"",
+    "\"\\t\"",
     "\"&\"",
     "\"|\"",
     "\"!\"",
