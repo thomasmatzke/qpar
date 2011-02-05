@@ -8,5 +8,5 @@ echo "solving formulas in qpro/"
 for f in qpro/*.qpro
 do
 	echo `basename $f`
-	qpro.exe $f
+	time qpro $f
 done

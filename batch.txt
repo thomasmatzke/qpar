@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
 #EVALUATE testing/NPNCNF2008 2 qpro 60
 #EVALUATE testing/boole 1 5 qpro 60
@@ -24,5 +25,11 @@ LOGEVAL testing/counter_biggest 1 4 qpro 480
 #newjob testing\boole\counter5_2-bin.qbf testing\counter5_2-bin.qbf.txt qpro litcount 1
 #startjob 1
 #waitforresult 1
+=======
+waitforslave 2 qpro
+newjob eineqbf eineqbf.out qpro simple 2
+startjob 1
+waitforresult 1
+>>>>>>> 0f61bb61227de4b1b19ac8696a32a9e0fac43831
 killallslaves
 quit
