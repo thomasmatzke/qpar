@@ -215,7 +215,7 @@ public class Job {
 				sub.jobId = this.getId();
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
-				logger.info("Sending formula " + sub.getId() + " ...");
+				
 				new Thread(new TransportThread(s, sub, this.solver)).start();
 				synchronized(this.formulaDesignations) {
 					formulaDesignations.put(sub.getId(), s);
@@ -240,7 +240,9 @@ public class Job {
 		@Override
 		public void run() {
 			try {
+				logger.info("Sending formula " + sub.getId() + " ...");
 				s.computeFormula(sub, this.solver);
+				logger.info("Formula " + sub.getId() + " sent ...");
 			} catch (RemoteException e) {
 				logger.error(e);
 			}

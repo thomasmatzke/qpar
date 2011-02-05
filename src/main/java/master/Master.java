@@ -50,27 +50,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 	private static HashMap<String, SlaveRemote> slaves = new HashMap<String, SlaveRemote>();
 	public static AbstractTableModel slaveTableModel;
 	
-	public static void removeSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
-		slaves.remove(slave.getHostName());
-		if (slaveTableModel != null) {
-			slaveTableModel.fireTableDataChanged();
-		}
-	}
 	
-	public static void addSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
-		slaves.put(slave.getHostName(), slave);
-		logger.debug("Adding Slave: " + slave);
-		if (slaveTableModel != null) {
-			slaveTableModel.fireTableDataChanged();
-		}
-	}
-	
-	public static HashMap<String, SlaveRemote> getSlaves() {
-		return slaves;
-	}
-	
-	
-
 	public Master() throws FileNotFoundException, RemoteException {
 		//super(0, new ZipClientSocketFactory(), new ZipServerSocketFactory() );
 		
@@ -108,6 +88,26 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 			shellthread.start();
 		}
 	}
+	
+	public static void removeSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
+		slaves.remove(slave.getHostName());
+		if (slaveTableModel != null) {
+			slaveTableModel.fireTableDataChanged();
+		}
+	}
+	
+	public static void addSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
+		slaves.put(slave.getHostName(), slave);
+		logger.debug("Adding Slave: " + slave);
+		if (slaveTableModel != null) {
+			slaveTableModel.fireTableDataChanged();
+		}
+	}
+	
+	public static HashMap<String, SlaveRemote> getSlaves() {
+		return slaves;
+	}
+	
 
 	private static void usage() {
 		System.out

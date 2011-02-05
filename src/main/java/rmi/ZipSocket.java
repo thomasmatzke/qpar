@@ -3,6 +3,10 @@ package main.java.rmi;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.zip.DeflaterInputStream;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import java.net.Socket;
@@ -20,7 +24,10 @@ public class ZipSocket extends Socket {
 	public InputStream getInputStream() 
 	throws IOException {
 		if (in == null) {
-			in = new ZipInputStream(super.getInputStream());
+			//in = new DeflaterInputStream(super.getInputStream());
+			//in = new ZipInputStream(super.getInputStream());
+			//in = new GZIPInputStream(super.getInputStream());
+			//in = new CompressionInputStream(super.getInputStream());
 		}
 		return in;
 	}
@@ -28,7 +35,10 @@ public class ZipSocket extends Socket {
 	public OutputStream getOutputStream() 
 	throws IOException {
 		if (out == null) {
-			out = new ZipOutputStream(super.getOutputStream());
+			//out = new DeflaterOutputStream(super.getOutputStream());
+			//out = new ZipOutputStream(super.getOutputStream());
+			//out = new GZIPOutputStream(super.getOutputStream());
+			//out = new CompressionOutputStream(super.getOutputStream());
 		}
 		return out;
 	}

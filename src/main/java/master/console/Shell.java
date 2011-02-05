@@ -186,7 +186,11 @@ public class Shell implements Runnable{
 		}
 		
 		LogarithmicEvaluationSuite eval = new LogarithmicEvaluationSuite(directory, cores_min, cores_max, timeout, solverId);
-		eval.run();
+		try {
+			eval.run();
+		} catch (FileNotFoundException e) {
+			logger.error("Directory not found: " + e.getMessage());
+		}
 	}
 
 	/**

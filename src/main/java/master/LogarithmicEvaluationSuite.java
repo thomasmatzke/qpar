@@ -2,6 +2,7 @@ package main.java.master;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,8 +51,10 @@ public class LogarithmicEvaluationSuite {
 		
 	}
 	
-	public void run() {
-		logger.error(coreSet);
+	public void run() throws FileNotFoundException {
+		if(!directory.exists()) {
+			throw new FileNotFoundException(directory.toString());
+		}
 		Shell.waitforslaves(stopCores, solverId);
 		
 		this.startedAt = new Date();
