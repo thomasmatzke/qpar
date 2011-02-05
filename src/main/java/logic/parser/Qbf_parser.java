@@ -73,6 +73,7 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
                         currentParent.jjtAddChild((SimpleNode) lastChild, 0);
                         lastChild.jjtSetParent((SimpleNode) currentParent);
 
+                        n.setVarList(null);
                 }
         }
 

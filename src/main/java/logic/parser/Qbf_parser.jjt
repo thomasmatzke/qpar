@@ -103,6 +103,7 @@ public class Qbf_parser implements Serializable {
 			currentParent.jjtAddChild((SimpleNode) lastChild, 0);
 			lastChild.jjtSetParent((SimpleNode) currentParent);
 			
+			n.setVarList(null);
                 }
         }
 
