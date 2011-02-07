@@ -11,6 +11,7 @@ MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblabla
 #LOGEVAL testing/counter_small 1 64 qpro 60
 #LOGEVAL testing/counter_medium 1 64 qpro 60
 #LOGEVAL testing/counter_big 1 64 qpro 60
+#LOGEVAL testing/counter_biggest 1 64 qpro 60
 
 #LOGEVAL testing/ncf_small 1 64 qpro 60
 #LOGEVAL testing/ncf_medium 1 64 qpro 60
