@@ -1,7 +1,6 @@
 package main.java.slave;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -18,8 +17,6 @@ import main.java.QPar;
 import main.java.logic.TransmissionQbf;
 import main.java.rmi.MasterRemote;
 import main.java.rmi.SlaveRemote;
-import main.java.rmi.ZipClientSocketFactory;
-import main.java.rmi.ZipServerSocketFactory;
 import main.java.slave.solver.Solver;
 import main.java.slave.solver.SolverFactory;
 
@@ -44,6 +41,8 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	public Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	public MasterRemote master = null;
 	
+	public FormulaListener formulaListener = null;
+	
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
 		//super(0, new ZipClientSocketFactory(), new ZipServerSocketFactory() );
 		this.masterIp = masterIp;
@@ -55,7 +54,15 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 		Signal.handle(new Signal("INT"), handler);
 		Signal.handle(new Signal("TERM"), handler);
 		//Signal.handle(new Signal("HUP"), handler);
-					
+		
+		try {
+			this.formulaListener = new FormulaListener(11111);
+			new Thread(this.formulaListener).start();
+		} catch (IOException e) {
+			logger.fatal(e);
+			System.exit(-1);
+		}
+		
 		logger.info("Available Solvers are: " + availableSolvers);
 		if (masterIp == null) {
 			// so no ip was set...listen for the beacon...
@@ -196,11 +203,30 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
             }}.start();
 	}
 
+//	@Override
+//	public void computeFormula(TransmissionQbf formula, String solverId)
+//			throws RemoteException {
+//		logger.info("Starting computation of formula " + formula.getId());
+//		Solver s = SolverFactory.getSolver(solverId, this);
+//		s.setTransmissionQbf(formula);
+//		synchronized(threads) {
+//			threads.put(formula.getId(), s);
+//			s.getThread().start();
+//		}
+//	}
+	
 	@Override
-	public void computeFormula(TransmissionQbf formula, String solverId)
+	public void computeFormula(String formulaId, String solverId)
 			throws RemoteException {
-		logger.info("Starting computation of formula " + formula.getId());
+		logger.info("Starting computation of formula " + formulaId);
 		Solver s = SolverFactory.getSolver(solverId, this);
+		while(formulaListener.getTqbf(formulaId) == null) {
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e) {}
+		}
+		TransmissionQbf formula = formulaListener.getTqbf(formulaId);
+		formulaListener.deleteFormula(formulaId);
 		s.setTransmissionQbf(formula);
 		synchronized(threads) {
 			threads.put(formula.getId(), s);

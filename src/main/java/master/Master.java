@@ -3,7 +3,6 @@ package main.java.master;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -23,8 +22,6 @@ import main.java.master.gui.ProgramWindow;
 import main.java.rmi.MasterRemote;
 import main.java.rmi.Result;
 import main.java.rmi.SlaveRemote;
-import main.java.rmi.ZipClientSocketFactory;
-import main.java.rmi.ZipServerSocketFactory;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -38,6 +35,11 @@ import org.apache.log4j.Logger;
  * 
  */
 public class Master extends UnicastRemoteObject implements MasterRemote {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6189223346936131655L;
 
 	private static ArgumentParser ap;
 
@@ -65,7 +67,6 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 		
 		// Start own interface
 		MasterRemote myInterface = this;
-		//UnicastRemoteObject.exportObject(this, 0);
 		registry.rebind("Master", myInterface);
 		
 		if (Master.startGui) {

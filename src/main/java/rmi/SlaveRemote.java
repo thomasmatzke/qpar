@@ -11,7 +11,7 @@ import main.java.slave.solver.Solver;
 
 public interface SlaveRemote extends Remote {
 		
-	public void computeFormula(TransmissionQbf formula, String solverId) throws RemoteException;
+	public void computeFormula(String formulaId, String solverId) throws RemoteException;
 	
 	public void shutdown() throws RemoteException;
 	

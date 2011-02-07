@@ -3,6 +3,8 @@ package main.java.master;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -16,6 +18,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
+import main.java.StackTraceUtil;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 import main.java.logic.heuristic.HeuristicFactory;
@@ -216,7 +219,15 @@ public class Job {
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
 				
-				new Thread(new TransportThread(s, sub, this.solver)).start();
+				try {
+					new Thread(new TransportThread(s, sub, this.solver)).start();
+				} catch (UnknownHostException e) {
+					logger.error(StackTraceUtil.getStackTrace(e));
+				} catch (RemoteException e) {
+					logger.error(StackTraceUtil.getStackTrace(e));
+				} catch (IOException e) {
+					logger.error(StackTraceUtil.getStackTrace(e));
+				}
 				synchronized(this.formulaDesignations) {
 					formulaDesignations.put(sub.getId(), s);
 				}
@@ -230,20 +241,31 @@ public class Job {
 		TransmissionQbf sub = null;
 		String solver = null;
 		SlaveRemote s = null;
+		Socket senderSocket;
+		private ObjectOutputStream oos;
 		
-		public TransportThread(SlaveRemote s, TransmissionQbf sub, String solver) {
+		public TransportThread(SlaveRemote s, TransmissionQbf sub, String solver) throws UnknownHostException, RemoteException, IOException {
 			this.sub = sub;
 			this.solver = solver;
 			this.s = s;
+			logger.info("hostname: " + s.getHostName());
+			senderSocket = new Socket(s.getHostName(), 11111);
 		}
 		
 		@Override
 		public void run() {
 			try {
 				logger.info("Sending formula " + sub.getId() + " ...");
-				s.computeFormula(sub, this.solver);
+				oos = new ObjectOutputStream(senderSocket.getOutputStream());
+				oos.writeObject(sub);
+				oos.flush();
+				oos.close();
+				senderSocket.close();
+				s.computeFormula(sub.getId(), this.solver);
 				logger.info("Formula " + sub.getId() + " sent ...");
 			} catch (RemoteException e) {
+				logger.error(e);
+			} catch (IOException e) {
 				logger.error(e);
 			}
 		}

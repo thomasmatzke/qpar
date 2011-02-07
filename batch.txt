@@ -1,35 +1,33 @@
-<<<<<<< HEAD
 MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
-#EVALUATE testing/NPNCNF2008 2 qpro 60
-#EVALUATE testing/boole 1 5 qpro 60
-#LOGEVAL testing/boole 1 4 qpro 60
-#LOGEVAL testing/boole_ring 1 4 qpro 60
-#LOGEVAL testing/boole_semaphore 1 4 qpro 60
-#LOGEVAL testing/boole_counter 1 4 qpro 60
-LOGEVAL testing/counter_biggest 1 4 qpro 480
-#EVALUATE testing/cctgen 3 5 qpro 60
-#EVALUATE testing/smallring 2 5 qpro 180
 
-#LOGEVAL testing/dme 1 4 qpro 60
-#EVALUATE testing/consistency 4 6 qpro 60
-#EVALUATE testing/counter 1 5 qpro 60
-#EVALUATE testing/ring 2 5 qpro 60
-#EVALUATE testing/possibility 4 6 qpro 60
-#EVALUATE testing/semaphore 4 6 qpro 60
-#EVALUATE testing/assertion 4 6 qpro 60
+#LOGEVAL testing/semaphore_small 1 64 qpro 60
+#LOGEVAL testing/semaphore_medium 1 64 qpro 60
+#LOGEVAL testing/semaphore_big 1 64 qpro 60
 
-#waitforslave 6 simple
-#newjob testing/NPNCNF2008/assertion11_0_10-bin.qbf testing/NPNCNF2008/assertion11_0_10-bin.txt qpro rand 2
-#newjob testing/NPNCNF2008/ring5_4-bin.qbf testing/NPNCNF2008/ring5_4-bin.qbf.txt qpro simple 2
-#newjob testing/NPNCNF2008/008-020-03-04-000.ncf-bin.qbf testing/NPNCNF2008/008-020-03-04-000.ncf-bin.txt simple rand 2
-#newjob testing\boole\counter5_2-bin.qbf testing\counter5_2-bin.qbf.txt qpro litcount 1
-#startjob 1
-#waitforresult 1
-=======
-waitforslave 2 qpro
-newjob eineqbf eineqbf.out qpro simple 2
-startjob 1
-waitforresult 1
->>>>>>> 0f61bb61227de4b1b19ac8696a32a9e0fac43831
+#LOGEVAL testing/ring_small 1 64 qpro 60
+#LOGEVAL testing/ring_medium 1 64 qpro 60
+#LOGEVAL testing/ring_big 1 64 qpro 60
+
+#LOGEVAL testing/counter_small 1 64 qpro 60
+#LOGEVAL testing/counter_medium 1 64 qpro 60
+#LOGEVAL testing/counter_big 1 64 qpro 60
+
+#LOGEVAL testing/ncf_small 1 64 qpro 60
+#LOGEVAL testing/ncf_medium 1 64 qpro 60
+#LOGEVAL testing/ncf_big 1 64 qpro 60
+
+#LOGEVAL testing/consistency_big 1 64 qpro 60
+#LOGEVAL testing/consistency_bigger 1 64 qpro 60
+
+#LOGEVAL testing/dme_big 1 64 qpro 60
+#LOGEVAL testing/dme_small 1 64 qpro 60
+
+#LOGEVAL testing/possibility_big 1 64 qpro 60
+#LOGEVAL testing/possibility_bigger 1 64 qpro 60
+
+#LOGEVAL testing/assertion_small 1 64 qpro 60
+#LOGEVAL testing/assertion_medium 1 64 qpro 60
+#LOGEVAL testing/assertion_big 1 64 qpro 60
+
 killallslaves
 quit
