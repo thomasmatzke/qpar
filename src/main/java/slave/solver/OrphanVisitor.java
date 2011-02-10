@@ -2,12 +2,12 @@ package main.java.slave.solver;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
-
 import main.java.logic.Visitor;
 import main.java.logic.parser.Node;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
+
+import org.apache.log4j.Logger;
 
 public class OrphanVisitor implements Visitor {
 

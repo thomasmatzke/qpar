@@ -2,11 +2,12 @@ package main.java.logic;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import org.apache.log4j.Logger;
 
 import main.java.logic.parser.Node;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
+
+import org.apache.log4j.Logger;
 
 /**
  * Reduces a tree of simplenodes following boolean rules

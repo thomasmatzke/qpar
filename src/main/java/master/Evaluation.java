@@ -1,8 +1,6 @@
 package main.java.master;
 
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 
 import main.java.QPar;
@@ -73,12 +71,8 @@ public class Evaluation {
 					assert(false);
 				}
 			} catch(Throwable t) {
-				StringWriter result = new StringWriter();
-				PrintWriter writer = new PrintWriter(result);
-				t.printStackTrace(writer);
-				logger.error(result);
-				if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
-					Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Evaluation.evaluate())", result.toString());
+				logger.error(t);
+				QPar.sendExceptionMail(t);
 			}
 		}
 	}

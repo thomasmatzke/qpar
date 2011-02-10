@@ -8,10 +8,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
-import org.apache.log4j.Logger;
-
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.console.Shell;
+
+import org.apache.log4j.Logger;
 
 public class LogarithmicEvaluationSuite {
 

@@ -34,6 +34,7 @@ public class TransmissionQbf implements Serializable {
 	
 	public ArrayDeque<SimpleNode> truthAssignedNodes = null;
 	
+	public String solverId = null;
 	
 	public void reduceFast() {
 		ArrayDeque<SimpleNode> reducableNodes = new ArrayDeque<SimpleNode>();

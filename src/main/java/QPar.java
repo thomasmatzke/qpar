@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import main.java.master.Mailer;
+
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
@@ -32,6 +34,11 @@ public class QPar {
 		QPar.mailUser 	= properties.getProperty("mailUser");
 		QPar.mailServer = properties.getProperty("mailServer");
 		QPar.exceptionNotifierAddress = properties.getProperty("exceptionNotifierAddress");
+	}
+	
+	public static void sendExceptionMail(Throwable t) {
+		if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
+			Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification", StackTraceUtil.getStackTrace(t));
 	}
 	
 }

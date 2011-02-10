@@ -13,6 +13,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.zip.GZIPOutputStream;
 
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
@@ -22,17 +27,19 @@ import main.java.StackTraceUtil;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 import main.java.logic.heuristic.HeuristicFactory;
+import main.java.logic.parser.TokenMgrError;
 import main.java.master.console.Shell;
 import main.java.rmi.Result;
 import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.Logger;
 
-
 public class Job {
 
-	public enum Status { READY, RUNNING, COMPLETE, ERROR, TIMEOUT }
-	
+	public enum Status {
+		READY, RUNNING, COMPLETE, ERROR, TIMEOUT
+	}
+
 	private static int idCounter = 0;
 	private static Map<String, Job> jobs = new HashMap<String, Job>();
 	private static AbstractTableModel tableModel;
@@ -42,15 +49,14 @@ public class Job {
 	private long timeout = 0;
 	private Qbf formula;
 
-	
-	// tqbfs -> slaves
-	public volatile Map<String, SlaveRemote> formulaDesignations = new HashMap<String, SlaveRemote>();
+	public volatile ConcurrentMap<String, SlaveRemote> formulaDesignations = new ConcurrentHashMap<String, SlaveRemote>();
+	public volatile BlockingQueue<String> acknowledgedComputations = new LinkedBlockingQueue<String>();
 	private String heuristic, id, inputFileString, outputFileString, solver;
 	private int usedCores = 0, resultCtr = 0;
 	private volatile Status status;
 	private List<TransmissionQbf> subformulas;
 	private Date startedAt = null, stoppedAt = null;
-	
+
 	public Job() {
 		logger.setLevel(QPar.logLevel);
 	}
@@ -80,12 +86,11 @@ public class Job {
 		job.setHeuristic(heuristicId);
 		job.setStatus(Status.READY);
 		addJob(job);
-		logger.info("Job created. \n" +
-					"	JobId:        " + job.getId() + "\n" + 
-					"	HeuristicId:  "	+ job.getHeuristic() + "\n" + 
-					"	SolverId:     " + job.getSolver() + "\n" +
-					"	Inputfile:    " + job.getInputFileString() + "\n" + 
-					"	Outputfile:   " + job.getOutputFileString() + "\n");
+		logger.info("Job created. \n" + "	JobId:        " + job.getId() + "\n"
+				+ "	HeuristicId:  " + job.getHeuristic() + "\n"
+				+ "	SolverId:     " + job.getSolver() + "\n"
+				+ "	Inputfile:    " + job.getInputFileString() + "\n"
+				+ "	Outputfile:   " + job.getOutputFileString() + "\n");
 		return job;
 	}
 
@@ -96,7 +101,7 @@ public class Job {
 		return jobs;
 	}
 
-	synchronized public void abort() {
+	public void abort() {
 		if (this.getStatus() != Status.RUNNING)
 			return;
 		logger.info("Aborting Job " + this.id + "...");
@@ -114,28 +119,34 @@ public class Job {
 	}
 
 	private void abortComputations() throws RemoteException {
-		synchronized(this.formulaDesignations) {
-			for (Map.Entry<String, SlaveRemote> entry : this.formulaDesignations
-					.entrySet()) {
-				SlaveRemote s = entry.getValue();
-				String tqbfId = entry.getKey();
-				logger.info("Aborting Formula " + tqbfId + "...");
-				s.abortFormula(tqbfId);
+		String tqbfId = null;
+		while(this.formulaDesignations.size() > 0) {
+			try {
+				tqbfId = this.acknowledgedComputations.take();
+			} catch (InterruptedException e) {}
+			logger.info("Aborting Formula " + tqbfId + " ...");
+			SlaveRemote designation = this.formulaDesignations.get(tqbfId);
+			if(designation != null) {
+				designation.abortFormula(tqbfId);
+				this.formulaDesignations.remove(tqbfId);
+				logger.info("Formula " + tqbfId + " aborted.");
 			}
 		}
+		
 	}
 
 	public void startBlocking() {
 		this.start();
-		while(this.getStatus() == Status.RUNNING) {
+		while (this.getStatus() == Status.RUNNING) {
 			try {
 				Thread.sleep(500);
-			} catch (InterruptedException e) {	}
-			
-			if((startedAt.getTime() + timeout) < new Date().getTime()) {
-				logger.info("Timeout reached. Aborting Job. \n" +
-							"	Job Id:         " + this.id + "\n" +
-							"	Timeout (secs): " + timeout/1000 + "\n");
+			} catch (InterruptedException e) {
+			}
+
+			if ((startedAt.getTime() + timeout) < new Date().getTime()) {
+				logger.info("Timeout reached. Aborting Job. \n"
+						+ "	Job Id:         " + this.id + "\n"
+						+ "	Timeout (secs): " + timeout / 1000 + "\n");
 				this.abort();
 				this.setStatus(Status.TIMEOUT);
 				break;
@@ -154,16 +165,20 @@ public class Job {
 			logger.error(e);
 			this.setStatus(Status.ERROR);
 			return;
+		} catch(TokenMgrError e) {
+			logger.error(e);
+			this.setStatus(Status.ERROR);
+			return;
 		}
-		
+
 		ArrayList<SlaveRemote> slots = new ArrayList<SlaveRemote>();
 		ArrayList<SlaveRemote> slaves;
 		try {
 			slaves = Master.getSlavesWithSolver(this.solver);
-			
-			for(SlaveRemote slave : slaves) {
+
+			for (SlaveRemote slave : slaves) {
 				availableCores += slave.getCores();
-				for(int i = 0; i < slave.getCores(); i++) {
+				for (int i = 0; i < slave.getCores(); i++) {
 					slots.add(slave);
 				}
 			}
@@ -172,14 +187,14 @@ public class Job {
 			this.setStatus(Status.ERROR);
 			return;
 		}
-		
-		logger.debug("Available Cores: " + availableCores + ", Used Cores: " + usedCores);
-		
-		
+
+		logger.debug("Available Cores: " + availableCores + ", Used Cores: "
+				+ usedCores);
+
 		Collections.shuffle(slots);
 		String slotStr = "";
 		try {
-			for(SlaveRemote s : slots)
+			for (SlaveRemote s : slots)
 				slotStr += s.getHostName() + " ";
 		} catch (RemoteException e) {
 			logger.error(e);
@@ -190,37 +205,39 @@ public class Job {
 			this.setStatus(Status.ERROR);
 			return;
 		}
-				
+
 		logger.info("Computationslots generated: " + slotStr.trim());
-		
+
 		this.startedAt = new Date();
-		this.subformulas = formula.splitQbf(Math.min(availableCores, usedCores), 
-											HeuristicFactory.getHeuristic(this.getHeuristic(), this.formula));
-		
-		if(slots.size() < this.subformulas.size()) {
+		this.subformulas = formula.splitQbf(
+				Math.min(availableCores, usedCores), HeuristicFactory
+						.getHeuristic(this.getHeuristic(), this.formula));
+
+		if (slots.size() < this.subformulas.size()) {
 			logger.error("Not enough cores available for Job. Job failed.");
 			this.setStatus(Status.ERROR);
-			return;		
+			return;
 		}
-		
-		logger.info("Job started " + this.id + "...\n" +
-					"	Started at:  " + startedAt + "\n" +
-					"	Subformulas: " + this.subformulas.size()+ "\n" + 
-					"	Cores(avail):" + availableCores + "\n" +
-					"	Cores(used): " + usedCores + "\n" +
-					"	Slaves:      " + slaves.size());
-					
+
+		logger.info("Job started " + this.id + "...\n" + "	Started at:  "
+				+ startedAt + "\n" + "	Subformulas: " + this.subformulas.size()
+				+ "\n" + "	Cores(avail):" + availableCores + "\n"
+				+ "	Cores(used): " + usedCores + "\n" + "	Slaves:      "
+				+ slaves.size());
+
 		int slotIndex = 0;
-		for(TransmissionQbf sub : subformulas) {
-			synchronized(this) {
-				if(this.getStatus() != Status.RUNNING)
+		for (TransmissionQbf sub : subformulas) {
+			synchronized (this) {
+				if (this.getStatus() != Status.RUNNING)
 					return;
+				sub.solverId = this.solver;
 				sub.jobId = this.getId();
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
-				
+
 				try {
-					new Thread(new TransportThread(s, sub, this.solver)).start();
+					new Thread(new TransportThread(s, sub, this.solver))
+							.start();
 				} catch (UnknownHostException e) {
 					logger.error(StackTraceUtil.getStackTrace(e));
 				} catch (RemoteException e) {
@@ -228,40 +245,41 @@ public class Job {
 				} catch (IOException e) {
 					logger.error(StackTraceUtil.getStackTrace(e));
 				}
-				synchronized(this.formulaDesignations) {
-					formulaDesignations.put(sub.getId(), s);
-				}
-				if(slotIndex >= this.subformulas.size()) //roundrobin if overbooked
+				formulaDesignations.put(sub.getId(), s);
+				if (slotIndex >= this.subformulas.size()) // roundrobin if
+															// overbooked
 					slotIndex = 0;
 			}
-		}		
+		}
 	}
-	
+
 	class TransportThread implements Runnable {
 		TransmissionQbf sub = null;
 		String solver = null;
 		SlaveRemote s = null;
 		Socket senderSocket;
 		private ObjectOutputStream oos;
-		
-		public TransportThread(SlaveRemote s, TransmissionQbf sub, String solver) throws UnknownHostException, RemoteException, IOException {
+
+		public TransportThread(SlaveRemote s, TransmissionQbf sub, String solver)
+				throws UnknownHostException, RemoteException, IOException {
 			this.sub = sub;
 			this.solver = solver;
 			this.s = s;
-			logger.info("hostname: " + s.getHostName());
+			// logger.info("hostname: " + s.getHostName());
 			senderSocket = new Socket(s.getHostName(), 11111);
 		}
-		
+
 		@Override
 		public void run() {
 			try {
 				logger.info("Sending formula " + sub.getId() + " ...");
-				oos = new ObjectOutputStream(senderSocket.getOutputStream());
+				// oos = new ObjectOutputStream(senderSocket.getOutputStream());
+				oos = new ObjectOutputStream(new GZIPOutputStream(
+						senderSocket.getOutputStream()));
 				oos.writeObject(sub);
 				oos.flush();
 				oos.close();
 				senderSocket.close();
-				s.computeFormula(sub.getId(), this.solver);
 				logger.info("Formula " + sub.getId() + " sent ...");
 			} catch (RemoteException e) {
 				logger.error(e);
@@ -280,25 +298,26 @@ public class Job {
 	}
 
 	synchronized public void fireJobCompleted(boolean result) {
-		if(this.getStatus() != Status.RUNNING)
+		if (this.getStatus() != Status.RUNNING)
 			return;
 		this.setStatus(Status.COMPLETE);
 		this.setStoppedAt(new Date());
-		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
+		logger.info("Job complete. Resolved to: " + result
+				+ ". Aborting computations.");
 		try {
 			this.abortComputations();
 		} catch (RemoteException e) {
 			logger.error(e);
 		}
-		this.setResult(result);		
+		this.setResult(result);
 
 		// Write the results to a file
 		// But only if we want that. In case of a evaluation
 		// the outputfile is set to null
 		if (this.getOutputFileString() != null) {
 			try {
-				BufferedWriter out = new BufferedWriter(new FileWriter(this
-						.getOutputFileString()));
+				BufferedWriter out = new BufferedWriter(new FileWriter(
+						this.getOutputFileString()));
 				out.write(resultText());
 				out.flush();
 			} catch (IOException e) {
@@ -317,12 +336,12 @@ public class Job {
 	}
 
 	private void freeResources() {
-		this.formula				= null;
-		this.formulaDesignations	= null;
-		this.subformulas			= null;
+		this.formula = null;
+		this.formulaDesignations = null;
+		this.subformulas = null;
 		System.gc();
 	}
-	
+
 	public long totalMillis() {
 		// if(this.status != Job.COMPLETE)
 		// return -1;
@@ -350,43 +369,40 @@ public class Job {
 
 	private void handleResult(String tqbfId, boolean result) {
 		resultCtr++;
-//logger.info("dttree pre merge: " + formula.decisionRoot.dump());
 		boolean solved = formula.mergeQbf(tqbfId, result);
 		logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
 				+ getId() + " (" + result + ")");
-//logger.info("dttree post merge: " + formula.decisionRoot.dump());
-		synchronized(this.formulaDesignations) {
-			this.formulaDesignations.remove(tqbfId);
-		}
+		this.formulaDesignations.remove(tqbfId);
 		if (solved)
 			fireJobCompleted(formula.getResult());
 		else {
-			if(resultCtr == subformulas.size()) {
-				// Received all subformulas but still no result...something is wrong
+			if (resultCtr == subformulas.size()) {
+				// Received all subformulas but still no result...something is
+				// wrong
 				logger.fatal("Merging broken!");
-				logger.fatal("Dumping decisiontree: \n" + formula.decisionRoot.dump());
+				logger.fatal("Dumping decisiontree: \n"
+						+ formula.decisionRoot.dump());
 				System.exit(-1);
 			}
 		}
-		
 	}
-	
+
 	synchronized public void handleResult(Result r) {
-		if(this.getStatus() != Status.RUNNING) {
+		if (this.getStatus() != Status.RUNNING) {
 			return;
 		}
-		
-		if(r.type != Result.Type.ERROR) {
+
+		if (r.type != Result.Type.ERROR) {
 			handleResult(r.tqbfId, r.type == Result.Type.TRUE ? true : false);
 			return;
 		}
-		
+
 		logger.error("Slave returned error for subformula: " + r.tqbfId);
-		if(r.exception != null)
+		if (r.exception != null)
 			logger.error("Exception occured in Slave: " + r.exception);
-		if(r.errorMessage != null)
+		if (r.errorMessage != null)
 			logger.error("Solver returned: " + r.errorMessage);
-		abort();		
+		abort();
 	}
 
 	public Qbf getFormula() {
@@ -456,17 +472,17 @@ public class Job {
 	synchronized public void setStatus(Status status) {
 		this.status = status;
 		if (Job.getTableModel() != null) {
-			SwingUtilities.invokeLater(new Runnable(){
-					public void run() {
-						Job.getTableModel().fireTableDataChanged();
-					}
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					Job.getTableModel().fireTableDataChanged();
+				}
 			});
 		}
 	}
 
 	public void setStoppedAt(Date stoppedAt) {
 		// Only allow this once, in case of an erroneous second call
-		if(this.stoppedAt == null)
+		if (this.stoppedAt == null)
 			this.stoppedAt = stoppedAt;
 	}
 
@@ -488,16 +504,16 @@ public class Job {
 
 	public static String getStatusDescription(Status status) {
 		switch (status) {
-			case READY:
-				return "Ready";
-			case RUNNING:
-				return "Running";
-			case COMPLETE:
-				return "Complete";
-			case ERROR:
-				return "Error";
-			default:
-				return "undefined";
+		case READY:
+			return "Ready";
+		case RUNNING:
+			return "Running";
+		case COMPLETE:
+			return "Complete";
+		case ERROR:
+			return "Error";
+		default:
+			return "undefined";
 		}
 	}
 

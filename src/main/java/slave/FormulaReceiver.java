@@ -3,10 +3,13 @@ package main.java.slave;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.util.zip.GZIPInputStream;
+
+import main.java.slave.*;
+import main.java.logic.TransmissionQbf;
 
 import org.apache.log4j.Logger;
 
-import main.java.logic.TransmissionQbf;
 
 public class FormulaReceiver implements Runnable {
 
@@ -24,12 +27,13 @@ public class FormulaReceiver implements Runnable {
 	@Override
 	public void run() {
 		try {
-			ois = new ObjectInputStream(sock.getInputStream());
+			//ois = new ObjectInputStream(sock.getInputStream());
+			ois = new ObjectInputStream(new GZIPInputStream(sock.getInputStream()));
 			TransmissionQbf tqbf = (TransmissionQbf) ois.readObject();
 			logger.info("Received formula " + tqbf.getId());
-			synchronized(listener.store) {
-				listener.store.put(tqbf.getId(), tqbf);
-			}
+			ComputationStateMachine m = new ComputationStateMachine(tqbf);
+			ComputationStateMachine.computations.put(tqbf.getId(), m);
+			m.startComputation();
 		} catch (IOException e) {
 			logger.error(e);
 		} catch (ClassNotFoundException e) {

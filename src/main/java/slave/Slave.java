@@ -9,16 +9,14 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 
 import main.java.ArgumentParser;
 import main.java.QPar;
-import main.java.logic.TransmissionQbf;
 import main.java.rmi.MasterRemote;
 import main.java.rmi.SlaveRemote;
-import main.java.slave.solver.Solver;
-import main.java.slave.solver.SolverFactory;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -33,13 +31,17 @@ import sun.misc.Signal;
  *
  */
 public class Slave extends UnicastRemoteObject implements SlaveRemote  {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7927545942720427850L;
 	static Logger logger = Logger.getLogger(Slave.class);
 	public static ArrayList<String> availableSolvers = new ArrayList<String>();
 	public String masterIp;
 	
 	public boolean connected = false;
-	public Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
-	public MasterRemote master = null;
+//	public Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
+	public static MasterRemote master = null;
 	
 	public FormulaListener formulaListener = null;
 	
@@ -120,6 +122,14 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 		connected = false;
 		logger.error("Killing threads...");
 		killAllThreads();
+		this.formulaListener.stop();
+		try {
+			this.formulaListener = new FormulaListener(11111);
+			new Thread(this.formulaListener).start();
+		} catch (IOException e) {
+			logger.fatal(e);
+			System.exit(-1);
+		}
 		logger.error("Reconnecting...");
 		try {
 			connect();
@@ -154,25 +164,12 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 		System.exit(-1);
 	}
 	
-	public void addThread(String qbfId, Solver solver) {
-		synchronized(this.threads) {
-			this.threads.put(qbfId, solver);
-			try {
-				assert(threads.size() <= this.getCores());
-			} catch (RemoteException e) { logger.error(e); }
-		}
-	}
-
 	@Override
 	public int getCores() throws RemoteException {
 		return Runtime.getRuntime().availableProcessors();
 	}
 
-	@Override
-	public Hashtable<String, Solver> getThreads() {
-		return threads;
-	}
-	
+
 	@Override
 	public String getHostName() throws RemoteException, UnknownHostException {
 		return InetAddress.getLocalHost().getHostName();
@@ -184,8 +181,9 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	}
 
 	@Override
-	public synchronized void kill(String reason) throws RemoteException {
+	public void kill(String reason) throws RemoteException {
 		logger.info("Killing slave...");
+		this.killAllThreads();
 		new Thread() {
             @Override
 			public void run() {
@@ -194,7 +192,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	}
 
 	@Override
-	synchronized public void shutdown() throws RemoteException {
+	public void shutdown() throws RemoteException {
 		logger.info("Shutting down host...");
 		new Thread() {
             @Override
@@ -203,68 +201,28 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
             }}.start();
 	}
 
-//	@Override
-//	public void computeFormula(TransmissionQbf formula, String solverId)
-//			throws RemoteException {
-//		logger.info("Starting computation of formula " + formula.getId());
-//		Solver s = SolverFactory.getSolver(solverId, this);
-//		s.setTransmissionQbf(formula);
-//		synchronized(threads) {
-//			threads.put(formula.getId(), s);
-//			s.getThread().start();
-//		}
-//	}
-	
-	@Override
-	public void computeFormula(String formulaId, String solverId)
-			throws RemoteException {
-		logger.info("Starting computation of formula " + formulaId);
-		Solver s = SolverFactory.getSolver(solverId, this);
-		while(formulaListener.getTqbf(formulaId) == null) {
-			try {
-				Thread.sleep(5);
-			} catch (InterruptedException e) {}
-		}
-		TransmissionQbf formula = formulaListener.getTqbf(formulaId);
-		formulaListener.deleteFormula(formulaId);
-		s.setTransmissionQbf(formula);
-		synchronized(threads) {
-			threads.put(formula.getId(), s);
-			s.getThread().start();
-		}
-	}
-
 	@Override
 	public void abortFormula(String tqbfId) {
-		logger.info("Aborting formula " + tqbfId);
-		synchronized(threads) {
-			Solver s = threads.get(tqbfId);
-			if(s == null)
-				return;			
-			s.kill();
-			threads.remove(tqbfId);
-		}
+		ComputationStateMachine computation = ComputationStateMachine.computations.get(tqbfId);
+		if(computation != null)
+			computation.abortComputation();
 	}
 
 	@Override
 	public String[] getCurrentJobs() throws RemoteException {
-		ArrayList<String> jobIds = new ArrayList<String>();
-		synchronized(threads) {
-			for(Solver s : threads.values()) {
-				if(!jobIds.contains(s.getTransmissionQbf().jobId)) {
-					jobIds.add(s.getTransmissionQbf().jobId);
-				}
-			}
+		Set<String> jobIds = new HashSet<String>();
+		for(String tqbfId : ComputationStateMachine.computations.keySet()) {
+			String jobPrefix = tqbfId.split("\\.")[0];
+			jobIds.add(jobPrefix);
 		}
 		return jobIds.toArray(new String[jobIds.size()]);
 	}
 	
 	public void killAllThreads() {
-		synchronized(threads) {
-			for(Solver s : threads.values()) {
-				s.kill();
-			}
-			threads = new Hashtable<String, Solver>();
+		logger.info("Killing all threads...");
+		for(ComputationStateMachine machine : ComputationStateMachine.computations.values()) {
+			machine.abortComputation();
+			logger.info("Computation " + machine.tqbfId + " aborted.");
 		}
 	}
 	

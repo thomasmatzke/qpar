@@ -9,6 +9,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -53,9 +54,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 	public static AbstractTableModel slaveTableModel;
 	
 	
-	public Master() throws FileNotFoundException, RemoteException {
-		//super(0, new ZipClientSocketFactory(), new ZipServerSocketFactory() );
-		
+	public Master() throws FileNotFoundException, RemoteException {		
 		Registry registry = null;
 		// Start the registry
 		try {
@@ -213,10 +212,18 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 		try {
 			new Master();
 		} catch (Throwable t) {
-			if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
-				Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Master.main())", t.toString());
+			QPar.sendExceptionMail(t);
 			throw t;
 		}
+	}
+
+	@Override
+	public void notifyComputationStarted(String tqbfId) throws RemoteException {
+		String jobPrefix = tqbfId.split("\\.")[0];
+		Job job = Job.getJobs().get(jobPrefix);
+		try {
+			job.acknowledgedComputations.put(tqbfId);
+		} catch (InterruptedException e) {}
 	}
 
 }

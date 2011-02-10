@@ -2,7 +2,7 @@ package main.java.slave.solver;
 
 import java.util.Vector;
 
-import main.java.slave.Slave;
+import main.java.logic.TransmissionQbf;
 
 /**
  * A solver-factory
@@ -33,15 +33,15 @@ public class SolverFactory {
 	 * @param id
 	 * @return
 	 */
-	public static Solver getSolver(String id, Slave slave) {
+	public static Solver getSolver(String id, ResultHandler handler, TransmissionQbf tqbf) {
 		if (id.equals("qpro")) {
-			Solver q = new QProSolver(slave);
+			Solver q = new QProSolver(tqbf,handler);
 			Thread t = new Thread(q);
 			q.setThread(t);
 			return q;
 		}
 		if (id.equals("simple")) {
-			Solver q = new SimpleSolver(slave);
+			Solver q = new SimpleSolver(tqbf, handler);
 			Thread t = new Thread(q);
 			q.setThread(t);
 			return q;

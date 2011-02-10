@@ -1,9 +1,8 @@
 package main.java.slave.solver;
 
-import org.apache.log4j.Logger;
-
 import main.java.logic.TransmissionQbf;
-import main.java.slave.Slave;
+
+import org.apache.log4j.Logger;
 
 /**
  * Basic interface which all solvers have to implement. To appear in the list of
@@ -15,12 +14,13 @@ import main.java.slave.Slave;
 public abstract class Solver implements Runnable {
 
 	static Logger logger = Logger.getLogger(QProSolver.class);
-	protected TransmissionQbf formula;
+	protected TransmissionQbf tqbf;
 	protected Thread thread;
-	protected Slave slave = null;
+	protected ResultHandler handler = null;
 	
-	public Solver(Slave slave) {
-		this.slave = slave;
+	public Solver(TransmissionQbf tqbf, ResultHandler handler) {
+		this.handler = handler;
+		this.tqbf = tqbf;
 	}
 	
 	public abstract void kill();
@@ -28,13 +28,9 @@ public abstract class Solver implements Runnable {
 	public abstract void run();
 
 	public TransmissionQbf getTransmissionQbf() {
-		return this.formula;
+		return this.tqbf;
 	}
-	
-	public void setTransmissionQbf(TransmissionQbf formula) {
-		this.formula = formula;
-	}
-	
+		
 	public Thread getThread() {
 		return this.thread;
 	}

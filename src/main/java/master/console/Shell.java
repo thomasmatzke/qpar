@@ -14,8 +14,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
+
 import main.java.QPar;
-import main.java.StackTraceUtil;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Evaluation;
 import main.java.master.Job;
@@ -96,8 +96,7 @@ public class Shell implements Runnable{
 			} catch(Throwable t) {
 				logger.fatal(t);
 				t.printStackTrace();
-				if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
-					Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (Shell.run())", StackTraceUtil.getStackTrace(t));
+				QPar.sendExceptionMail(t);
 			}	
 		}
 		

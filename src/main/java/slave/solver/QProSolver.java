@@ -4,12 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.rmi.RemoteException;
+
 import main.java.QPar;
 import main.java.logic.TransmissionQbf;
-import main.java.master.Mailer;
 import main.java.rmi.Result;
-import main.java.slave.Slave;
 
 import org.apache.log4j.Level;
 
@@ -32,9 +30,8 @@ public class QProSolver extends Solver {
 	private BufferedReader 		br 			= null;
 	private OutputStreamWriter 	osw 		= null;
 	
-	public QProSolver(Slave slave) {
-		super(slave);
-		
+	public QProSolver(TransmissionQbf tqbf, ResultHandler handler) {
+		super(tqbf, handler);
 	}
 
 	/**
@@ -51,14 +48,16 @@ public class QProSolver extends Solver {
 		// Get the id from our formula so we can nullify it after
 		// qproization
 		// -> for cleanup by garbage collector
-		tqbfId = this.formula.getId();
-		r = new Result(tqbfId, formula.jobId);
+		tqbfId = this.tqbf.getId();
+		r = new Result(tqbfId, tqbf.jobId);
 						
-		try {
+//		try {
 			generateQproInput();
-			this.formula = null;
-			if(r.type != null)
+			this.tqbf = null;
+			if(r.type != null) {
+				this.handler.handleResult(r);
 				return;
+			}
 			System.gc();
 			try {
 			startQpro();
@@ -67,44 +66,48 @@ public class QProSolver extends Solver {
 					logger.error("IO Error while getting result from solver: " + e);
 					r.type = Result.Type.ERROR;
 					r.exception = e;
-					this.slave.master.returnResult(r);
+					this.handler.handleResult(r);
 				}
 				return;
 			}
 			waitForQpro();
-			if (qproProcess == null)
+			if (qproProcess == null) {
+				r.type = Result.Type.ERROR;
+				this.handler.handleResult(r);
 				return;
+			}
+				
 			if(!readQproResult()) {
 				if (qproProcess != null)
 					qproProcess.destroy();
+				r.type = Result.Type.ERROR;
+				this.handler.handleResult(r);
 				return;
 			}				
 			handleResult();
-		} catch (RemoteException e) {
-			// Comm fail...what to do now
-			logger.error(e);
-			if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
-				Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (QProSolver.main())", e.toString());
-			slave.reconnect();
-		}
+//		} catch (RemoteException e) {
+//			// Comm fail...what to do now
+//			logger.error(e);
+//			if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
+//				Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (QProSolver.main())", e.toString());
+//		}
 
 		if (qproProcess != null)
 			qproProcess.destroy();
-		this.slave.threads.remove(tqbfId);
 	}
 
-	private void handleResult() throws RemoteException {
+	private void handleResult() {
 		// If qpro returns 1 the subformula is satisfiable
 		if (readString.startsWith("1")) {
 			logger.info("Result for Subformula(" + tqbfId + ") was "
 					+ new Boolean(true));
 			r.type = Result.Type.TRUE;
-			this.slave.master.returnResult(r);
+			this.handler.handleResult(r);
 
 		// IF qpro returns 0 the subformula is unsatisfiable
 		} else if (readString.startsWith("0")) {
 			r.type = Result.Type.FALSE;
-			this.slave.master.returnResult(r);
+			this.handler.handleResult(r);
 			logger.info("Result for Subformula(" + tqbfId + ") was "
 					+ new Boolean(false));
 
@@ -121,11 +124,11 @@ public class QProSolver extends Solver {
 			r.type = Result.Type.ERROR;
 			r.errorMessage = "Unexpected result from solver("
 					+ readString + "). Aborting Formula.";
-			this.slave.master.returnResult(r);
+			this.handler.handleResult(r);
 		}
 	}
 
-	private void waitForQpro() throws RemoteException {
+	private void waitForQpro() {
 		logger.info("Waiting for qpro...");
 		try {
 			if(qproProcess != null)
@@ -133,32 +136,31 @@ public class QProSolver extends Solver {
 		} catch (InterruptedException e) {
 			if(!killed) {
 				logger.error(e);
-				if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
-					Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification (QProSolver.main())", e.toString());
+				QPar.sendExceptionMail(e);
 				r.type = Result.Type.ERROR;
 				r.exception = e;
-				this.slave.master.returnResult(r);
+				this.handler.handleResult(r);
 			}
 		}
 	}
 
-	private void generateQproInput() throws RemoteException {
+	private void generateQproInput() {
 		logger.info("Generating qpro input...");
-		this.inputString = toInputString(this.formula);
+		this.inputString = toInputString(this.tqbf);
 		if (inputString.equals("true")) {
 			logger.info("Result for Subformula(" + tqbfId
 					+ ") was true. Formula collapsed to root-node");
 			r.type = Result.Type.TRUE;
-			this.slave.master.returnResult(r);
+			this.handler.handleResult(r);
 		} else if (inputString.equals("false")) {
 			r.type = Result.Type.FALSE;
-			this.slave.master.returnResult(r);
+			this.handler.handleResult(r);
 			logger.info("Result for Subformula(" + tqbfId
 					+ ") was false. Formula collapsed to root-node");
 		}
 	}
 
-	private boolean readQproResult() throws RemoteException {
+	private boolean readQproResult() {
 		try {
 			String line = "";
 			StringBuffer sb = new StringBuffer();
@@ -177,7 +179,7 @@ public class QProSolver extends Solver {
 				logger.warn("IO Error while getting result from solver: " + e);
 				r.type = Result.Type.ERROR;
 				r.exception = e;
-				this.slave.master.returnResult(r);
+				this.handler.handleResult(r);
 			}
 			return false;
 		}
@@ -185,13 +187,7 @@ public class QProSolver extends Solver {
 	}
 
 	private void startQpro() throws IOException {
-		synchronized (this) {
-			synchronized(slave.threads) {
-				if(this.killed) {
-					this.slave.threads.remove(tqbfId);
-					return;
-				}
-			}				
+		synchronized (this) {				
 			logger.info("Starting qpro process...");
 			ProcessBuilder pb = new ProcessBuilder("qpro");
 			qproProcess = pb.start();
