@@ -196,8 +196,7 @@ public class QProSolver extends Solver {
 				try {
 					Thread.sleep(new Random().nextInt(100));
 				} catch (InterruptedException e1) {}
-				if(solverProcess != null)
-					solverProcess.destroy();
+				killSolverProcess();
 				pb = new ProcessBuilder("qpro");
 				solverProcess = pb.start();
 			}			
@@ -250,8 +249,7 @@ public class QProSolver extends Solver {
 
 	protected void finalize() throws Throwable {
 		try {
-			if (solverProcess != null)
-				solverProcess.destroy();
+			killSolverProcess();
 		} finally {
 			super.finalize();
 		}

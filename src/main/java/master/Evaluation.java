@@ -28,6 +28,8 @@ public class Evaluation {
 	public long minSolverTime;
 	public double meanSolverTime;
 	public double meanMedianSolverTime;
+	private double meanSolverTimeAbs;
+	private double meanMedianSolverTimeAbs;
 	
 	public Evaluation(	File 	directory,
 						String 	heuristicId,
@@ -54,6 +56,7 @@ public class Evaluation {
 	}
 	
 	public void evaluate() {
+		int nonEmptyCtr = 0;
 		for(File f : this.directory.listFiles()) {
 			if(f.getName().equals("evaluation.txt") || f.getName().equals(referenceFileName))
 				continue;
@@ -76,21 +79,27 @@ public class Evaluation {
 				}
 				
 				// Do the stats
-				if(this.minSolverTime > job.minSolverTime())
-					this.minSolverTime = job.minSolverTime();
-				
-				if(this.maxSolverTime < job.maxSolverTime())
-					this.maxSolverTime = job.maxSolverTime();
-				
-				this.meanSolverTime += job.meanSolverTime()/this.directory.listFiles().length;
-				
-				this.meanMedianSolverTime += job.medianSolverTime()/this.directory.listFiles().length;
+				if(!job.solverTimes.isEmpty()) {
+					nonEmptyCtr++;
+					if(this.minSolverTime > job.minSolverTime())
+						this.minSolverTime = job.minSolverTime();
+					
+					if(this.maxSolverTime < job.maxSolverTime())
+						this.maxSolverTime = job.maxSolverTime();
+					
+					this.meanSolverTimeAbs += job.meanSolverTime();
+					
+					this.meanMedianSolverTimeAbs += job.medianSolverTime();
+				}
 				
 			} catch(Throwable t) {
 				logger.error("Evaluation.java", t);
 				QPar.sendExceptionMail(t);
 			}
 		}
+		
+		this.meanSolverTime 		= this.meanSolverTimeAbs / nonEmptyCtr;
+		this.meanMedianSolverTime 	= this.meanMedianSolverTimeAbs / nonEmptyCtr;
 	}
 
 	public String statisticsResultString() {

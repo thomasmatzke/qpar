@@ -106,7 +106,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 				logger.fatal("Wrong address? Exception was: " + e);
 				System.exit(-1);
 			} catch (RemoteException e) {
-				logger.error("RMI fail", e);
+				logger.error("Reconnecting...");
 			} catch (NotBoundException e) {
 				logger.error("Something is not bound :P", e);
 			} catch (UnknownHostException e) {

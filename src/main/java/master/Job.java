@@ -516,10 +516,14 @@ public class Job {
 	}
 	
 	public long maxSolverTime() {
+		if(solverTimes.isEmpty())
+			return 0;
 		return Collections.max(solverTimes);
 	}
 
 	public long minSolverTime() {
+		if(solverTimes.isEmpty())
+			return 0;
 		return Collections.min(solverTimes);
 	}
 	

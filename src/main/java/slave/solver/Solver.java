@@ -1,5 +1,7 @@
 package main.java.slave.solver;
 
+import java.io.IOException;
+
 import main.java.logic.TransmissionQbf;
 import main.java.rmi.Result;
 
@@ -82,7 +84,15 @@ public abstract class Solver implements Runnable {
 	}
 	
 	protected void killSolverProcess() {
-		if (solverProcess != null)
+		if (solverProcess != null) {
+			try {
+				solverProcess.getErrorStream().close();
+				solverProcess.getInputStream().close();
+				solverProcess.getOutputStream().close();
+			} catch (IOException e) {
+				logger.error("Error while closing process streams", e);
+			}
 			solverProcess.destroy();
+		}
 	}
 }
