@@ -28,7 +28,7 @@ public class FormulaListener implements Runnable{
 				new Thread(new FormulaReceiver(clientSock, this)).start();
 			} catch (IOException e) {
 				if(run)
-					logger.error(e);
+					logger.error("FormulaReceiver not created", e);
 			}
 		}
 	}
@@ -38,7 +38,7 @@ public class FormulaListener implements Runnable{
 		try {
 			sock.close();
 		} catch (IOException e) {
-			logger.error(e);
+			logger.error("Cant close socket", e);
 		}
 	}
 	

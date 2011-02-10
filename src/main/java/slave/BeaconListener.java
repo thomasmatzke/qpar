@@ -45,7 +45,7 @@ public class BeaconListener implements Runnable {
 				slave.reconnect();
 			}
 		} catch (IOException e) {
-			logger.error(e);
+			logger.error("Problem while listening for beacon", e);
 		}
 		
 	}

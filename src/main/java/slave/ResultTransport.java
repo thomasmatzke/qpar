@@ -28,7 +28,7 @@ public class ResultTransport implements Runnable {
 		try {
 			master.returnResult(r);
 		} catch (RemoteException e) {
-			logger.error(e);
+			logger.error("RMI fail", e);
 		}
 	}
 

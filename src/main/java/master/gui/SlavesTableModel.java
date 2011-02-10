@@ -49,10 +49,10 @@ public class SlavesTableModel extends AbstractTableModel {
 					return null;
 			}
 		} catch (RemoteException e) {
-			logger.error(e);
+			logger.error("RMI fail", e);
 			return null;
 		} catch (UnknownHostException e) {
-			logger.error(e);
+			logger.error("Host not found", e);
 			return null;
 		}
 	}

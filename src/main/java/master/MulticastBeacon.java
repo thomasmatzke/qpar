@@ -46,8 +46,8 @@ public class MulticastBeacon implements Runnable {
 			try {
 //				logger.info("Beacon Ping...");
 				socket.send(dgram);
-			} catch (IOException e1) {
-				logger.error(e1);
+			} catch (IOException e) {
+				logger.error("Cant send beacon", e);
 			}			
 			
 			try {

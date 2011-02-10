@@ -32,6 +32,7 @@ import main.java.master.console.Shell;
 import main.java.rmi.Result;
 import main.java.rmi.SlaveRemote;
 
+import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.log4j.Logger;
 
 public class Job {
@@ -51,6 +52,7 @@ public class Job {
 
 	public volatile ConcurrentMap<String, SlaveRemote> formulaDesignations = new ConcurrentHashMap<String, SlaveRemote>();
 	public volatile BlockingQueue<String> acknowledgedComputations = new LinkedBlockingQueue<String>();
+	public ArrayList<Long> solverTimes = new ArrayList<Long>();
 	private String heuristic, id, inputFileString, outputFileString, solver;
 	private int usedCores = 0, resultCtr = 0;
 	private volatile Status status;
@@ -109,7 +111,7 @@ public class Job {
 		try {
 			abortComputations();
 		} catch (RemoteException e) {
-			logger.error(e);
+			logger.error("Aborting Computations failed.", e);
 		}
 		this.setStatus(Status.ERROR);
 		if (tableModel != null)
@@ -162,11 +164,11 @@ public class Job {
 		try {
 			this.formula = new Qbf(inputFileString);
 		} catch (IOException e) {
-			logger.error(e);
+			logger.error(this.inputFileString, e);
 			this.setStatus(Status.ERROR);
 			return;
 		} catch(TokenMgrError e) {
-			logger.error(e);
+			logger.error(this.inputFileString, e);
 			this.setStatus(Status.ERROR);
 			return;
 		}
@@ -206,7 +208,7 @@ public class Job {
 			return;
 		}
 
-		logger.info("Computationslots generated: " + slotStr.trim());
+		logger.debug("Computationslots generated: " + slotStr.trim());
 
 		this.startedAt = new Date();
 		this.subformulas = formula.splitQbf(
@@ -274,17 +276,15 @@ public class Job {
 			try {
 				logger.info("Sending formula " + sub.getId() + " ...");
 				// oos = new ObjectOutputStream(senderSocket.getOutputStream());
-				oos = new ObjectOutputStream(new GZIPOutputStream(
-						senderSocket.getOutputStream()));
+				CountingOutputStream cos = new CountingOutputStream(senderSocket.getOutputStream());
+				oos = new ObjectOutputStream(new GZIPOutputStream(cos));
 				oos.writeObject(sub);
 				oos.flush();
 				oos.close();
 				senderSocket.close();
-				logger.info("Formula " + sub.getId() + " sent ...");
-			} catch (RemoteException e) {
-				logger.error(e);
+				logger.info("Formula " + sub.getId() + " sent ... (" + cos.getByteCount()/1024 + "kib)");
 			} catch (IOException e) {
-				logger.error(e);
+				logger.error("While sending formula " + sub.getId(), e);
 			}
 		}
 	}
@@ -307,7 +307,7 @@ public class Job {
 		try {
 			this.abortComputations();
 		} catch (RemoteException e) {
-			logger.error(e);
+			logger.error("Aborting computations failed.", e);
 		}
 		this.setResult(result);
 
@@ -388,6 +388,8 @@ public class Job {
 	}
 
 	synchronized public void handleResult(Result r) {
+		if(r.solverTime > 0)
+			this.solverTimes.add(r.solverTime);
 		if (this.getStatus() != Status.RUNNING) {
 			return;
 		}
@@ -397,11 +399,7 @@ public class Job {
 			return;
 		}
 
-		logger.error("Slave returned error for subformula: " + r.tqbfId);
-		if (r.exception != null)
-			logger.error("Exception occured in Slave: " + r.exception);
-		if (r.errorMessage != null)
-			logger.error("Solver returned: " + r.errorMessage);
+		logger.error("Slave returned error for subformula: " + r.tqbfId, r.exception);
 		abort();
 	}
 
@@ -516,5 +514,32 @@ public class Job {
 			return "undefined";
 		}
 	}
+	
+	public long maxSolverTime() {
+		return Collections.max(solverTimes);
+	}
 
+	public long minSolverTime() {
+		return Collections.min(solverTimes);
+	}
+	
+	public double meanSolverTime() {
+		long added = 0;
+		for(long l : solverTimes)
+			added += l;
+		
+		return added /solverTimes.size();
+	}
+	
+	public double medianSolverTime() {
+		Collections.sort(solverTimes);
+		int middle = solverTimes.size()/2;
+	    if (solverTimes.size()%2 == 1) {
+	        return solverTimes.get(middle);
+	    } else {
+	       return (solverTimes.get(middle-1) + solverTimes.get(middle)) / 2.0;
+	    }
+
+	}
+	
 }

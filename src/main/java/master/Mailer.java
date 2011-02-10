@@ -41,7 +41,7 @@ public class Mailer {
 			t.sendMessage(msg, msg.getAllRecipients());
 			t.close();
 		} catch (MessagingException e) {
-			logger.error(e);
+			logger.error("TO: " + email + ", SERVER: " + server + ", USER: " + user, e);
 		}
 	}
 }

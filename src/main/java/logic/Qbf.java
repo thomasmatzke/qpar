@@ -79,12 +79,11 @@ public class Qbf {
 			//root.dump("> ");
 		}
 		catch (ParseException e) {
-			logger.error("Parse error");			
-			logger.error(e);
+			logger.error("Parse error", e);
 			return;
 		}
 		catch (TokenMgrError e) {
-			logger.error(e);
+			logger.error(filename, e);
 			throw e;
 		}
 		long end = System.currentTimeMillis();
@@ -116,7 +115,7 @@ public class Qbf {
 		logger.info("Splitting into " + n + " subformulas...");
 		long start = System.currentTimeMillis();
 		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
-		logger.info("Heuristic returned variable-assignment order: " + Arrays.toString(order));
+		logger.debug("Heuristic returned variable-assignment order: " + Arrays.toString(order));
 			
 		int leafCtr = 1;
 		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();

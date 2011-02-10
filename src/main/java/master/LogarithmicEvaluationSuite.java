@@ -35,7 +35,6 @@ public class LogarithmicEvaluationSuite {
 	public LogarithmicEvaluationSuite(String dir, int startCores, int stopCores, long timeout, String solverId) {
 		if(!isBaseTwo(startCores) || !isBaseTwo(stopCores)) {
 			IllegalArgumentException e = new IllegalArgumentException("Use only powers of 2");
-			logger.error(e);
 			throw e;
 		}
 					
@@ -58,8 +57,8 @@ public class LogarithmicEvaluationSuite {
 		Shell.waitforslaves(stopCores, solverId);
 		
 		this.startedAt = new Date();
-		int idx = 0;
 		
+		int idx = 0;
 		for(int cores : coreSet) {
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
 				Evaluation e = new Evaluation(directory, h, solverId, timeout, cores);
@@ -86,7 +85,7 @@ public class LogarithmicEvaluationSuite {
 			out.write(report);
 			out.flush();
 		} catch (IOException e) {
-			logger.error(e);
+			logger.error("While writing report: ", e);
 		}
 	}
 
@@ -117,7 +116,10 @@ public class LogarithmicEvaluationSuite {
 			idx++;
 		}
 		
-		report += correctnessReport();
+		report += correctnessReport() + "\n";
+		
+		report += solverTimesReport();
+		
 	}
 
 	public String getReport() {
@@ -164,7 +166,7 @@ public class LogarithmicEvaluationSuite {
 					if(compare == null && current != null) {
 						compare = current;
 					} else if(compare != null && current != null && compare != current) {
-						logger.error("Correctness error detected: File: " + f + ", Cores: " + coreSet.get(c) + ", Heuristic: " + h);
+						logger.warn("Correctness error detected: File: " + f + ", Cores: " + coreSet.get(c) + ", Heuristic: " + h);
 						correctness = false;
 					}
 				}
@@ -174,6 +176,28 @@ public class LogarithmicEvaluationSuite {
 		}
 		
 		return correctnessReport;
+	}
+	
+	public String solverTimesReport() {
+		String report = "Solvertimes statistics: \n";
+		for(String h : HeuristicFactory.getAvailableHeuristics()) {
+			report += String.format("%s_min\t%s_max\t%s_mean\t%s_meanmedian\t", h, h, h, h);
+		}
+		report = report.trim() + "\n";
+		
+		int idx = 0;
+		for(int c : coreSet) {
+			String line = "" + c + "\t";
+			for(String h : HeuristicFactory.getAvailableHeuristics()) {
+				line += result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)].statisticsResultString() + "\t";
+			}		
+			line = line.trim();
+			line += "\n";
+			report += line;
+			idx++;
+		}
+		
+		return report;
 	}
 	
 }

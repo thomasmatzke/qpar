@@ -30,7 +30,7 @@ public class PingTimer extends TimerTask {
 			slave.master.ping();
 		} catch (RemoteException e) {
 			if(slave.connected){
-				logger.error("Master probably dead: " + e);
+				logger.error("Master probably dead", e);
 				slave.reconnect();
 			}
 		}

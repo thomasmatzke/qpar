@@ -35,15 +35,15 @@ public class FormulaReceiver implements Runnable {
 			ComputationStateMachine.computations.put(tqbf.getId(), m);
 			m.startComputation();
 		} catch (IOException e) {
-			logger.error(e);
+			logger.error("Couldnt read object", e);
 		} catch (ClassNotFoundException e) {
-			logger.error(e);
+			logger.error("Weird... O_o" + e);
 		}
 		try {
 			ois.close();
 			sock.close();
 		} catch (IOException e) {
-			logger.error(e);
+			logger.error("Couldnt close socket", e);
 		}		
 		
 	}

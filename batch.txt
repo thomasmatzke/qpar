@@ -4,7 +4,7 @@ MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblabla
 #LOGEVAL testing/semaphore_medium 1 64 qpro 60
 #LOGEVAL testing/semaphore_big 1 64 qpro 60
 
-#LOGEVAL testing/ring_small 1 64 qpro 60
+#LOGEVAL testing/boole 1 4 qpro 60
 #LOGEVAL testing/ring_medium 1 64 qpro 60
 #LOGEVAL testing/ring_big 1 64 qpro 60
 
@@ -12,7 +12,7 @@ logeval testing/counter_test 4 4 qpro 60
 #LOGEVAL testing/counter_small 1 64 qpro 60
 #LOGEVAL testing/counter_medium 1 64 qpro 60
 #LOGEVAL testing/counter_big 1 64 qpro 60
-#LOGEVAL testing/counter_biggest 1 64 qpro 60
+#LOGEVAL testing/counter_biggest 4 4 qpro 60
 
 #LOGEVAL testing/ncf_small 1 64 qpro 60
 #LOGEVAL testing/ncf_medium 1 64 qpro 60

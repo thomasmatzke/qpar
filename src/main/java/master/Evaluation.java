@@ -24,6 +24,10 @@ public class Evaluation {
 	private int 					errors			= 0;
 	private long 					elapsedTotal 	= 0;
 	private HashMap<File, Boolean> 	results 		= new HashMap<File, Boolean>();
+	public long maxSolverTime;
+	public long minSolverTime;
+	public double meanSolverTime;
+	public double meanMedianSolverTime;
 	
 	public Evaluation(	File 	directory,
 						String 	heuristicId,
@@ -70,13 +74,29 @@ public class Evaluation {
 				} else {
 					assert(false);
 				}
+				
+				// Do the stats
+				if(this.minSolverTime > job.minSolverTime())
+					this.minSolverTime = job.minSolverTime();
+				
+				if(this.maxSolverTime < job.maxSolverTime())
+					this.maxSolverTime = job.maxSolverTime();
+				
+				this.meanSolverTime += job.meanSolverTime()/this.directory.listFiles().length;
+				
+				this.meanMedianSolverTime += job.medianSolverTime()/this.directory.listFiles().length;
+				
 			} catch(Throwable t) {
-				logger.error(t);
+				logger.error("Evaluation.java", t);
 				QPar.sendExceptionMail(t);
 			}
 		}
 	}
 
+	public String statisticsResultString() {
+		return String.format("%d\t%d\t%f\t%f", this.minSolverTime, this.maxSolverTime, this.meanSolverTime, this.meanMedianSolverTime);
+	}
+	
 	public String toString() {
 		return String.format("%d\t%d\t%d", this.elapsedTotal, this.timeouts, this.errors);
 	}

@@ -73,9 +73,9 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 				// Wait til we found a signal
 				synchronized(this) { wait(); }
 			} catch (UnknownHostException e) {
-				logger.error(e);
+				logger.error("Unknown host", e);
 			} catch (IOException e) {
-				logger.error(e);
+				logger.error("Cant start beaconlistener", e);
 			}
 		}
 		
@@ -106,11 +106,11 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 				logger.fatal("Wrong address? Exception was: " + e);
 				System.exit(-1);
 			} catch (RemoteException e) {
-				logger.error(e);
+				logger.error("RMI fail", e);
 			} catch (NotBoundException e) {
-				logger.error(e);
+				logger.error("Something is not bound :P", e);
 			} catch (UnknownHostException e) {
-				logger.fatal("Wrong address? Exception was: " + e);
+				logger.fatal("Wrong address?", e);
 				System.exit(-1);
 			}
 			logger.info("Could not connect. Trying again in 5 seconds...");		
@@ -120,7 +120,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	
 	synchronized public void reconnect() {
 		connected = false;
-		logger.error("Killing threads...");
+		logger.warn("Killing threads...");
 		killAllThreads();
 		this.formulaListener.stop();
 		try {
@@ -130,7 +130,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 			logger.fatal(e);
 			System.exit(-1);
 		}
-		logger.error("Reconnecting...");
+		logger.warn("Reconnecting...");
 		try {
 			connect();
 		} catch (InterruptedException e1) {}
@@ -231,10 +231,10 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 			return "Slave -- Hostname: " + this.getHostName() + ", Solvers: "
 					+ this.getSolvers()	+ ", Cores: " + this.getCores();
 		} catch (RemoteException e) {
-			logger.error(e);
+			logger.error("RMI fail", e);
 			return "";
 		} catch (UnknownHostException e) {
-			logger.error(e);
+			logger.error("Thar host is not known, arrr!", e);
 			return "";
 		}
 	}

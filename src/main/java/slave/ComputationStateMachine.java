@@ -81,7 +81,7 @@ public class ComputationStateMachine implements ResultHandler{
 		try {
 			Slave.master.notifyComputationStarted(tqbfId);
 		} catch (RemoteException e) {
-			logger.error(e);
+			logger.error("RMI fail", e);
 		}
 	}
 	

@@ -253,7 +253,7 @@ public class ProgramWindow extends JFrame {
 					try {
 						solvers = Master.getAllAvaliableSolverIds();
 					} catch (RemoteException e1) {
-						logger.error(e1);
+						logger.error("RMi fail", e1);
 						solvers = new HashSet<String>();
 					}
 					if(solvers.size() < 1) {
@@ -400,7 +400,7 @@ public class ProgramWindow extends JFrame {
 		try {
 			slave.kill("User command");
 		} catch (RemoteException e) {
-			logger.error(e);
+			logger.error("RMI fail", e);
 		}
 	}
 

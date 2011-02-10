@@ -188,7 +188,7 @@ public class Shell implements Runnable{
 		try {
 			eval.run();
 		} catch (FileNotFoundException e) {
-			logger.error("Directory not found: " + e.getMessage());
+			logger.error("Directory not found: ", e);
 		}
 	}
 
@@ -215,7 +215,7 @@ public class Shell implements Runnable{
 			try {
 				s.shutdown();
 			} catch (RemoteException e) {
-				logger.error(e);
+				logger.error("RMI fail", e);
 			}
 		}
 		try {
@@ -329,7 +329,7 @@ public class Shell implements Runnable{
 					if(compare == null && current != null) {
 						compare = current;
 					} else if(compare != null && current != null && compare != current) {
-						logger.error("Correctness error detected: File: " + f + ", Cores: " + cores_min + c + ", Heuristic: " + h);
+						logger.warn("Correctness error detected: File: " + f + ", Cores: " + cores_min + c + ", Heuristic: " + h);
 						correctness = false;
 					}
 				}
@@ -367,7 +367,7 @@ public class Shell implements Runnable{
 			try {
 				s.kill("User request");
 			} catch (RemoteException e) {
-				logger.error(e);
+				logger.error("RMI fail", e);
 			}
 		}
 		try {
@@ -384,7 +384,7 @@ public class Shell implements Runnable{
 		try{
 			waitfor_jobid = token.nextToken();
 			if(Job.getJobs().get(waitfor_jobid) == null) {
-				logger.error("No job with id " + waitfor_jobid);
+				logger.warn("No job with id " + waitfor_jobid);
 				return;
 			}
 			if(Job.getJobs().get(waitfor_jobid).getStatus() == Job.Status.ERROR)
@@ -432,8 +432,8 @@ public class Shell implements Runnable{
 				if(waitfor_cores <= Master.getCoresWithSolver(solverId)) {
 					return;
 				}
-			} catch (RemoteException e1) {
-				logger.error(e1);
+			} catch (RemoteException e) {
+				logger.error("RMI fail", e);
 			}
 				
 			try {
@@ -457,9 +457,9 @@ public class Shell implements Runnable{
 					parseLine(line);
 				}
 			} catch (FileNotFoundException e) {
-				logger.error("Error while reading formula file: " + e);
+				logger.error("Cant find formula file: ", e);
 			} catch (IOException e) {
-				logger.error(e);
+				logger.error("Error while reading file", e);
 			}
 		} else {
 			puts("Syntax: SOURCE path");
@@ -482,7 +482,7 @@ public class Shell implements Runnable{
 			try {
 				Master.getSlaves().get(hostname).kill("User command");
 			} catch (RemoteException e) {
-				logger.error(e);
+				logger.error("RMI fail", e);
 			}
 		} else {
 			puts("Syntax: KILLSLAVE hostname");
@@ -508,9 +508,9 @@ public class Shell implements Runnable{
 			try {
 				puts(s.getHostName() + "\t" + s.getCores() + "\t" + StringUtils.join(s.getCurrentJobs(), ","));
 			} catch (RemoteException e) {
-				logger.error(e);
+				logger.error("RMI fail", e);
 			} catch (UnknownHostException e) {
-				logger.error(e);
+				logger.error("Cant find hostname", e);
 			}
 		}
 	}

@@ -10,16 +10,11 @@ import main.java.rmi.Result;
 
 public class SimpleSolver extends Solver {
 
-	boolean run = true;
-	Result r = new Result();
+	Result r = null;
 
 	public SimpleSolver(TransmissionQbf tqbf, ResultHandler handler) {
 		super(tqbf, handler);
-	}
-
-	@Override
-	public void kill() {
-		run = false;
+		new Result(tqbf.getId(), tqbf.solverId);
 	}
 
 	@Override
@@ -65,7 +60,7 @@ public class SimpleSolver extends Solver {
 			try {
 				clonedFormula = tqbf.deepClone();
 			} catch (Exception e) {
-				logger.error(e);
+				logger.error("Problem while cloning tqbf", e);
 				r.exception = e;
 				r.type = Result.Type.ERROR;
 				handler.handleResult(r);
