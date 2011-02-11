@@ -1,5 +1,6 @@
 package main.java.slave;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
@@ -28,7 +29,8 @@ public class FormulaReceiver implements Runnable {
 	public void run() {
 		try {
 			//ois = new ObjectInputStream(sock.getInputStream());
-			ois = new ObjectInputStream(new GZIPInputStream(sock.getInputStream()));
+			BufferedInputStream bis = new BufferedInputStream(sock.getInputStream());
+			ois = new ObjectInputStream(new GZIPInputStream(bis));
 			TransmissionQbf tqbf = (TransmissionQbf) ois.readObject();
 			ois.close();
 			sock.close();
