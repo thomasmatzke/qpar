@@ -182,7 +182,7 @@ public class LogarithmicEvaluationSuite {
 		String report = "Solvertimes statistics: \n";
 		report += "cores\t";
 		for(String h : HeuristicFactory.getAvailableHeuristics()) {
-			report += String.format("%s_min\t%s_max\t%s_mean\t%s_meanmedian\t", h, h, h, h);
+			report += String.format("%s_min\t%s_max\t%s_mean\t", h, h, h);
 		}
 		report = report.trim() + "\n";
 		

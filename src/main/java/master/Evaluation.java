@@ -80,7 +80,7 @@ public class Evaluation {
 			}
 		}
 		
-		this.meanSolverTime	= this.meanSolverTimeAbs / nonEmptyCtr;
+		this.meanSolverTime	= this.meanSolverTimeAbs; // / nonEmptyCtr;
 	}
 
 	public String statisticsResultString() {
