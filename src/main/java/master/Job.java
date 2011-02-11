@@ -147,10 +147,10 @@ public class Job {
 			} catch (InterruptedException e) {
 			}
 
-			if ((startedAt.getTime() + timeout) < new Date().getTime()) {
+			if ((startedAt.getTime() + timeout*1000) < new Date().getTime()) {
 				logger.info("Timeout reached. Aborting Job. \n"
 						+ "	Job Id:         " + this.id + "\n"
-						+ "	Timeout (secs): " + timeout / 1000 + "\n");
+						+ "	Timeout (secs): " + timeout + "\n");
 				this.abort();
 				this.setStatus(Status.TIMEOUT);
 				break;
@@ -249,16 +249,13 @@ public class Job {
 					new Thread(new TransportThread(s, sub, this.solver))
 							.start();
 				} catch (UnknownHostException e) {
-					logger.error(StackTraceUtil.getStackTrace(e));
+					logger.error("Host not found", e);
 				} catch (RemoteException e) {
-					logger.error(StackTraceUtil.getStackTrace(e));
+					logger.error("RMI fail", e);
 				} catch (IOException e) {
-					logger.error(StackTraceUtil.getStackTrace(e));
+					logger.error("Something in IO failed...", e);
 				}
 				formulaDesignations.put(sub.getId(), s);
-				if (slotIndex >= this.subformulas.size()) // roundrobin if
-															// overbooked
-					slotIndex = 0;
 			}
 		}
 	}

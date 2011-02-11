@@ -22,18 +22,18 @@ public abstract class Solver implements Runnable {
 	protected ResultHandler handler = null;
 	protected String tqbfId = null;
 	protected String jobId = null;
-	
+
 	protected boolean killed = true;
 	protected boolean run = true;
 	protected Process solverProcess = null;
-	
+
 	public Solver(TransmissionQbf tqbf, ResultHandler handler) {
 		this.handler = handler;
 		this.tqbf = tqbf;
 		this.tqbfId = tqbf.getId();
 		this.jobId = tqbf.jobId;
 	}
-	
+
 	public void kill() {
 		this.killed = true;
 		this.run = false;
@@ -46,15 +46,15 @@ public abstract class Solver implements Runnable {
 	public TransmissionQbf getTransmissionQbf() {
 		return this.tqbf;
 	}
-		
+
 	public Thread getThread() {
 		return this.thread;
 	}
 
 	public void setThread(Thread t) {
-		this.thread = t;		
+		this.thread = t;
 	}
-	
+
 	protected void returnWithError(String tqbfId, String jobId, Exception e) {
 		Result r = new Result(tqbfId, jobId);
 		logger.error("Cant complete tqbf computation", e);
@@ -62,37 +62,36 @@ public abstract class Solver implements Runnable {
 		r.exception = e;
 		this.handler.handleResult(r);
 	}
-	
-	protected void returnWithSuccess(String tqbfId, String jobId, boolean result, long solverTime) {
+
+	protected void returnWithSuccess(String tqbfId, String jobId,
+			boolean result, long solverTime) {
 		Result r = new Result(tqbfId, jobId);
-		
-		if(result)
+
+		if (result)
 			r.type = Result.Type.TRUE;
 		else
 			r.type = Result.Type.FALSE;
-		
-		if(solverTime > 0)
+
+		if (solverTime > 0)
 			r.solverTime = solverTime;
-		
+
 		logger.info("Returning result for formula " + tqbfId + ": " + r.type);
 		this.handler.handleResult(r);
-	
+
 	}
-	
+
 	protected void returnWithSuccess(String tqbfId, String jobId, boolean result) {
 		returnWithSuccess(tqbfId, jobId, result, 0);
 	}
-	
+
 	protected void killSolverProcess() {
-		if (solverProcess != null) {
-			try {
-				solverProcess.getErrorStream().close();
-				solverProcess.getInputStream().close();
-				solverProcess.getOutputStream().close();
-			} catch (IOException e) {
-				logger.error("Error while closing process streams", e);
-			}
-			solverProcess.destroy();
+		try {
+			solverProcess.getErrorStream().close();
+			solverProcess.getInputStream().close();
+			solverProcess.getOutputStream().close();
+		} catch (IOException e) {
+			logger.error("Error while closing process streams", e);
 		}
+		solverProcess.destroy();
 	}
 }

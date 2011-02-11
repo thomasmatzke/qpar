@@ -1,6 +1,7 @@
 package main.java.master;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 
 import main.java.QPar;
@@ -17,7 +18,7 @@ public class Evaluation {
 	static 	Logger 	logger = Logger.getLogger(Evaluation.class);
 	private File 	directory;
 	private String 	heuristicId, solverId;
-	private long	timeout;
+	private long	timeout; // timeout in seconds
 	private int		cores;
 	
 	private int 					timeouts		= 0;
@@ -44,12 +45,16 @@ public class Evaluation {
 	public void evaluate() {
 		int nonEmptyCtr = 0;
 		for(File f : this.directory.listFiles()) {
+			if(f.getName().equals("evaluation.txt"))
+				continue;
 			try {
 				Job job = Job.createJob(f.getAbsolutePath(), null, solverId, heuristicId, timeout, cores);
 							
 				job.startBlocking();
 				
 				if(job.getStatus() == Job.Status.COMPLETE) {
+					//logger.info("JOB TOTAL MILLIS " + job.totalMillis());
+					//logger.info("ELAPSED TOAL " + elapsedTotal);
 					elapsedTotal += job.totalMillis();
 					results.put(f, job.getResult());
 				} else if(job.getStatus() == Job.Status.TIMEOUT){ 
@@ -62,16 +67,18 @@ public class Evaluation {
 					assert(false);
 				}
 				
+				
+				
 				// Do the stats
 				if(!job.solverTimes.isEmpty()) {
 					nonEmptyCtr++;
-					if(this.minSolverTime > job.minSolverTime())
+					if(job.minSolverTime() > 0 && this.minSolverTime > job.minSolverTime())
 						this.minSolverTime = job.minSolverTime();
 					
 					if(this.maxSolverTime < job.maxSolverTime())
 						this.maxSolverTime = job.maxSolverTime();
 					
-					this.meanSolverTimeAbs += job.meanSolverTime();
+					this.meanSolverTime += job.meanSolverTime();
 				}
 				
 			} catch(Throwable t) {
@@ -80,15 +87,14 @@ public class Evaluation {
 			}
 		}
 		
-		this.meanSolverTime	= this.meanSolverTimeAbs; // / nonEmptyCtr;
 	}
 
 	public String statisticsResultString() {
-		return String.format("%d\t%d\t%f", this.minSolverTime, this.maxSolverTime, this.meanSolverTime);
+		return String.format("%d\t%d\t%f", this.minSolverTime/1000, this.maxSolverTime/1000, this.meanSolverTime/1000);
 	}
 	
 	public String toString() {
-		return String.format("%d\t%d\t%d", this.elapsedTotal, this.timeouts, this.errors);
+		return String.format("%.2f\t%d\t%d", this.elapsedTotal/1000.00, this.timeouts, this.errors);
 	}
 	
 	public int getTimeouts() {

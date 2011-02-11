@@ -19,7 +19,7 @@ public class LogarithmicEvaluationSuite {
 	
 	private File directory;
 	private int startCores, stopCores;
-	private long timeout;
+	private long timeout; //in seconds
 	private String solverId;
 	
 	private String report = null;

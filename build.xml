@@ -103,16 +103,9 @@
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
-    <target name="Master_batch (DEBUG)">
-        <java classname="main.java.master.Master" failonerror="true" fork="yes">
-            <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m"/>
-            <arg line="-i=batch.txt -log=debug"/>
-            <classpath refid="qpar.classpath"/>
-        </java>
-    </target>
     <target name="Master_batch">
         <java classname="main.java.master.Master" failonerror="true" fork="yes">
-            <jvmarg line="-Xss5m -ea -Xms64m -Xmx256m"/>
+            <jvmarg line="-Xss5m -ea -Xms64m -Xmx256m -Djava.rmi.server.useLocalHostname=true"/>
             <arg line="-i=batch.txt -log=info"/>
             <classpath refid="qpar.classpath"/>
         </java>
@@ -120,13 +113,6 @@
     <target name="Master_console">
         <java classname="main.java.master.Master" failonerror="true" fork="yes">
             <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m"/>
-            <classpath refid="qpar.classpath"/>
-        </java>
-    </target>
-    <target name="Slave (DEBUG)">
-        <java classname="main.java.slave.Slave" failonerror="true" fork="yes">
-            <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m"/>
-            <arg line="localhost -log=debug"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>

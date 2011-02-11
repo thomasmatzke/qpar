@@ -178,7 +178,7 @@ public class Shell implements Runnable{
 			cores_min			= Integer.parseInt(token.nextToken());
 			cores_max			= Integer.parseInt(token.nextToken());
 			solverId			= token.nextToken();
-			timeout				= Integer.parseInt(token.nextToken()) * 1000;
+			timeout				= Integer.parseInt(token.nextToken());
 		} catch(NoSuchElementException e) {
 			puts("Syntax: LOGEVAL directory_path_to_formulas coresMin coresMax solverId timeout");
 			return;
@@ -270,7 +270,7 @@ public class Shell implements Runnable{
 			cores_min			= Integer.parseInt(token.nextToken());
 			cores_max			= Integer.parseInt(token.nextToken());
 			solverId			= token.nextToken();
-			timeout				= Integer.parseInt(token.nextToken()) * 1000;
+			timeout				= Integer.parseInt(token.nextToken());
 		} catch(NoSuchElementException e) {
 			puts("Syntax: EVALUATE directory_path_to_formulas coresMin coresMax solverId timeout");
 			return;

@@ -61,7 +61,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 			this.formulaListener = new FormulaListener(11111);
 			new Thread(this.formulaListener).start();
 		} catch (IOException e) {
-			logger.fatal(e);
+			logger.fatal("Couldnt start formulalistener", e);
 			System.exit(-1);
 		}
 		
