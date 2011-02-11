@@ -16,6 +16,11 @@ import org.apache.log4j.Logger;
 // All nodes in the formula tree are derived from SimpleNode.
 public class SimpleNode implements Node, Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6618526605222641809L;
+
 	static Logger logger = Logger.getLogger(SimpleNode.class);
 		
 	protected Object value;
