@@ -30,6 +30,8 @@ public class FormulaReceiver implements Runnable {
 			//ois = new ObjectInputStream(sock.getInputStream());
 			ois = new ObjectInputStream(new GZIPInputStream(sock.getInputStream()));
 			TransmissionQbf tqbf = (TransmissionQbf) ois.readObject();
+			ois.close();
+			sock.close();
 			logger.info("Received formula " + tqbf.getId());
 			ComputationStateMachine m = new ComputationStateMachine(tqbf);
 			ComputationStateMachine.computations.put(tqbf.getId(), m);
@@ -39,13 +41,7 @@ public class FormulaReceiver implements Runnable {
 		} catch (ClassNotFoundException e) {
 			logger.error("Weird... O_o" + e);
 		}
-		try {
-			ois.close();
-			sock.close();
-		} catch (IOException e) {
-			logger.error("Couldnt close socket", e);
-		}		
-		
+						
 	}
 
 }

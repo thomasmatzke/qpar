@@ -278,7 +278,9 @@ public class Job {
 				// oos = new ObjectOutputStream(senderSocket.getOutputStream());
 				CountingOutputStream cos = new CountingOutputStream(senderSocket.getOutputStream());
 				oos = new ObjectOutputStream(new GZIPOutputStream(cos));
+				logger.info("Writing object " + sub.getId());
 				oos.writeObject(sub);
+				logger.info("Object " + sub.getId() + "written.");
 				oos.flush();
 				oos.close();
 				senderSocket.close();
@@ -533,17 +535,6 @@ public class Job {
 			added += l;
 		
 		return added /solverTimes.size();
-	}
-	
-	public double medianSolverTime() {
-		Collections.sort(solverTimes);
-		int middle = solverTimes.size()/2;
-	    if (solverTimes.size()%2 == 1) {
-	        return solverTimes.get(middle);
-	    } else {
-	       return (solverTimes.get(middle-1) + solverTimes.get(middle)) / 2.0;
-	    }
-
 	}
 	
 }

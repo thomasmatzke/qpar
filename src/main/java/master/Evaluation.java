@@ -15,8 +15,8 @@ import org.apache.log4j.Logger;
 public class Evaluation {
 
 	static 	Logger 	logger = Logger.getLogger(Evaluation.class);
-	private File 	directory, referenceFile;
-	private String 	heuristicId, solverId, referenceFileName = "qpro_results.txt";
+	private File 	directory;
+	private String 	heuristicId, solverId;
 	private long	timeout;
 	private int		cores;
 	
@@ -27,9 +27,7 @@ public class Evaluation {
 	public long maxSolverTime;
 	public long minSolverTime;
 	public double meanSolverTime;
-	public double meanMedianSolverTime;
 	private double meanSolverTimeAbs;
-	private double meanMedianSolverTimeAbs;
 	
 	public Evaluation(	File 	directory,
 						String 	heuristicId,
@@ -43,23 +41,9 @@ public class Evaluation {
 		this.cores				= cores;
 	}
 	
-	public Evaluation(	File 	directory,
-						String 	heuristicId,
-						String 	solverId,
-						long 	timeout,
-						int 	cores,
-						String	referenceFileName) {
-		this(directory,	heuristicId, solverId, timeout,	cores);
-		this.referenceFileName = referenceFileName;
-		
-		this.referenceFile = new File(directory,referenceFileName);
-	}
-	
 	public void evaluate() {
 		int nonEmptyCtr = 0;
 		for(File f : this.directory.listFiles()) {
-			if(f.getName().equals("evaluation.txt") || f.getName().equals(referenceFileName))
-				continue;
 			try {
 				Job job = Job.createJob(f.getAbsolutePath(), null, solverId, heuristicId, timeout, cores);
 							
@@ -88,8 +72,6 @@ public class Evaluation {
 						this.maxSolverTime = job.maxSolverTime();
 					
 					this.meanSolverTimeAbs += job.meanSolverTime();
-					
-					this.meanMedianSolverTimeAbs += job.medianSolverTime();
 				}
 				
 			} catch(Throwable t) {
@@ -98,12 +80,11 @@ public class Evaluation {
 			}
 		}
 		
-		this.meanSolverTime 		= this.meanSolverTimeAbs / nonEmptyCtr;
-		this.meanMedianSolverTime 	= this.meanMedianSolverTimeAbs / nonEmptyCtr;
+		this.meanSolverTime	= this.meanSolverTimeAbs / nonEmptyCtr;
 	}
 
 	public String statisticsResultString() {
-		return String.format("%d\t%d\t%f\t%f", this.minSolverTime, this.maxSolverTime, this.meanSolverTime, this.meanMedianSolverTime);
+		return String.format("%d\t%d\t%f", this.minSolverTime, this.maxSolverTime, this.meanSolverTime);
 	}
 	
 	public String toString() {
