@@ -22,7 +22,9 @@ import org.apache.log4j.Logger;
 // vars to assign false. They are created in the Qbf class and sent to the
 // slaves to be solved there.
 public class TransmissionQbf implements Serializable {
-	private SimpleNode root = null;
+	private transient SimpleNode root = null;
+	public byte[] serializedFormula = null;
+	
 	private String id;
 	public String jobId;
 	private Vector<Integer> eVars = new Vector<Integer>();
@@ -31,35 +33,38 @@ public class TransmissionQbf implements Serializable {
 	public ArrayList<Integer> trueVars = new ArrayList<Integer>();
 	public ArrayList<Integer> falseVars = new ArrayList<Integer>();
 	static Logger logger = Logger.getLogger(TransmissionQbf.class);
-	
+
 	public ArrayDeque<SimpleNode> truthAssignedNodes = null;
-	
+
 	public String solverId = null;
-	
+
 	public void reduceFast() {
 		ArrayDeque<SimpleNode> reducableNodes = new ArrayDeque<SimpleNode>();
-		
+
 		// The parents of the assignednodes are reducable, so lets get them
-		for(SimpleNode n : truthAssignedNodes) {
-			if(n.jjtGetParent() != null)
-				reducableNodes.add((SimpleNode)n.jjtGetParent());
-		}		
-		
+		for (SimpleNode n : truthAssignedNodes) {
+			if (n.jjtGetParent() != null)
+				reducableNodes.add((SimpleNode) n.jjtGetParent());
+		}
+
 		Reducer r = new Reducer(reducableNodes);
 		r.reduce();
-		//this.root.dump(this.getId() + "  ");
+		// this.root.dump(this.getId() + "  ");
 	}
-	
+
 	/**
 	 * Print the tree
-	 * @param s optional string to prefix the tree
+	 * 
+	 * @param s
+	 *            optional string to prefix the tree
 	 */
 	public void dump(String s) {
-		root.dump(s);
+		this.getRootNode().dump(s);
 	}
-	
+
 	/**
 	 * getter for the trueVars ArrayList
+	 * 
 	 * @return the ArrayList of true-assigned vars
 	 */
 	public ArrayList<Integer> getTrueVars() {
@@ -68,6 +73,7 @@ public class TransmissionQbf implements Serializable {
 
 	/**
 	 * getter for the falseVars ArrayList
+	 * 
 	 * @return the ArrayList of false-assigned vars
 	 */
 	public ArrayList<Integer> getFalseVars() {
@@ -79,15 +85,16 @@ public class TransmissionQbf implements Serializable {
 		vars.addAll(this.getEVars());
 		return Collections.max(vars);
 	}
-	
+
 	/**
 	 * debug method that logs the content of a transmissionQbf
 	 */
 	public void checkQbf() {
-		logger.debug("checkQBF id: "+this.id);
-//		logger.debug("checkQBF root node: " + root.getClass().getName() + " with " +
-//		root.jjtGetNumChildren() + " children (should be 1. first one: " +
-//		root.jjtGetChild(0).getClass().getName() + ")");
+		logger.debug("checkQBF id: " + this.id);
+		// logger.debug("checkQBF root node: " + root.getClass().getName() +
+		// " with " +
+		// root.jjtGetNumChildren() + " children (should be 1. first one: " +
+		// root.jjtGetChild(0).getClass().getName() + ")");
 		logger.debug("checkQBF vars: " + this.vars);
 		logger.debug("checkQBF eVars: " + this.eVars);
 		logger.debug("checkQBF aVars: " + this.aVars);
@@ -97,6 +104,7 @@ public class TransmissionQbf implements Serializable {
 
 	/**
 	 * getter for the eVars Vector
+	 * 
 	 * @return the Vector of exist-quantified vars
 	 */
 	public Vector<Integer> getEVars() {
@@ -105,6 +113,7 @@ public class TransmissionQbf implements Serializable {
 
 	/**
 	 * getter for the aVars Vector
+	 * 
 	 * @return the Vector of all-quantified vars
 	 */
 	public Vector<Integer> getAVars() {
@@ -113,6 +122,7 @@ public class TransmissionQbf implements Serializable {
 
 	/**
 	 * getter for the vars Vector
+	 * 
 	 * @return the Vector of all variables that appear in a formula
 	 */
 	public Vector<Integer> getVars() {
@@ -121,7 +131,9 @@ public class TransmissionQbf implements Serializable {
 
 	/**
 	 * setter for the exist-quantified vars
-	 * @param v vector of exist-quantified vars
+	 * 
+	 * @param v
+	 *            vector of exist-quantified vars
 	 */
 	public void setEVars(Vector<Integer> v) {
 		this.eVars = v;
@@ -129,7 +141,9 @@ public class TransmissionQbf implements Serializable {
 
 	/**
 	 * setter for the all-quantified vars
-	 * @param v vector of all-quantified vars
+	 * 
+	 * @param v
+	 *            vector of all-quantified vars
 	 */
 	public void setAVars(Vector<Integer> v) {
 		this.aVars = v;
@@ -137,7 +151,9 @@ public class TransmissionQbf implements Serializable {
 
 	/**
 	 * setter for the vars
-	 * @param v vector of all vars
+	 * 
+	 * @param v
+	 *            vector of all vars
 	 */
 	public void setVars(Vector<Integer> v) {
 		this.vars = v;
@@ -150,89 +166,96 @@ public class TransmissionQbf implements Serializable {
 		int i;
 		ArrayDeque<SimpleNode> assigned = new ArrayDeque<SimpleNode>();
 		for (i = 0; i < this.trueVars.size(); i++) {
-			assigned.addAll(root.assignTruthValue(this.trueVars.get(i), true));
+			assigned.addAll(this.getRootNode().assignTruthValue(this.trueVars.get(i), true));
 		}
 		for (i = 0; i < this.falseVars.size(); i++) {
-			assigned.addAll(root.assignTruthValue(this.falseVars.get(i), false));
+			assigned.addAll(this.getRootNode().assignTruthValue(this.falseVars.get(i), false));
 		}
-		
+
 		this.truthAssignedNodes = assigned;
 	}
 
 	/**
-	 * calls the reduce() method of the tree as long as there's something to reduce
+	 * calls the reduce() method of the tree as long as there's something to
+	 * reduce
 	 */
 	public void reduceTree() {
-		boolean continueReducing = true;		
+		boolean continueReducing = true;
 
 		while (continueReducing) {
-			continueReducing = root.reduce();
+			continueReducing = this.getRootNode().reduce();
 		}
 	}
 
 	/**
 	 * calls the traverse() method of the tree.
+	 * 
 	 * @return The formula (without header and footer) in QPro format.
 	 */
 	public String traverseTree() {
-		return root.jjtGetChild(0).traverse();
+		return this.getRootNode().jjtGetChild(0).traverse();
 	}
 
 	/**
 	 * checks if the first node after the input node has a truth value assigned
-	 * @return true if the first node after input has a truth value, false otherwise
+	 * 
+	 * @return true if the first node after input has a truth value, false
+	 *         otherwise
 	 */
 	public boolean rootIsTruthNode() {
-		 
-		SimpleNode start = (SimpleNode)root.jjtGetChild(0);
+
+		SimpleNode start = (SimpleNode) this.getRootNode().jjtGetChild(0);
 		return start.isTruthNode();
-//
-//		while ((start.getNodeType() == NodeType.FORALL) || (start.getNodeType() == NodeType.EXISTS)) {
-//			start = (SimpleNode)start.jjtGetChild(0);
-//			}
-//
-//		if (start.getTruthValue().equals(""))
-//			return false;
-//		return true;
+		//
+		// while ((start.getNodeType() == NodeType.FORALL) ||
+		// (start.getNodeType() == NodeType.EXISTS)) {
+		// start = (SimpleNode)start.jjtGetChild(0);
+		// }
+		//
+		// if (start.getTruthValue().equals(""))
+		// return false;
+		// return true;
 	}
 
 	/**
 	 * returns the truth value of the formulas root node
+	 * 
 	 * @return a truth value
 	 */
 	public boolean rootGetTruthValue() {
-		if (root.jjtGetChild(0).getNodeType() == NodeType.TRUE)
+		if (this.getRootNode().jjtGetChild(0).getNodeType() == NodeType.TRUE)
 			return true;
-		return false;	
+		return false;
 	}
 
 	/**
 	 * returns a vector of vars from aVars & eVars that don't appear in the tree
+	 * 
 	 * @return a vector of orphaned quantified vars
-	 */	
-//	public Vector<Integer> getOrphanedVars() {
-//		Vector<Integer> orphanedVars = new Vector<Integer>();
-//		Vector<Integer> quantifiedVars = new Vector<Integer>();
-//
-//		quantifiedVars.addAll(aVars);
-//		quantifiedVars.addAll(eVars);
-//		
-//		for (int i = 0; i < quantifiedVars.size(); i++) {
-//			if (!root.findVar(quantifiedVars.get(i))) {
-//				orphanedVars.add(quantifiedVars.get(i));
-//			}
-//		}
-//		return orphanedVars;
-//	}
-	
+	 */
+	// public Vector<Integer> getOrphanedVars() {
+	// Vector<Integer> orphanedVars = new Vector<Integer>();
+	// Vector<Integer> quantifiedVars = new Vector<Integer>();
+	//
+	// quantifiedVars.addAll(aVars);
+	// quantifiedVars.addAll(eVars);
+	//
+	// for (int i = 0; i < quantifiedVars.size(); i++) {
+	// if (!root.findVar(quantifiedVars.get(i))) {
+	// orphanedVars.add(quantifiedVars.get(i));
+	// }
+	// }
+	// return orphanedVars;
+	// }
+
 	public void eliminateOrphanedVars() {
 		ArrayList<Integer> quantifiedVars = new ArrayList<Integer>(aVars);
 		quantifiedVars.addAll(eVars);
-		
+
 		OrphanVisitor v = new OrphanVisitor(quantifiedVars);
 		v.visit(this.getRootNode());
 		ArrayList<Integer> orphans = v.getOrpahns();
-//		logger.info("Eliminating vars(" + orphans.size() + "): " + orphans);
+		// logger.info("Eliminating vars(" + orphans.size() + "): " + orphans);
 		aVars.removeAll(orphans);
 		eVars.removeAll(orphans);
 	}
@@ -247,14 +270,37 @@ public class TransmissionQbf implements Serializable {
 	}
 
 	public SimpleNode getRootNode() {
-		return root;
+		if(this.root == null) {
+			if(this.serializedFormula == null) {
+				// This is weird...
+				logger.error("TransmissionQbf didnt contain a formula tree or a serialized formula-tree");
+				assert(false);
+				return null;
+			} else {
+				// This means the root was nullified by transient while serialization
+				// deserialize and write to root-variable
+				try {
+					ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(this.serializedFormula));
+					this.root = (SimpleNode) in.readObject();
+					in.close();
+					return root;
+				} catch (Exception e) {
+					// this sucks...
+					logger.error("Problem while deserializing formula", e);
+					return null;
+				}
+			}
+		} else {
+			return this.root;
+		}
 	}
-	
+
 	public void setRootNode(SimpleNode n) {
 		this.root = n;
 	}
-	
-	public TransmissionQbf deepClone() throws IOException, ClassNotFoundException {
+
+	public TransmissionQbf deepClone() throws IOException,
+			ClassNotFoundException {
 		TransmissionQbf clonedObj = null;
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -267,6 +313,5 @@ public class TransmissionQbf implements Serializable {
 		ois.close();
 		return clonedObj;
 	}
-}	
 
-
+}

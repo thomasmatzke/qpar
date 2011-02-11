@@ -50,7 +50,8 @@ public class Job {
 	private boolean result;
 	private long timeout = 0;
 	private Qbf formula;
-
+	public byte[] serializedFormula;
+	
 	public volatile ConcurrentMap<String, SlaveRemote> formulaDesignations = new ConcurrentHashMap<String, SlaveRemote>();
 	public volatile BlockingQueue<String> acknowledgedComputations = new LinkedBlockingQueue<String>();
 	public ArrayList<Long> solverTimes = new ArrayList<Long>();
@@ -200,11 +201,11 @@ public class Job {
 			for (SlaveRemote s : slots)
 				slotStr += s.getHostName() + " ";
 		} catch (RemoteException e) {
-			logger.error(e);
+			logger.error("RMI fail", e);
 			this.setStatus(Status.ERROR);
 			return;
 		} catch (UnknownHostException e) {
-			logger.error(e);
+			logger.error("Host not known...", e);
 			this.setStatus(Status.ERROR);
 			return;
 		}
@@ -212,9 +213,15 @@ public class Job {
 		logger.debug("Computationslots generated: " + slotStr.trim());
 
 		this.startedAt = new Date();
-		this.subformulas = formula.splitQbf(
-				Math.min(availableCores, usedCores), HeuristicFactory
-						.getHeuristic(this.getHeuristic(), this.formula));
+		try {
+			this.subformulas = formula.splitQbf(
+					Math.min(availableCores, usedCores), HeuristicFactory
+							.getHeuristic(this.getHeuristic(), this.formula));
+		} catch (IOException e1) {
+			logger.error("Couldnt split formula", e1);
+			this.setStatus(Status.ERROR);
+			return;
+		}
 
 		if (slots.size() < this.subformulas.size()) {
 			logger.error("Not enough cores available for Job. Job failed.");

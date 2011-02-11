@@ -1,7 +1,9 @@
 package main.java.logic;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,6 +44,7 @@ public class Qbf {
 	public DependencyNode dependencyGraphRoot;
 		
 	private Object mergeLock = new Object();
+	
 	
 	/**
 	* constructor
@@ -110,8 +113,9 @@ public class Qbf {
 	* V2: Uses exactly n cores now
 	* @param n Number of subformulas to return
 	* @return A list of n TransmissionQbfs, each a subformula of the whole QBF
+	 * @throws IOException 
 	*/
-	public synchronized List<TransmissionQbf> splitQbf(int n, Heuristic h) {
+	public synchronized List<TransmissionQbf> splitQbf(int n, Heuristic h) throws IOException {
 		logger.info("Splitting into " + n + " subformulas...");
 		long start = System.currentTimeMillis();
 		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
@@ -151,6 +155,16 @@ public class Qbf {
 		
 		logger.info("Generating TransmissionQbfs...");
 		List<TransmissionQbf> tqbfs = new ArrayList<TransmissionQbf>();
+		
+		// We only want to serialize the tree once
+		
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream out;
+		out = new ObjectOutputStream(bos);
+		out.writeObject(root);
+		out.close();
+		byte[] serializedFormula = bos.toByteArray();
+		
 		// Generate ids for leaves and corresponding tqbfs
 		int idCtr = 0;
 		for(DTNode node : leaves) {
@@ -161,6 +175,8 @@ public class Qbf {
 			tqbf.falseVars.addAll(node.variablesAssignedFalse);
 			tqbf.trueVars.addAll(node.variablesAssignedTrue);
 			tqbf.setRootNode(root);
+			tqbf.serializedFormula = serializedFormula;
+			
 			tqbf.setEVars(this.eVars);
 			tqbf.setAVars(this.aVars);
 			Vector<Integer> tmpVars = new Vector<Integer>();
