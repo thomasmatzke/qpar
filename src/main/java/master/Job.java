@@ -1,5 +1,6 @@
 package main.java.master;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -276,7 +277,9 @@ public class Job {
 			try {
 				logger.info("Sending formula " + sub.getId() + " ...");
 				// oos = new ObjectOutputStream(senderSocket.getOutputStream());
-				CountingOutputStream cos = new CountingOutputStream(senderSocket.getOutputStream());
+				
+				BufferedOutputStream bos = new BufferedOutputStream(senderSocket.getOutputStream());
+				CountingOutputStream cos = new CountingOutputStream(bos);
 				oos = new ObjectOutputStream(new GZIPOutputStream(cos));
 				long start = System.currentTimeMillis();
 				oos.writeObject(sub);
