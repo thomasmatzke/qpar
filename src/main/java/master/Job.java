@@ -278,13 +278,14 @@ public class Job {
 				// oos = new ObjectOutputStream(senderSocket.getOutputStream());
 				CountingOutputStream cos = new CountingOutputStream(senderSocket.getOutputStream());
 				oos = new ObjectOutputStream(new GZIPOutputStream(cos));
-				logger.info("Writing object " + sub.getId());
+				long start = System.currentTimeMillis();
 				oos.writeObject(sub);
-				logger.info("Object " + sub.getId() + "written.");
+				long stop = System.currentTimeMillis();
 				oos.flush();
 				oos.close();
 				senderSocket.close();
-				logger.info("Formula " + sub.getId() + " sent ... (" + cos.getByteCount()/1024 + "kib)");
+				long kiB = cos.getByteCount()/1024;
+				logger.info("Formula " + sub.getId() + " sent ... (" + kiB + "kiB, " + (kiB/1000) + " seconds, " + kiB / ((double)(stop - start)/1000.00) + "kiB/s)");
 			} catch (IOException e) {
 				logger.error("While sending formula " + sub.getId(), e);
 			}
