@@ -284,8 +284,9 @@ public class Job {
 				oos.flush();
 				oos.close();
 				senderSocket.close();
+				double time = (stop - start)/1000.00;
 				long kiB = cos.getByteCount()/1024;
-				logger.info("Formula " + sub.getId() + " sent ... (" + kiB + "kiB, " + (kiB/1000) + " seconds, " + kiB / ((double)(stop - start)/1000.00) + "kiB/s)");
+				logger.info("Formula " + sub.getId() + " sent ... (" + kiB + "kiB, " + time + " seconds, " + kiB / time + "kiB/s)");
 			} catch (IOException e) {
 				logger.error("While sending formula " + sub.getId(), e);
 			}
