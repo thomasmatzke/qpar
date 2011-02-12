@@ -22,6 +22,10 @@ import org.apache.log4j.Logger;
 // vars to assign false. They are created in the Qbf class and sent to the
 // slaves to be solved there.
 public class TransmissionQbf implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6627723521432123349L;
 	private transient SimpleNode root = null;
 	public byte[] serializedFormula = null;
 	

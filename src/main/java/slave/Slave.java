@@ -52,7 +52,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 				
 		QPar.loadConfig();
 	
-		SignalHandler handler = new SignalHandler(this);
+		MySignalHandler handler = new MySignalHandler(this);
 		Signal.handle(new Signal("INT"), handler);
 		Signal.handle(new Signal("TERM"), handler);
 		//Signal.handle(new Signal("HUP"), handler);

@@ -85,6 +85,8 @@ public abstract class Solver implements Runnable {
 	}
 
 	protected void killSolverProcess() {
+		if(solverProcess == null)
+			return;
 		try {
 			solverProcess.getErrorStream().close();
 			solverProcess.getInputStream().close();

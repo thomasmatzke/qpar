@@ -617,11 +617,11 @@ public class SimpleNode implements Node, Serializable {
 
 	public void setOp(String o) {
 //		this.op = o;
-		if (o == "&") {
+		if (o.equals("&")) {
 			nodeType = NodeType.AND;
-		} else if (o == "|") {
+		} else if (o.equals("|")) {
 			nodeType = NodeType.OR;
-		} else if (o == "!") {
+		} else if (o.equals("!")) {
 			nodeType = NodeType.NOT;
 		} 
 	}
