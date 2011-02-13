@@ -34,12 +34,7 @@ public abstract class Solver implements Runnable {
 		this.jobId = tqbf.jobId;
 	}
 
-	public void kill() {
-		this.killed = true;
-		this.run = false;
-		if (solverProcess != null)
-			solverProcess.destroy();
-	}
+	public abstract void kill();
 
 	public abstract void run();
 
@@ -86,7 +81,6 @@ public abstract class Solver implements Runnable {
 
 	protected void killSolverProcess() {
 		if(solverProcess == null)
-			return;
 		try {
 			solverProcess.getErrorStream().close();
 			solverProcess.getInputStream().close();
