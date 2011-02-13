@@ -91,6 +91,8 @@ public class QProSolver extends Solver {
 		this.qproProcessStartedAt = new Date();
 		logger.info("Starting qpro process... (" + tqbfId + ")");
 		try {
+			if (killed)
+				return;
 			executor.execute(command, resultHandler);
 		} catch (ExecuteException e) {
 			logger.error("", e);
@@ -190,7 +192,8 @@ public class QProSolver extends Solver {
 	@Override
 	public void kill() {
 		this.killed = true;
-		
+		if(watchdog == null)
+			return;
 		watchdog.destroyProcess();
 		if (!watchdog.killedProcess()) {
 			logger.error("qpro process wasnt killed!");

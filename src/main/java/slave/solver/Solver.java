@@ -25,8 +25,7 @@ public abstract class Solver implements Runnable {
 
 	volatile protected boolean killed = false;
 	protected boolean run = true;
-	protected Process solverProcess = null;
-
+	
 	public Solver(TransmissionQbf tqbf, ResultHandler handler) {
 		this.handler = handler;
 		this.tqbf = tqbf;

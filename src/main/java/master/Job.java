@@ -398,7 +398,7 @@ public class Job {
 	}
 
 	synchronized public void handleResult(Result r) {
-		if(r.solverTime > 0)
+		if(this.status == Job.Status.RUNNING && r.solverTime > 0)
 			this.solverTimes.add(r.solverTime);
 		if (this.getStatus() != Status.RUNNING) {
 			return;

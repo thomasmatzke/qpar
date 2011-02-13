@@ -62,13 +62,10 @@ public class Evaluation {
 				} else {
 					assert(false);
 				}
-				
-				
-				
+							
 				// Do the stats
 				if(!job.solverTimes.isEmpty()) {
-					nonEmptyCtr++;
-									
+					nonEmptyCtr++;				
 					this.meanSolverTime += job.meanSolverTime();
 				}
 				
