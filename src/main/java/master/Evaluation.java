@@ -64,11 +64,12 @@ public class Evaluation {
 				}
 							
 				// Do the stats
-				if(!job.solverTimes.isEmpty()) {
-					nonEmptyCtr++;				
-					this.meanSolverTime += job.meanSolverTime();
+				synchronized(job.solverTimes) {
+					if (!job.solverTimes.isEmpty()) {
+						nonEmptyCtr++;
+						this.meanSolverTime += job.meanSolverTime();
+					}
 				}
-				
 			} catch(Throwable t) {
 				logger.error("Evaluation.java", t);
 				QPar.sendExceptionMail(t);

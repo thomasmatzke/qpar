@@ -50,7 +50,7 @@ public class Job {
 	private long timeout = 0;
 	private Qbf formula;
 	public byte[] serializedFormula;
-	
+
 	public volatile ConcurrentMap<String, SlaveRemote> formulaDesignations = new ConcurrentHashMap<String, SlaveRemote>();
 	public volatile BlockingQueue<String> acknowledgedComputations = new LinkedBlockingQueue<String>();
 	public ArrayList<Long> solverTimes = new ArrayList<Long>();
@@ -123,19 +123,20 @@ public class Job {
 
 	private void abortComputations() throws RemoteException {
 		String tqbfId = null;
-		while(this.formulaDesignations.size() > 0) {
+		while (this.formulaDesignations.size() > 0) {
 			try {
 				tqbfId = this.acknowledgedComputations.take();
-			} catch (InterruptedException e) {}
+			} catch (InterruptedException e) {
+			}
 			logger.info("Aborting Formula " + tqbfId + " ...");
 			SlaveRemote designation = this.formulaDesignations.get(tqbfId);
-			if(designation != null) {
+			if (designation != null) {
 				designation.abortFormula(tqbfId);
 				this.formulaDesignations.remove(tqbfId);
 				logger.info("Formula " + tqbfId + " aborted.");
 			}
 		}
-		
+
 	}
 
 	public void startBlocking() {
@@ -146,7 +147,7 @@ public class Job {
 			} catch (InterruptedException e) {
 			}
 
-			if ((startedAt.getTime() + timeout*1000) < new Date().getTime()) {
+			if ((startedAt.getTime() + timeout * 1000) < new Date().getTime()) {
 				logger.info("Timeout reached. Aborting Job. \n"
 						+ "	Job Id:         " + this.id + "\n"
 						+ "	Timeout (secs): " + timeout + "\n");
@@ -168,7 +169,7 @@ public class Job {
 			logger.error(this.inputFileString, e);
 			this.setStatus(Status.ERROR);
 			return;
-		} catch(TokenMgrError e) {
+		} catch (TokenMgrError e) {
 			logger.error(this.inputFileString, e);
 			this.setStatus(Status.ERROR);
 			return;
@@ -213,9 +214,9 @@ public class Job {
 
 		this.startedAt = new Date();
 		try {
-			this.subformulas = formula.splitQbf(
-					Math.min(availableCores, usedCores), HeuristicFactory
-							.getHeuristic(this.getHeuristic(), this.formula));
+			this.subformulas = formula.splitQbf(Math.min(availableCores,
+					usedCores), HeuristicFactory.getHeuristic(
+					this.getHeuristic(), this.formula));
 		} catch (IOException e1) {
 			logger.error("Couldnt split formula", e1);
 			this.setStatus(Status.ERROR);
@@ -280,8 +281,9 @@ public class Job {
 			try {
 				logger.info("Sending formula " + sub.getId() + " ...");
 				// oos = new ObjectOutputStream(senderSocket.getOutputStream());
-				
-				BufferedOutputStream bos = new BufferedOutputStream(senderSocket.getOutputStream());
+
+				BufferedOutputStream bos = new BufferedOutputStream(
+						senderSocket.getOutputStream());
 				CountingOutputStream cos = new CountingOutputStream(bos);
 				oos = new ObjectOutputStream(new GZIPOutputStream(cos));
 				long start = System.currentTimeMillis();
@@ -290,9 +292,10 @@ public class Job {
 				oos.flush();
 				oos.close();
 				senderSocket.close();
-				double time = (stop - start)/1000.00;
-				long kiB = cos.getByteCount()/1024;
-				logger.info("Formula " + sub.getId() + " sent ... (" + kiB + "kiB, " + time + " seconds, " + kiB / time + "kiB/s)");
+				double time = (stop - start) / 1000.00;
+				long kiB = cos.getByteCount() / 1024;
+				logger.info("Formula " + sub.getId() + " sent ... (" + kiB
+						+ "kiB, " + time + " seconds, " + kiB / time + "kiB/s)");
 			} catch (IOException e) {
 				logger.error("While sending formula " + sub.getId(), e);
 			}
@@ -398,8 +401,10 @@ public class Job {
 	}
 
 	synchronized public void handleResult(Result r) {
-		if(this.status == Job.Status.RUNNING && r.solverTime > 0)
-			this.solverTimes.add(r.solverTime);
+		if (this.status == Job.Status.RUNNING && r.solverTime > 0)
+			synchronized (solverTimes) {
+				this.solverTimes.add(r.solverTime);
+			}
 		if (this.getStatus() != Status.RUNNING) {
 			return;
 		}
@@ -409,7 +414,8 @@ public class Job {
 			return;
 		}
 
-		logger.error("Slave returned error for subformula: " + r.tqbfId, r.exception);
+		logger.error("Slave returned error for subformula: " + r.tqbfId,
+				r.exception);
 		abort();
 	}
 
@@ -524,16 +530,18 @@ public class Job {
 			return "undefined";
 		}
 	}
-		
+
 	public double meanSolverTime() {
 		long added = 0;
-		for(long time : solverTimes) {
-			logger.info(time);
-			added += time;
+		synchronized (solverTimes) {
+			for (long time : solverTimes) {
+				logger.info(time);
+				added += time;
+			}
 		}
-		double mean = (double)added / (double)solverTimes.size();
-		//assert((minSolverTime() < mean) && (mean < maxSolverTime()));
+		double mean = (double) added / (double) solverTimes.size();
+		// assert((minSolverTime() < mean) && (mean < maxSolverTime()));
 		return mean;
 	}
-	
+
 }
