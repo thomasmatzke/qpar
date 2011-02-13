@@ -1,7 +1,6 @@
 package main.java.master;
 
 import java.io.File;
-import java.text.DecimalFormat;
 import java.util.HashMap;
 
 import main.java.QPar;
@@ -25,10 +24,7 @@ public class Evaluation {
 	private int 					errors			= 0;
 	private long 					elapsedTotal 	= 0;
 	private HashMap<File, Boolean> 	results 		= new HashMap<File, Boolean>();
-	public long maxSolverTime;
-	public long minSolverTime;
 	public double meanSolverTime;
-	private double meanSolverTimeAbs;
 	
 	public Evaluation(	File 	directory,
 						String 	heuristicId,
@@ -58,10 +54,10 @@ public class Evaluation {
 					elapsedTotal += job.totalMillis();
 					results.put(f, job.getResult());
 				} else if(job.getStatus() == Job.Status.TIMEOUT){ 
-					elapsedTotal += timeout;
+					elapsedTotal += timeout*1000;
 					timeouts++;
 				} else if(job.getStatus() == Job.Status.ERROR) {
-					elapsedTotal += timeout;
+					elapsedTotal += timeout*1000;
 					errors++;
 				} else {
 					assert(false);
@@ -72,12 +68,7 @@ public class Evaluation {
 				// Do the stats
 				if(!job.solverTimes.isEmpty()) {
 					nonEmptyCtr++;
-					if(job.minSolverTime() > 0 && this.minSolverTime > job.minSolverTime())
-						this.minSolverTime = job.minSolverTime();
-					
-					if(this.maxSolverTime < job.maxSolverTime())
-						this.maxSolverTime = job.maxSolverTime();
-					
+									
 					this.meanSolverTime += job.meanSolverTime();
 				}
 				
@@ -90,7 +81,7 @@ public class Evaluation {
 	}
 
 	public String statisticsResultString() {
-		return String.format("%d\t%d\t%f", this.minSolverTime/1000, this.maxSolverTime/1000, this.meanSolverTime/1000);
+		return String.format("%.2f", this.meanSolverTime/1000.00);
 	}
 	
 	public String toString() {

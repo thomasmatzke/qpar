@@ -2,6 +2,8 @@ package main.java;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 import main.java.master.Mailer;
@@ -37,8 +39,15 @@ public class QPar {
 	}
 	
 	public static void sendExceptionMail(Throwable t) {
+		String body = "";
+		try {
+			body += "Host: " + InetAddress.getLocalHost().getHostName() + "\n";
+		} catch (UnknownHostException e) {
+			body += "Host: UNKNOWN (Exception ocurred)\n";
+		}
+		body += StackTraceUtil.getStackTrace(t);
 		if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
-			Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification", StackTraceUtil.getStackTrace(t));
+			Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification", body);
 	}
 	
 }

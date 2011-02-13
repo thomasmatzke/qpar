@@ -24,7 +24,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
-import main.java.StackTraceUtil;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
 import main.java.logic.heuristic.HeuristicFactory;
@@ -525,25 +524,16 @@ public class Job {
 			return "undefined";
 		}
 	}
-	
-	public long maxSolverTime() {
-		if(solverTimes.isEmpty())
-			return 0;
-		return Collections.max(solverTimes);
-	}
-
-	public long minSolverTime() {
-		if(solverTimes.isEmpty())
-			return 0;
-		return Collections.min(solverTimes);
-	}
-	
+		
 	public double meanSolverTime() {
 		long added = 0;
-		for(long l : solverTimes)
-			added += l;
-		
-		return added /solverTimes.size();
+		for(long time : solverTimes) {
+			logger.info(time);
+			added += time;
+		}
+		double mean = (double)added / (double)solverTimes.size();
+		//assert((minSolverTime() < mean) && (mean < maxSolverTime()));
+		return mean;
 	}
 	
 }

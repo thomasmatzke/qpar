@@ -91,8 +91,8 @@ public class LogarithmicEvaluationSuite {
 
 	private void generateReport() {
 		report = "Logarithmic Evaluation Suite Report\n" +
-						"Started: " + startedAt + 
-						"Stopped: " + stoppedAt +
+						"Started: " + startedAt + "\n" +
+						"Stopped: " + stoppedAt + "\n" +
 						"Solver: \t" + solverId + "\n" +
 						"Timeout: \t" + timeout + "\n" +
 						"Cores Min: \t" + startCores + "\n" +
@@ -179,26 +179,29 @@ public class LogarithmicEvaluationSuite {
 	}
 	
 	public String solverTimesReport() {
-		String report = "Solvertimes statistics: \n";
-		report += "cores\t";
+		StringBuffer report = new StringBuffer();
+
+		report.append("Solvertimes statistics: \n");
+		report.append("cores\t");
 		for(String h : HeuristicFactory.getAvailableHeuristics()) {
-			report += String.format("%s_min\t%s_max\t%s_mean\t", h, h, h);
+			report.append(String.format("%s_mean\t", h));
 		}
-		report = report.trim() + "\n";
-		
+		//report = report.trim() + "\n";
+		report.append("\n");
 		int idx = 0;
 		for(int c : coreSet) {
-			String line = "" + c + "\t";
+			StringBuffer line = new StringBuffer(); 
+			line.append("" + c + "\t");
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
-				line += result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)].statisticsResultString() + "\t";
+				line.append(result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)].statisticsResultString() + "\t");
 			}		
-			line = line.trim();
-			line += "\n";
-			report += line;
+			//line = line.trim();
+			line.append("\n");
+			report.append(line);
 			idx++;
 		}
 		
-		return report;
+		return report.toString();
 	}
 	
 }
