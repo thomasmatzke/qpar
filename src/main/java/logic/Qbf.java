@@ -96,13 +96,13 @@ public class Qbf {
 		logger.debug("Number of u.q.vs: " + aVars.size());
 		logger.debug("All variables: " + vars);
 		logger.debug("Number of all v.: " + vars.size());
-		logger.info("Finished parsing QBF from " + filename + ", Took: " + (end-start)/1000 + " seconds.");
+		logger.debug("Finished parsing QBF from " + filename + ", Took: " + (end-start)/1000 + " seconds.");
 		
-		logger.info("Generating dependency graph...");
+		logger.debug("Generating dependency graph...");
 		start = System.currentTimeMillis();
 		dependencyGraphRoot = this.root.dependencyTree()[0];
 		end = System.currentTimeMillis();
-		logger.info("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
+		logger.debug("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
 		if(QPar.logLevel == Level.DEBUG)
 			logger.debug("Dependencyree: \n" + dependencyGraphRoot.dump());
 	}
@@ -116,7 +116,7 @@ public class Qbf {
 	 * @throws IOException 
 	*/
 	public synchronized List<TransmissionQbf> splitQbf(int n, Heuristic h) throws IOException {
-		logger.info("Splitting into " + n + " subformulas...");
+		logger.debug("Splitting into " + n + " subformulas...");
 		long start = System.currentTimeMillis();
 		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
 		logger.debug("Heuristic returned variable-assignment order: " + Arrays.toString(order));
@@ -127,7 +127,7 @@ public class Qbf {
 		leaves.addFirst(decisionRoot);
 		
 		// Generate the tree
-		logger.info("Generating decision tree...");
+		logger.debug("Generating decision tree...");
 		while(leafCtr < n) {
 			DTNode leaf 		= leaves.pollLast();
 			Integer splitVar 	= order[leaf.getDepth()]; 
@@ -153,7 +153,7 @@ public class Qbf {
 		
 		assert(leaves.size() == n);
 		
-		logger.info("Generating TransmissionQbfs...");
+		logger.debug("Generating TransmissionQbfs...");
 		List<TransmissionQbf> tqbfs = new ArrayList<TransmissionQbf>();
 		
 		// We only want to serialize the tree once
@@ -187,7 +187,7 @@ public class Qbf {
 		}
 		assert(tqbfs.size() == n);
 		long end = System.currentTimeMillis();
-		logger.info("Formula splitted. Took " + (end-start)/1000 + " seconds.");
+		logger.debug("Formula splitted. Took " + (end-start)/1000 + " seconds.");
 		return tqbfs;
 	}
 

@@ -165,7 +165,7 @@ public class LogarithmicEvaluationSuite {
 					
 					if(compare == null && current != null) {
 						compare = current;
-					} else if(compare != null && current != null && compare != current) {
+					} else if(compare != null && current != null && compare.equals(current)) {
 						logger.warn("Correctness error detected: File: " + f + ", Cores: " + coreSet.get(c) + ", Heuristic: " + h);
 						correctness = false;
 					}
@@ -174,6 +174,11 @@ public class LogarithmicEvaluationSuite {
 			}
 			correctnessReport += "\n";
 		}
+		
+		if(correctness)
+			report = report + correctnessReport;
+		else
+			report = report + "WARNING: INCONSISTENT RESULTS DETECTED! PROGRAM NOT CORRECT!\n\n" + correctnessReport;
 		
 		return correctnessReport;
 	}

@@ -127,6 +127,11 @@ public class QProSolver extends Solver {
 	}
 
 	private void handleResult(String readString) {
+		if(killed)
+			return;
+		
+		logger.info("qpro return string: " + readString);
+		
 		long solverTime = this.qproProcessStoppedAt.getTime()
 				- this.qproProcessStartedAt.getTime();
 		// If qpro returns 1 the subformula is satisfiable
@@ -136,10 +141,6 @@ public class QProSolver extends Solver {
 			// IF qpro returns 0 the subformula is unsatisfiable
 		} else if (readString.startsWith("0")) {
 			returnWithSuccess(tqbfId, jobId, false, solverTime);
-
-			// We have been killed by the master
-		} else if (this.killed == true) {
-
 			// anything else is an error
 		} else {
 			String errorString = "Unexpected result from solver.\n"
@@ -185,15 +186,7 @@ public class QProSolver extends Solver {
 	public Thread getThread() {
 		return thread;
 	}
-
-	protected void finalize() throws Throwable {
-		try {
-			killSolverProcess();
-		} finally {
-			super.finalize();
-		}
-	}
-
+	
 	@Override
 	public void kill() {
 		this.killed = true;
