@@ -1,9 +1,6 @@
 package main.java.slave;
 
 import java.rmi.RemoteException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 

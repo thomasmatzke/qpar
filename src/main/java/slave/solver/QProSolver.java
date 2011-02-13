@@ -1,26 +1,15 @@
 package main.java.slave.solver;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.Date;
 import java.util.Random;
 
-import main.java.QPar;
 import main.java.StreamGobbler;
-import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
-import main.java.rmi.Result;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-
-import sun.misc.Lock;
 
 /**
  * This class encapsulates the qpro-solver

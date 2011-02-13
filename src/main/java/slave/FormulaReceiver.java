@@ -6,7 +6,6 @@ import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.zip.GZIPInputStream;
 
-import main.java.slave.*;
 import main.java.logic.TransmissionQbf;
 
 import org.apache.log4j.Logger;
