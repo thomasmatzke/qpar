@@ -23,7 +23,7 @@ public abstract class Solver implements Runnable {
 	protected String tqbfId = null;
 	protected String jobId = null;
 
-	protected boolean killed = true;
+	protected boolean killed = false;
 	protected boolean run = true;
 	protected Process solverProcess = null;
 

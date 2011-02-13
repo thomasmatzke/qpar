@@ -31,18 +31,18 @@ import org.apache.log4j.Logger;
 public class QProSolver extends Solver {
 
 	static Logger logger = Logger.getLogger(QProSolver.class);
-	
+
 	public static final String toolId = "qpro";
 
 	private String inputString = null;
 
-	protected static Object globLock = new Object();
-	
+	protected static Object killMutex = new Object();
+
 	private Date qproProcessStartedAt = null;
 	private Date qproProcessStoppedAt = null;
 
 	private ExecuteWatchdog watchdog = null;
-	
+
 	public QProSolver(TransmissionQbf tqbf, ResultHandler handler) {
 		super(tqbf, handler);
 	}
@@ -64,21 +64,19 @@ public class QProSolver extends Solver {
 
 		this.tqbf = null;
 		System.gc();
-		
+
 		Executor executor = new DefaultExecutor();
-		
+
 		watchdog = new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT);
 		executor.setWatchdog(watchdog);
-		
+
 		ShutdownHookProcessDestroyer processDestroyer = new ShutdownHookProcessDestroyer();
 		executor.setProcessDestroyer(processDestroyer);
-		
+
 		CommandLine command = new CommandLine("qpro");
 		DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
-		
 
-		
-	    ByteArrayInputStream input;
+		ByteArrayInputStream input;
 		try {
 			input = new ByteArrayInputStream(inputString.getBytes("ISO-8859-1"));
 		} catch (UnsupportedEncodingException e1) {
@@ -86,11 +84,12 @@ public class QProSolver extends Solver {
 			returnWithError(tqbfId, jobId, e1);
 			return;
 		}
-	    ByteArrayOutputStream output = new ByteArrayOutputStream();
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-	    executor.setStreamHandler(new PumpStreamHandler(output, null, input));
+		executor.setStreamHandler(new PumpStreamHandler(output, null, input));
 
-	    this.qproProcessStartedAt = new Date();
+		this.qproProcessStartedAt = new Date();
+		logger.info("Starting qpro process... (" + tqbfId + ")");
 		try {
 			executor.execute(command, resultHandler);
 		} catch (ExecuteException e) {
@@ -102,12 +101,20 @@ public class QProSolver extends Solver {
 			returnWithError(tqbfId, jobId, e);
 			return;
 		}
-		
-		while(!resultHandler.hasResult()) {
-			try { resultHandler.waitFor(); } catch (InterruptedException e1) {}
+
+		while (!resultHandler.hasResult()) {
+			try {
+				resultHandler.waitFor();
+			} catch (InterruptedException e1) {
+			}
 		}
-				
 		this.qproProcessStoppedAt = new Date();
+		logger.info("qpro process terminated... (" + tqbfId + ")");
+
+		
+		if (killed)
+			return;
+
 		try {
 			handleResult(output.toString("ISO-8859-1"));
 		} catch (UnsupportedEncodingException e) {
@@ -115,7 +122,8 @@ public class QProSolver extends Solver {
 			returnWithError(tqbfId, jobId, e);
 			return;
 		}
-	
+		
+
 	}
 
 	private void handleResult(String readString) {
@@ -140,10 +148,6 @@ public class QProSolver extends Solver {
 			returnWithError(tqbfId, jobId, new Exception(errorString));
 		}
 	}
-
-
-
-
 
 	/**
 	 * make a formula in qpro format from the transmission QBF
@@ -192,9 +196,12 @@ public class QProSolver extends Solver {
 
 	@Override
 	public void kill() {
+		this.killed = true;
+		
 		watchdog.destroyProcess();
-		if(!watchdog.killedProcess()) {
+		if (!watchdog.killedProcess()) {
 			logger.error("qpro process wasnt killed!");
 		}
+
 	}
 }
