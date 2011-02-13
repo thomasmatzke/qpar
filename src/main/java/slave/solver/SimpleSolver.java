@@ -17,6 +17,8 @@ public class SimpleSolver extends Solver {
 		new Result(tqbf.getId(), tqbf.solverId);
 	}
 
+	
+	
 	@Override
 	public void run() {
 		tqbf.assignTruthValues();
@@ -168,5 +170,10 @@ public class SimpleSolver extends Solver {
 			return arr;
 		}
 
+	}
+
+	@Override
+	public void kill() {
+		this.run = false;
 	}
 }

@@ -1,14 +1,25 @@
 package main.java.slave.solver;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Random;
 
 import main.java.StreamGobbler;
 import main.java.logic.TransmissionQbf;
 
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 import org.apache.log4j.Logger;
 
 /**
@@ -30,6 +41,8 @@ public class QProSolver extends Solver {
 	private Date qproProcessStartedAt = null;
 	private Date qproProcessStoppedAt = null;
 
+	private ExecuteWatchdog watchdog = null;
+	
 	public QProSolver(TransmissionQbf tqbf, ResultHandler handler) {
 		super(tqbf, handler);
 	}
@@ -52,86 +65,56 @@ public class QProSolver extends Solver {
 		this.tqbf = null;
 		System.gc();
 		
-		logger.info("Starting qpro process...");
-		ProcessBuilder pb = new ProcessBuilder("qpro");
-		pb.redirectErrorStream(true);
+		Executor executor = new DefaultExecutor();
+		
+		watchdog = new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT);
+		executor.setWatchdog(watchdog);
+		
+		ShutdownHookProcessDestroyer processDestroyer = new ShutdownHookProcessDestroyer();
+		executor.setProcessDestroyer(processDestroyer);
+		
+		CommandLine command = new CommandLine("qpro");
+		DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
+		
+
+		
+	    ByteArrayInputStream input;
 		try {
-			solverProcess = pb.start();
-		} catch (IOException e) {
-			// Try again because of windows suckiness (but wait a bit)
-			logger.error("Windows suckiness. Trying again to start qpro...", e);
-			try {
-				Thread.sleep(new Random().nextInt(100));
-			} catch (InterruptedException e1) {
-				logger.error("", e1);
-			}
-			killSolverProcess();
-			pb = new ProcessBuilder("qpro");
-			pb.redirectErrorStream(true);
-			try {
-				solverProcess = pb.start();
-			} catch (IOException e1) {
-				// second fail.... fuck you!
-				if (!killed) {
-					logger.error("Starting of qpro failed twice. Giving up", e);
-					returnWithError(tqbfId, jobId, e);
-				}
-				return;
-			}
+			input = new ByteArrayInputStream(inputString.getBytes("ISO-8859-1"));
+		} catch (UnsupportedEncodingException e1) {
+			logger.error("", e1);
+			returnWithError(tqbfId, jobId, e1);
+			return;
 		}
-					
-		logger.info("Starting streamgobblers");
-		StreamGobbler stdoutStreamGobbler = new StreamGobbler(solverProcess.getInputStream());
-//        StreamGobbler stderrStreamGobbler = new StreamGobbler(solverProcess.getErrorStream());
-        Thread stdoutThread = new Thread(stdoutStreamGobbler);
-//        Thread stderrThread = new Thread(stderrStreamGobbler);
-		stdoutThread.start();
-//		stderrThread.start();
-        		
-		logger.info("Piping inputstring to qpro...");
-		this.qproProcessStartedAt = new Date();
-        if(inputString != null) {
-        	OutputStreamWriter writer = new OutputStreamWriter(new BufferedOutputStream(solverProcess.getOutputStream()));
-            try {
-				writer.write(inputString);
-				writer.flush();
-	            writer.close();
-			} catch (IOException e) {
-				if(killed) {
-					return;
-				}
-				logger.error("Something happened while piping input to qpro", e);
-				returnWithError(tqbfId, jobId, e);
-				return;
-			}
-            
-        }
-     
-        
-        logger.info("Waiting for gobblers to finish");
-        try {
-        	stdoutThread.join();
-//        	stderrThread.join();
-		} catch (InterruptedException e) {
-			logger.error("Interrupted while waiting for streamgobbler", e);
+	    ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+	    executor.setStreamHandler(new PumpStreamHandler(output, null, input));
+
+	    this.qproProcessStartedAt = new Date();
+		try {
+			executor.execute(command, resultHandler);
+		} catch (ExecuteException e) {
+			logger.error("", e);
+			returnWithError(tqbfId, jobId, e);
+			return;
+		} catch (IOException e) {
+			logger.error("", e);
 			returnWithError(tqbfId, jobId, e);
 			return;
 		}
-		logger.info("Gobblers returned");
 		
-		// Check for process termination. if process terminated, but readers are not done, the stream hangs
-        // Fucking java bugs....
-        try { solverProcess.waitFor(); } catch (InterruptedException e1) {}
-		
-        try {
-			solverProcess.getErrorStream().close();	solverProcess.getInputStream().close();	solverProcess.getOutputStream().close();
-		} catch (IOException e) {
-			logger.error("", e);
+		while(!resultHandler.hasResult()) {
+			try { resultHandler.waitFor(); } catch (InterruptedException e1) {}
 		}
 				
 		this.qproProcessStoppedAt = new Date();
-		
-		handleResult(stdoutStreamGobbler.result);
+		try {
+			handleResult(output.toString("ISO-8859-1"));
+		} catch (UnsupportedEncodingException e) {
+			logger.error("", e);
+			returnWithError(tqbfId, jobId, e);
+			return;
+		}
 	
 	}
 
@@ -204,6 +187,14 @@ public class QProSolver extends Solver {
 			killSolverProcess();
 		} finally {
 			super.finalize();
+		}
+	}
+
+	@Override
+	public void kill() {
+		watchdog.destroyProcess();
+		if(!watchdog.killedProcess()) {
+			logger.error("qpro process wasnt killed!");
 		}
 	}
 }
