@@ -368,7 +368,7 @@ public class ProgramWindow extends JFrame {
 		int row = getJobsTable().getSelectedRow(); 
 		if(row != -1) {
 			Job job = Job.getJobs().get(row);
-			job.abort(); 
+			job.abort("User request."); 
 		}
 	}
 	

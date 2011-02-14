@@ -129,8 +129,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 		logger.info("Unregistering Slave. Hostname: " + slave.getHostName());
 		for(String jobId : slave.getCurrentJobs()) {
 			Job j = Job.getJobs().get(jobId);
-			if(j.getStatus() == Job.Status.RUNNING)
-				j.abort();
+			j.abort("Slave unregistering.");
 		}
 	}
 

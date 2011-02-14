@@ -30,6 +30,7 @@ public class TransmissionQbf implements Serializable {
 	public byte[] serializedFormula = null;
 	
 	private String id;
+	public long timeout;
 	public String jobId;
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();

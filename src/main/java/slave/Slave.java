@@ -43,7 +43,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 //	public Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	public static MasterRemote master = null;
 	
-	public FormulaListener formulaListener = null;
+	transient public FormulaListener formulaListener = null;
 	
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
 		//super(0, new ZipClientSocketFactory(), new ZipServerSocketFactory() );

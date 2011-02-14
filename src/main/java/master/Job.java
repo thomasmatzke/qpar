@@ -1,11 +1,8 @@
 package main.java.master;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -18,7 +15,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.zip.GZIPOutputStream;
 
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
@@ -30,9 +26,9 @@ import main.java.logic.heuristic.HeuristicFactory;
 import main.java.logic.parser.TokenMgrError;
 import main.java.master.console.Shell;
 import main.java.rmi.Result;
+import main.java.rmi.Result.Type;
 import main.java.rmi.SlaveRemote;
 
-import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.log4j.Logger;
 
 public class Job {
@@ -104,24 +100,41 @@ public class Job {
 		return jobs;
 	}
 
-	public void abort() {
-		if (this.getStatus() != Status.RUNNING)
-			return;
-		logger.info("Aborting Job " + this.id + "...");
-		logger.info("Aborting Formulas. Sending AbortFormulaMessages to slaves...");
-		try {
+//	public void abort() {
+//		synchronized(this.status) {
+//			if (this.getStatus() != Status.RUNNING)
+//				return;
+//			logger.info("Aborting Job " + this.id + "...");
+//			logger.info("Aborting Formulas. Sending AbortFormulaMessages to slaves...");
+//			try {
+//				abortComputations();
+//			} catch (RemoteException e) {
+//				logger.error("Aborting Computations failed.", e);
+//			}
+//			this.setStatus(Status.ERROR);
+//			if (tableModel != null)
+//				tableModel.fireTableDataChanged();
+//			logger.info("AbortMessages sent.");
+//			this.freeResources();
+//		}
+//	}
+	
+	public void abort(String why) {
+		synchronized(this.status) {
+			if(this.status != Status.RUNNING)
+				return;
+			
+			logger.info("Job abort. Reason: " + why);
 			abortComputations();
-		} catch (RemoteException e) {
-			logger.error("Aborting Computations failed.", e);
-		}
-		this.setStatus(Status.ERROR);
-		if (tableModel != null)
+			this.status = Status.ERROR;
+			if (tableModel != null)
 			tableModel.fireTableDataChanged();
-		logger.info("AbortMessages sent.");
-		this.freeResources();
+			this.freeResources();
+		}
 	}
+	
 
-	private void abortComputations() throws RemoteException {
+	private void abortComputations() {
 		String tqbfId = null;
 		while (this.formulaDesignations.size() > 0) {
 			try {
@@ -131,7 +144,11 @@ public class Job {
 			logger.info("Aborting Formula " + tqbfId + " ...");
 			SlaveRemote designation = this.formulaDesignations.get(tqbfId);
 			if (designation != null) {
-				designation.abortFormula(tqbfId);
+				try {
+					designation.abortFormula(tqbfId);
+				} catch (RemoteException e) {
+					logger.error("RMI fail", e);
+				}
 				this.formulaDesignations.remove(tqbfId);
 				logger.info("Formula " + tqbfId + " aborted.");
 			}
@@ -151,9 +168,12 @@ public class Job {
 				logger.info("Timeout reached. Aborting Job. \n"
 						+ "	Job Id:         " + this.id + "\n"
 						+ "	Timeout (secs): " + timeout + "\n");
-				this.abort();
-				this.setStatus(Status.TIMEOUT);
-				break;
+				
+				synchronized(this.status) {
+					this.setStatus(Status.TIMEOUT);
+					abortComputations();
+				}
+				return;
 			}
 		}
 	}
@@ -242,6 +262,7 @@ public class Job {
 					return;
 				sub.solverId = this.solver;
 				sub.jobId = this.getId();
+				sub.timeout = this.timeout;
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
 
@@ -260,48 +281,6 @@ public class Job {
 		}
 	}
 
-	class TransportThread implements Runnable {
-		TransmissionQbf sub = null;
-		String solver = null;
-		SlaveRemote s = null;
-		Socket senderSocket;
-		private ObjectOutputStream oos;
-
-		public TransportThread(SlaveRemote s, TransmissionQbf sub, String solver)
-				throws UnknownHostException, RemoteException, IOException {
-			this.sub = sub;
-			this.solver = solver;
-			this.s = s;
-			// logger.info("hostname: " + s.getHostName());
-			senderSocket = new Socket(s.getHostName(), 11111);
-		}
-
-		@Override
-		public void run() {
-			try {
-				logger.info("Sending formula " + sub.getId() + " ...");
-				// oos = new ObjectOutputStream(senderSocket.getOutputStream());
-
-				BufferedOutputStream bos = new BufferedOutputStream(
-						senderSocket.getOutputStream());
-				CountingOutputStream cos = new CountingOutputStream(bos);
-				oos = new ObjectOutputStream(new GZIPOutputStream(cos));
-				long start = System.currentTimeMillis();
-				oos.writeObject(sub);
-				long stop = System.currentTimeMillis();
-				oos.flush();
-				oos.close();
-				senderSocket.close();
-				double time = (stop - start) / 1000.00;
-				long kiB = cos.getByteCount() / 1024;
-				logger.info("Formula " + sub.getId() + " sent ... (" + kiB
-						+ "kiB, " + time + " seconds, " + kiB / time + "kiB/s)");
-			} catch (IOException e) {
-				logger.error("While sending formula " + sub.getId(), e);
-			}
-		}
-	}
-
 	public void setResult(boolean result) {
 		this.result = result;
 	}
@@ -310,18 +289,13 @@ public class Job {
 		return result;
 	}
 
-	synchronized public void fireJobCompleted(boolean result) {
-		if (this.getStatus() != Status.RUNNING)
-			return;
+	private void fireJobCompleted(boolean result) {
 		this.setStatus(Status.COMPLETE);
 		this.setStoppedAt(new Date());
 		logger.info("Job complete. Resolved to: " + result
 				+ ". Aborting computations.");
-		try {
-			this.abortComputations();
-		} catch (RemoteException e) {
-			logger.error("Aborting computations failed.", e);
-		}
+		this.abortComputations();
+
 		this.setResult(result);
 
 		// Write the results to a file
@@ -380,45 +354,52 @@ public class Job {
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
 
-	private void handleResult(String tqbfId, boolean result) {
-		resultCtr++;
-		boolean solved = formula.mergeQbf(tqbfId, result);
-		logger.info("Result of tqbf(" + tqbfId + ") merged into Qbf of Job "
-				+ getId() + " (" + result + ")");
-		this.formulaDesignations.remove(tqbfId);
-		if (solved)
-			fireJobCompleted(formula.getResult());
-		else {
-			if (resultCtr == subformulas.size()) {
-				// Received all subformulas but still no result...something is
-				// wrong
-				logger.fatal("Merging broken!");
-				logger.fatal("Dumping decisiontree: \n"
-						+ formula.decisionRoot.dump());
-				System.exit(-1);
+	public void handleResult(Result r) {
+		synchronized(this.status) {
+			if(this.status != Status.RUNNING)
+				return;
+			
+			if(r.type == Result.Type.ERROR) {
+				logger.error("Slave returned error for subformula: " + r.tqbfId, r.exception);
+				this.status = Status.ERROR;
+				this.abortComputations();
+				return;
+			} 
+			
+			resultCtr++;
+			
+			boolean tqbfResult = false;
+			if(r.type == Type.FALSE) {
+				tqbfResult = false;
+			} else if (r.type == Type.TRUE){
+				tqbfResult = true;
+			} else {
+				assert(false);
 			}
-		}
-	}
-
-	synchronized public void handleResult(Result r) {
-		if (this.status == Job.Status.RUNNING && r.solverTime > 0)
-			synchronized (solverTimes) {
+			
+			synchronized(this.solverTimes) {
 				this.solverTimes.add(r.solverTime);
 			}
-		if (this.getStatus() != Status.RUNNING) {
-			return;
-		}
-
-		if (r.type != Result.Type.ERROR) {
-			handleResult(r.tqbfId, r.type == Result.Type.TRUE ? true : false);
-			return;
-		}
-
-		logger.error("Slave returned error for subformula: " + r.tqbfId,
-				r.exception);
-		abort();
+			
+			boolean solved = formula.mergeQbf(r.tqbfId, tqbfResult);
+			logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + getId() + " (" + result + ")");
+			this.formulaDesignations.remove(r.tqbfId);
+			if (solved)
+				fireJobCompleted(formula.getResult());
+			else {
+				if (resultCtr == subformulas.size()) {
+					// Received all subformulas but still no result...something is
+					// wrong
+					logger.fatal("Merging broken!");
+					logger.fatal("Dumping decisiontree: \n"
+							+ formula.decisionRoot.dump());
+					System.exit(-1);
+				}
+			}
+		}	
+		
 	}
-
+	
 	public Qbf getFormula() {
 		return formula;
 	}
@@ -516,31 +497,16 @@ public class Job {
 		this.timeout = timeout;
 	}
 
-	public static String getStatusDescription(Status status) {
-		switch (status) {
-		case READY:
-			return "Ready";
-		case RUNNING:
-			return "Running";
-		case COMPLETE:
-			return "Complete";
-		case ERROR:
-			return "Error";
-		default:
-			return "undefined";
-		}
-	}
-
 	public double meanSolverTime() {
 		long added = 0;
 		synchronized (solverTimes) {
 			for (long time : solverTimes) {
-				logger.info(time);
 				added += time;
 			}
 		}
 		double mean = (double) added / (double) solverTimes.size();
 		// assert((minSolverTime() < mean) && (mean < maxSolverTime()));
+		logger.info("Mean SOlver Time: " + mean);
 		return mean;
 	}
 	
@@ -549,6 +515,7 @@ public class Job {
 		synchronized(solverTimes) {
 			maxTime = Collections.max(solverTimes);
 		}
+		logger.info("Mean Max Solver Time: " + maxTime);
 		return maxTime;
 	}
 
