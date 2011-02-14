@@ -36,12 +36,14 @@ public class QProSolver extends Solver {
 
 	private String inputString = null;
 
-	protected static Object killMutex = new Object();
+	protected Object killMutex = new Object();
 
 	private Date qproProcessStartedAt = null;
 	private Date qproProcessStoppedAt = null;
 
 	private ExecuteWatchdog watchdog = null;
+
+	private boolean run = false;
 
 	public QProSolver(TransmissionQbf tqbf, ResultHandler handler) {
 		super(tqbf, handler);
@@ -90,30 +92,44 @@ public class QProSolver extends Solver {
 
 		this.qproProcessStartedAt = new Date();
 		logger.info("Starting qpro process... (" + tqbfId + ")");
-		try {
-			if (killed)
+		
+		
+		synchronized (killMutex) {
+			try {
+				if (killed)
+					return;
+				executor.execute(command, resultHandler);
+				this.run = true;
+			} catch (ExecuteException e) {
+				logger.error("", e);
+				returnWithError(tqbfId, jobId, e);
+				this.run = false;
 				return;
-			executor.execute(command, resultHandler);
-		} catch (ExecuteException e) {
-			logger.error("", e);
-			returnWithError(tqbfId, jobId, e);
-			return;
-		} catch (IOException e) {
-			logger.error("", e);
-			returnWithError(tqbfId, jobId, e);
-			return;
+			} catch (IOException e) {
+				logger.error("", e);
+				returnWithError(tqbfId, jobId, e);
+				this.run = false;
+				return;
+			}
+
 		}
 
-		while (!resultHandler.hasResult()) {
-			try {
-				resultHandler.waitFor();
-			} catch (InterruptedException e1) {
+		synchronized (killMutex) {
+			if(killed)
+				return;
+			while (!resultHandler.hasResult()) {
+				try {
+					resultHandler.waitFor();
+					this.run = false;
+				} catch (InterruptedException e1) {
+				}
 			}
 		}
+		
+
 		this.qproProcessStoppedAt = new Date();
 		logger.info("qpro process terminated... (" + tqbfId + ")");
 
-		
 		if (killed)
 			return;
 
@@ -124,16 +140,15 @@ public class QProSolver extends Solver {
 			returnWithError(tqbfId, jobId, e);
 			return;
 		}
-		
 
 	}
 
 	private void handleResult(String readString) {
-		if(killed)
+		if (killed)
 			return;
-		
+
 		logger.info("qpro return string: " + readString);
-		
+
 		long solverTime = this.qproProcessStoppedAt.getTime()
 				- this.qproProcessStartedAt.getTime();
 		// If qpro returns 1 the subformula is satisfiable
@@ -188,16 +203,17 @@ public class QProSolver extends Solver {
 	public Thread getThread() {
 		return thread;
 	}
-	
+
 	@Override
 	public void kill() {
-		this.killed = true;
-		if(watchdog == null)
-			return;
-		watchdog.destroyProcess();
-		if (!watchdog.killedProcess()) {
-			logger.error("qpro process wasnt killed!");
+		synchronized (killMutex) {
+			this.killed = true;
+			if (this.run) {
+				watchdog.destroyProcess();
+				if (!watchdog.killedProcess()) {
+					logger.error("qpro process wasnt killed!");
+				}
+			}
 		}
-
 	}
 }

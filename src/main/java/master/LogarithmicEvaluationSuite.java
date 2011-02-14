@@ -118,7 +118,9 @@ public class LogarithmicEvaluationSuite {
 		
 		report += correctnessReport() + "\n";
 		
-		report += solverTimesReport();
+		report += meanTimesReport() + "\n";
+		
+		report += maxTimesReport() + "\n";
 		
 	}
 
@@ -165,7 +167,7 @@ public class LogarithmicEvaluationSuite {
 					
 					if(compare == null && current != null) {
 						compare = current;
-					} else if(compare != null && current != null && compare.equals(current)) {
+					} else if(compare != null && current != null && !compare.equals(current)) {
 						logger.warn("Correctness error detected: File: " + f + ", Cores: " + coreSet.get(c) + ", Heuristic: " + h);
 						correctness = false;
 					}
@@ -183,10 +185,10 @@ public class LogarithmicEvaluationSuite {
 		return correctnessReport;
 	}
 	
-	public String solverTimesReport() {
+	public String meanTimesReport() {
 		StringBuffer report = new StringBuffer();
 
-		report.append("Solvertimes statistics: \n");
+		report.append("Mean Solvertimes statistics: \n");
 		report.append("cores\t");
 		for(String h : HeuristicFactory.getAvailableHeuristics()) {
 			report.append(String.format("%s_mean\t", h));
@@ -198,7 +200,33 @@ public class LogarithmicEvaluationSuite {
 			StringBuffer line = new StringBuffer(); 
 			line.append("" + c + "\t");
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
-				line.append(result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)].statisticsResultString() + "\t");
+				line.append(result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)].meanResultString() + "\t");
+			}		
+			//line = line.trim();
+			line.append("\n");
+			report.append(line);
+			idx++;
+		}
+		
+		return report.toString();
+	}
+	
+	public String maxTimesReport() {
+		StringBuffer report = new StringBuffer();
+
+		report.append("Max Solvertimes statistics: \n");
+		report.append("cores\t");
+		for(String h : HeuristicFactory.getAvailableHeuristics()) {
+			report.append(String.format("%s_max\t", h));
+		}
+		//report = report.trim() + "\n";
+		report.append("\n");
+		int idx = 0;
+		for(int c : coreSet) {
+			StringBuffer line = new StringBuffer(); 
+			line.append("" + c + "\t");
+			for(String h : HeuristicFactory.getAvailableHeuristics()) {
+				line.append(result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)].maxResultString() + "\t");
 			}		
 			//line = line.trim();
 			line.append("\n");

@@ -328,7 +328,7 @@ public class Shell implements Runnable{
 					
 					if(compare == null && current != null) {
 						compare = current;
-					} else if(compare != null && current != null && compare.equals(current)) {
+					} else if(compare != null && current != null && !compare.equals(current)) {
 						logger.warn("Correctness error detected: File: " + f + ", Cores: " + cores_min + c + ", Heuristic: " + h);
 						correctness = false;
 					}

@@ -25,6 +25,7 @@ public class Evaluation {
 	private long 					elapsedTotal 	= 0;
 	private HashMap<File, Boolean> 	results 		= new HashMap<File, Boolean>();
 	public double meanSolverTime;
+	public double meanMaxSolverTime;
 	
 	public Evaluation(	File 	directory,
 						String 	heuristicId,
@@ -68,6 +69,7 @@ public class Evaluation {
 					if (!job.solverTimes.isEmpty()) {
 						nonEmptyCtr++;
 						this.meanSolverTime += job.meanSolverTime();
+						this.meanMaxSolverTime += job.maxSolverTime();
 					}
 				}
 			} catch(Throwable t) {
@@ -78,8 +80,12 @@ public class Evaluation {
 		
 	}
 
-	public String statisticsResultString() {
+	public String meanResultString() {
 		return String.format("%.2f", this.meanSolverTime/1000.00);
+	}
+	
+	public String maxResultString() {
+		return String.format("%.2f", this.meanMaxSolverTime/1000.00);
 	}
 	
 	public String toString() {

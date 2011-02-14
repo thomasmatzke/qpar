@@ -543,5 +543,13 @@ public class Job {
 		// assert((minSolverTime() < mean) && (mean < maxSolverTime()));
 		return mean;
 	}
+	
+	public long maxSolverTime() {
+		long maxTime = 0;
+		synchronized(solverTimes) {
+			maxTime = Collections.max(solverTimes);
+		}
+		return maxTime;
+	}
 
 }
