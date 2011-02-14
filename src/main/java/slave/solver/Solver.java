@@ -22,7 +22,8 @@ public abstract class Solver implements Runnable {
 	protected ResultHandler handler = null;
 	protected String tqbfId = null;
 	protected String jobId = null;
-
+	protected long timeout;
+	
 	volatile protected boolean killed = false;
 	protected boolean run = true;
 	
@@ -31,6 +32,7 @@ public abstract class Solver implements Runnable {
 		this.tqbf = tqbf;
 		this.tqbfId = tqbf.getId();
 		this.jobId = tqbf.jobId;
+		this.timeout = tqbf.timeout;
 	}
 
 	public abstract void kill();

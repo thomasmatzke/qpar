@@ -242,6 +242,7 @@ public class Job {
 					return;
 				sub.solverId = this.solver;
 				sub.jobId = this.getId();
+				sub.timeout = this.timeout;
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
 

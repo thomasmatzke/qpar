@@ -44,7 +44,7 @@ public class QProSolver extends Solver {
 	private ExecuteWatchdog watchdog = null;
 
 	private boolean run = false;
-
+	
 	public QProSolver(TransmissionQbf tqbf, ResultHandler handler) {
 		super(tqbf, handler);
 	}
@@ -119,7 +119,8 @@ public class QProSolver extends Solver {
 				return;
 			while (!resultHandler.hasResult()) {
 				try {
-					resultHandler.waitFor();
+					resultHandler.waitFor(this.timeout * 1000);
+					watchdog.destroyProcess();
 					this.run = false;
 				} catch (InterruptedException e1) {
 				}
