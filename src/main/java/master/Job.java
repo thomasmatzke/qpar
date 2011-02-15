@@ -42,7 +42,7 @@ public class Job {
 	private static AbstractTableModel tableModel;
 	static Logger logger = Logger.getLogger(Job.class);
 
-	private boolean result;
+	private boolean jobResult;
 	private long timeout = 0;
 	private Qbf formula;
 	public byte[] serializedFormula;
@@ -100,25 +100,6 @@ public class Job {
 		return jobs;
 	}
 
-//	public void abort() {
-//		synchronized(this.status) {
-//			if (this.getStatus() != Status.RUNNING)
-//				return;
-//			logger.info("Aborting Job " + this.id + "...");
-//			logger.info("Aborting Formulas. Sending AbortFormulaMessages to slaves...");
-//			try {
-//				abortComputations();
-//			} catch (RemoteException e) {
-//				logger.error("Aborting Computations failed.", e);
-//			}
-//			this.setStatus(Status.ERROR);
-//			if (tableModel != null)
-//				tableModel.fireTableDataChanged();
-//			logger.info("AbortMessages sent.");
-//			this.freeResources();
-//		}
-//	}
-	
 	public void abort(String why) {
 		synchronized(this.status) {
 			if(this.status != Status.RUNNING)
@@ -132,7 +113,6 @@ public class Job {
 			this.freeResources();
 		}
 	}
-	
 
 	private void abortComputations() {
 		String tqbfId = null;
@@ -257,7 +237,7 @@ public class Job {
 
 		int slotIndex = 0;
 		for (TransmissionQbf sub : subformulas) {
-			synchronized (this) {
+			synchronized (this.status) {
 				if (this.getStatus() != Status.RUNNING)
 					return;
 				sub.solverId = this.solver;
@@ -281,12 +261,12 @@ public class Job {
 		}
 	}
 
-	public void setResult(boolean result) {
-		this.result = result;
+	public void setResult(boolean r) {
+		this.jobResult = r;
 	}
 
 	public boolean getResult() {
-		return result;
+		return jobResult;
 	}
 
 	private void fireJobCompleted(boolean result) {
@@ -382,7 +362,7 @@ public class Job {
 			}
 			
 			boolean solved = formula.mergeQbf(r.tqbfId, tqbfResult);
-			logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + getId() + " (" + result + ")");
+			logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + getId() + " (" + r.type + ")");
 			this.formulaDesignations.remove(r.tqbfId);
 			if (solved)
 				fireJobCompleted(formula.getResult());
@@ -428,7 +408,7 @@ public class Job {
 		return startedAt;
 	}
 
-	synchronized public Status getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
@@ -464,7 +444,7 @@ public class Job {
 		this.startedAt = startedAt;
 	}
 
-	synchronized public void setStatus(Status status) {
+	public void setStatus(Status status) {
 		this.status = status;
 		if (Job.getTableModel() != null) {
 			SwingUtilities.invokeLater(new Runnable() {
