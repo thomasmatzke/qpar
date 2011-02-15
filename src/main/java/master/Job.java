@@ -138,24 +138,33 @@ public class Job {
 
 	public void startBlocking() {
 		this.start();
-		while (this.getStatus() == Status.RUNNING) {
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
+		long restTimeout = this.timeout * 1000;
+		
+//		logger.info("rest timeout initial: " + restTimeout);
+		while(true) {
+			long waited = System.currentTimeMillis();
+			synchronized(this) { 
+				try { this.wait(restTimeout); } catch (InterruptedException e) {} 
 			}
-
-			if ((startedAt.getTime() + timeout * 1000) < new Date().getTime()) {
-				logger.info("Timeout reached. Aborting Job. \n"
-						+ "	Job Id:         " + this.id + "\n"
-						+ "	Timeout (secs): " + timeout + "\n");
-				
-				synchronized(this.status) {
-					this.setStatus(Status.TIMEOUT);
+			waited = System.currentTimeMillis() - waited;
+//			logger.info("waited: " + waited);
+			restTimeout -= waited;
+//			logger.info("Rest timeout " + restTimeout);
+			synchronized(this.status) {
+				if(restTimeout <= 0) {
+					this.status = Status.TIMEOUT;
+					logger.info("Timeout reached. Job: " + this.id + ", Timeout: " + this.timeout);
 					abortComputations();
+					return;
+				}			
+			
+				if(this.status == Status.COMPLETE || this.status == Status.ERROR) {
+					return;
 				}
-				return;
 			}
 		}
+		
+		
 	}
 
 	public void start() {
@@ -271,6 +280,8 @@ public class Job {
 
 	private void fireJobCompleted(boolean result) {
 		this.setStatus(Status.COMPLETE);
+		
+		synchronized(this) { this.notifyAll(); }
 		
 		logger.info("Job complete. Resolved to: " + result
 				+ ". Aborting computations.");
