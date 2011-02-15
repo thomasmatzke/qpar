@@ -36,14 +36,13 @@ public class QProSolver extends Solver {
 
 	private String inputString = null;
 
-	protected Object killMutex = new Object();
-
 	private Date qproProcessStartedAt = null;
 	private Date qproProcessStoppedAt = null;
 
 	private ExecuteWatchdog watchdog = null;
 
-	private boolean run = false;
+	private volatile Object killMutex = new Object();
+	
 	
 	public QProSolver(TransmissionQbf tqbf, ResultHandler handler) {
 		super(tqbf, handler);
@@ -89,57 +88,48 @@ public class QProSolver extends Solver {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 
 		executor.setStreamHandler(new PumpStreamHandler(output, null, input));
-
-		this.qproProcessStartedAt = new Date();
-		logger.info("Starting qpro process... (" + tqbfId + ")");
-		
-		
-		synchronized (killMutex) {
-			try {
+				
+		try {
+			synchronized(killMutex) {
 				if (killed)
 					return;
-				executor.execute(command, resultHandler);
+				logger.info("Starting qpro process... (" + tqbfId + ")");
 				this.run = true;
-			} catch (ExecuteException e) {
-				logger.error("", e);
-				returnWithError(tqbfId, jobId, e);
-				this.run = false;
-				return;
-			} catch (IOException e) {
-				logger.error("", e);
-				returnWithError(tqbfId, jobId, e);
-				this.run = false;
-				return;
+				executor.execute(command, resultHandler);
+				this.qproProcessStartedAt = new Date();
 			}
-
-		}
-
-		synchronized (killMutex) {
-			if(killed)
-				return;
-			while (!resultHandler.hasResult()) {
-				try {
-					resultHandler.waitFor(this.timeout * 1000);
-					watchdog.destroyProcess();
-					this.run = false;
-				} catch (InterruptedException e1) {
-				}
-			}
-		}
-		
-
-		this.qproProcessStoppedAt = new Date();
-		logger.info("qpro process terminated... (" + tqbfId + ")");
-
-		if (killed)
-			return;
-
-		try {
-			handleResult(output.toString("ISO-8859-1"));
-		} catch (UnsupportedEncodingException e) {
+		} catch (ExecuteException e) {
 			logger.error("", e);
 			returnWithError(tqbfId, jobId, e);
 			return;
+		} catch (IOException e) {
+			logger.error("", e);
+			returnWithError(tqbfId, jobId, e);
+			return;
+		}
+		
+		while (!resultHandler.hasResult()) {
+			try {
+//				resultHandler.waitFor(this.timeout * 1000);
+				resultHandler.waitFor();
+				watchdog.destroyProcess();
+			} catch (InterruptedException e1) {
+			}
+		}
+		this.qproProcessStoppedAt = new Date();
+		logger.info("qpro process terminated... (" + tqbfId + ")");
+
+		synchronized (killMutex) {
+			if (killed)
+				return;
+
+			try {
+				handleResult(output.toString("ISO-8859-1"));
+			} catch (UnsupportedEncodingException e) {
+				logger.error("", e);
+				returnWithError(tqbfId, jobId, e);
+				return;
+			}
 		}
 
 	}
@@ -207,14 +197,10 @@ public class QProSolver extends Solver {
 
 	@Override
 	public void kill() {
-		synchronized (killMutex) {
-			this.killed = true;
-			if (this.run) {
+		synchronized(killMutex) {
+			if(watchdog != null)
 				watchdog.destroyProcess();
-				if (!watchdog.killedProcess()) {
-					logger.error("qpro process wasnt killed!");
-				}
-			}
+			this.killed = true;
 		}
 	}
 }

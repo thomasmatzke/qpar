@@ -115,25 +115,28 @@ public class Job {
 	}
 
 	private void abortComputations() {
-		String tqbfId = null;
-		while (this.formulaDesignations.size() > 0) {
-			try {
-				tqbfId = this.acknowledgedComputations.take();
-			} catch (InterruptedException e) {
-			}
-			logger.info("Aborting Formula " + tqbfId + " ...");
-			SlaveRemote designation = this.formulaDesignations.get(tqbfId);
-			if (designation != null) {
+		synchronized(this.status) {
+			if(this.formulaDesignations == null)
+				return;
+			String tqbfId = null;
+			while (this.formulaDesignations.size() > 0) {
 				try {
-					designation.abortFormula(tqbfId);
-				} catch (RemoteException e) {
-					logger.error("RMI fail", e);
+					tqbfId = this.acknowledgedComputations.take();
+				} catch (InterruptedException e) {
 				}
-				this.formulaDesignations.remove(tqbfId);
-				logger.info("Formula " + tqbfId + " aborted.");
+				logger.info("Aborting Formula " + tqbfId + " ...");
+				SlaveRemote designation = this.formulaDesignations.get(tqbfId);
+				if (designation != null) {
+					try {
+						designation.abortFormula(tqbfId);
+					} catch (RemoteException e) {
+						logger.error("RMI fail", e);
+					}
+					this.formulaDesignations.remove(tqbfId);
+					logger.info("Formula " + tqbfId + " aborted.");
+				}
 			}
 		}
-
 	}
 
 	public void startBlocking() {
