@@ -49,19 +49,21 @@ public class Evaluation {
 							
 				job.startBlocking();
 				
-				if(job.getStatus() == Job.Status.COMPLETE) {
-					//logger.info("JOB TOTAL MILLIS " + job.totalMillis());
-					//logger.info("ELAPSED TOAL " + elapsedTotal);
-					elapsedTotal += job.totalMillis();
-					results.put(f, job.getResult());
-				} else if(job.getStatus() == Job.Status.TIMEOUT){ 
-					elapsedTotal += timeout*1000;
-					timeouts++;
-				} else if(job.getStatus() == Job.Status.ERROR) {
-					elapsedTotal += timeout*1000;
-					errors++;
-				} else {
-					assert(false);
+				synchronized(job.status) {
+					if(job.getStatus() == Job.Status.COMPLETE) {
+						//logger.info("JOB TOTAL MILLIS " + job.totalMillis());
+						//logger.info("ELAPSED TOAL " + elapsedTotal);
+						elapsedTotal += job.totalMillis();
+						results.put(f, job.getResult());
+					} else if(job.getStatus() == Job.Status.TIMEOUT){ 
+						elapsedTotal += timeout*1000;
+						timeouts++;
+					} else if(job.getStatus() == Job.Status.ERROR) {
+						elapsedTotal += timeout*1000;
+						errors++;
+					} else {
+						assert(false);
+					}
 				}
 							
 				// Do the stats

@@ -52,7 +52,7 @@ public class Job {
 	public ArrayList<Long> solverTimes = new ArrayList<Long>();
 	private String heuristic, id, inputFileString, outputFileString, solver;
 	private int usedCores = 0, resultCtr = 0;
-	private volatile Status status;
+	public volatile Status status;
 	private List<TransmissionQbf> subformulas;
 	private Date startedAt = null, stoppedAt = null;
 
