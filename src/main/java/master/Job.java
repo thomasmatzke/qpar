@@ -52,7 +52,10 @@ public class Job {
 	public ArrayList<Long> solverTimes = new ArrayList<Long>();
 	private String heuristic, id, inputFileString, outputFileString, solver;
 	private int usedCores = 0, resultCtr = 0;
+	
 	public volatile Status status;
+	private volatile Object statusLock = new Object(); 
+	
 	private List<TransmissionQbf> subformulas;
 	private Date startedAt = null, stoppedAt = null;
 
@@ -70,7 +73,7 @@ public class Job {
 
 	private static String allocateJobId() {
 		idCounter++;
-		return new Integer(idCounter).toString();
+		return Integer.valueOf(idCounter).toString();
 	}
 
 	public static Job createJob(String inputFile, String outputFile,
@@ -101,7 +104,7 @@ public class Job {
 	}
 
 	public void abort(String why) {
-		synchronized(this.status) {
+		synchronized(this.statusLock) {
 			if(this.status != Status.RUNNING)
 				return;
 			
@@ -115,7 +118,7 @@ public class Job {
 	}
 
 	private void abortComputations() {
-		synchronized(this.status) {
+		synchronized(this.statusLock) {
 			if(this.formulaDesignations == null)
 				return;
 			String tqbfId = null;
@@ -153,7 +156,7 @@ public class Job {
 //			logger.info("waited: " + waited);
 			restTimeout -= waited;
 //			logger.info("Rest timeout " + restTimeout);
-			synchronized(this.status) {
+			synchronized(this.statusLock) {
 				if(restTimeout <= 0) {
 					this.status = Status.TIMEOUT;
 					logger.info("Timeout reached. Job: " + this.id + ", Timeout: " + this.timeout);
@@ -241,15 +244,16 @@ public class Job {
 			return;
 		}
 
-		logger.info("Job started " + this.id + "...\n" + "	Started at:  "
-				+ startedAt + "\n" + "	Subformulas: " + this.subformulas.size()
-				+ "\n" + "	Cores(avail):" + availableCores + "\n"
-				+ "	Cores(used): " + usedCores + "\n" + "	Slaves:      "
-				+ slaves.size());
+		logger.info("Job started " + this.id + "...\n" + 
+				"	Started at:  " + startedAt + "\n" + 
+				"	Subformulas: " + this.subformulas.size() + "\n" + 
+				"	Cores(avail):" + availableCores + "\n" +
+				"	Cores(used): " + usedCores + "\n" + 
+				"	Slaves:      " + slaves.size());
 
 		int slotIndex = 0;
 		for (TransmissionQbf sub : subformulas) {
-			synchronized (this.status) {
+			synchronized (this.statusLock) {
 				if (this.getStatus() != Status.RUNNING)
 					return;
 				sub.solverId = this.solver;
@@ -314,7 +318,7 @@ public class Job {
 	}
 
 	public void handleResult(Result r) {
-		synchronized(this.status) {
+		synchronized(this.statusLock) {
 			if(this.status != Status.RUNNING)
 				return;
 			this.setStoppedAt(new Date());
@@ -499,7 +503,7 @@ public class Job {
 		}
 		double mean = (double) added / (double) solverTimes.size();
 		// assert((minSolverTime() < mean) && (mean < maxSolverTime()));
-		logger.info("Mean SOlver Time: " + mean);
+//		logger.info("Mean SOlver Time: " + mean);
 		return mean;
 	}
 	
@@ -508,7 +512,7 @@ public class Job {
 		synchronized(solverTimes) {
 			maxTime = Collections.max(solverTimes);
 		}
-		logger.info("Mean Max Solver Time: " + maxTime);
+//		logger.info("Mean Max Solver Time: " + maxTime);
 		return maxTime;
 	}
 

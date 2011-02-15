@@ -47,7 +47,7 @@ class TransportThread implements Runnable {
 			senderSocket.close();
 			double time = (stop - start) / 1000.00;
 			long kiB = cos.getByteCount() / 1024;
-			Job.logger.info("Formula " + sub.getId() + " sent ... (" + kiB
+			Job.logger.info("Formula " + sub.getId() + " sent to host " + s.getHostName() + "... (" + kiB
 					+ "kiB, " + time + " seconds, " + kiB / time + "kiB/s)");
 		} catch (IOException e) {
 			Job.logger.error("While sending formula " + sub.getId(), e);
