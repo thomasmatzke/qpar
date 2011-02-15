@@ -278,41 +278,6 @@ public class Job {
 		return jobResult;
 	}
 
-	private void fireJobCompleted(boolean result) {
-		this.setStatus(Status.COMPLETE);
-		
-		synchronized(this) { this.notifyAll(); }
-		
-		logger.info("Job complete. Resolved to: " + result
-				+ ". Aborting computations.");
-		this.abortComputations();
-
-		this.setResult(result);
-
-		// Write the results to a file
-		// But only if we want that. In case of a evaluation
-		// the outputfile is set to null
-		if (this.getOutputFileString() != null) {
-			try {
-				BufferedWriter out = new BufferedWriter(new FileWriter(
-						this.getOutputFileString()));
-				out.write(resultText());
-				out.flush();
-			} catch (IOException e) {
-				logger.error(e);
-			}
-		}
-
-		if (Shell.getWaitfor_jobid().equals(this.getId())) {
-			synchronized (Master.getShellThread()) {
-				Master.getShellThread().notify();
-			}
-		}
-		if (Job.getTableModel() != null)
-			Job.getTableModel().fireTableDataChanged();
-		this.freeResources();
-	}
-
 	private void freeResources() {
 		this.formula = null;
 		this.formulaDesignations = null;
@@ -389,6 +354,40 @@ public class Job {
 			}
 		}	
 		
+	}
+	
+	private void fireJobCompleted(boolean result) {
+		this.setStatus(Status.COMPLETE);
+		this.setResult(result);
+		
+		synchronized(this) { this.notifyAll(); }
+		
+		logger.info("Job complete. Resolved to: " + result
+				+ ". Aborting computations.");
+		this.abortComputations();
+
+		// Write the results to a file
+		// But only if we want that. In case of a evaluation
+		// the outputfile is set to null
+		if (this.getOutputFileString() != null) {
+			try {
+				BufferedWriter out = new BufferedWriter(new FileWriter(
+						this.getOutputFileString()));
+				out.write(resultText());
+				out.flush();
+			} catch (IOException e) {
+				logger.error(e);
+			}
+		}
+
+		if (Shell.getWaitfor_jobid().equals(this.getId())) {
+			synchronized (Master.getShellThread()) {
+				Master.getShellThread().notify();
+			}
+		}
+		if (Job.getTableModel() != null)
+			Job.getTableModel().fireTableDataChanged();
+		this.freeResources();
 	}
 	
 	public Qbf getFormula() {

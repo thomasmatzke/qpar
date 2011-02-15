@@ -159,9 +159,9 @@ public class LogarithmicEvaluationSuite {
 					Boolean current = result[c][HeuristicFactory.getAvailableHeuristics().indexOf(h)].getResults().get(f);
 					if(current == null) {
 						correctnessReport += "x";
-					} else if(current == true) {
+					} else if(current.equals(true)) {
 						correctnessReport += "t";
-					} else if(current == false) {
+					} else if(current.equals(false)) {
 						correctnessReport += "f";
 					} else { assert(false);}
 					
