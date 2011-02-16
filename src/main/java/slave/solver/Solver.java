@@ -75,7 +75,7 @@ public abstract class Solver implements Runnable {
 		this.handler.handleResult(r);
 
 	}
-
+	
 	protected void returnWithSuccess(String tqbfId, String jobId, boolean result) {
 		returnWithSuccess(tqbfId, jobId, result, 0);
 	}

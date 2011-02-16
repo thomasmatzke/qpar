@@ -121,18 +121,18 @@ public class QProSolver extends Solver {
 		this.qproProcessStoppedAt = new Date();
 		logger.info("qpro process terminated... (" + tqbfId + ")");
 
-		synchronized (killMutex) {
-			if (killed)
-				return;
+		
+		if (killed)
+			return;
 
-			try {
-				handleResult(output.toString("ISO-8859-1"));
-			} catch (UnsupportedEncodingException e) {
-				logger.error("", e);
-				returnWithError(tqbfId, jobId, e);
-				return;
-			}
+		try {
+			handleResult(output.toString("ISO-8859-1"));
+		} catch (UnsupportedEncodingException e) {
+			logger.error("", e);
+			returnWithError(tqbfId, jobId, e);
+			return;
 		}
+		
 
 	}
 
