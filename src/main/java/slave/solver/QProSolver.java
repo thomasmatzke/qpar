@@ -198,6 +198,8 @@ public class QProSolver extends Solver {
 	@Override
 	public void kill() {
 		synchronized(killMutex) {
+			if(this.run == false)
+				return;
 			if(watchdog != null)
 				watchdog.destroyProcess();
 			this.killed = true;
