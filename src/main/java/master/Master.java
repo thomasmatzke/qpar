@@ -217,11 +217,14 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 
 	@Override
 	public void notifyComputationStarted(String tqbfId) throws RemoteException {
+		logger.info("Computation started on formula " + tqbfId);
 		String jobPrefix = tqbfId.split("\\.")[0];
 		Job job = Job.getJobs().get(jobPrefix);
 		try {
 			job.acknowledgedComputations.put(tqbfId);
-		} catch (InterruptedException e) {}
+		} catch (InterruptedException e) {
+			logger.error("", e);
+		}
 	}
 
 }
