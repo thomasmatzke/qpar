@@ -271,6 +271,7 @@ public class Job {
 				}
 				this.formulaDesignations.remove(tqbfId);
 				logger.info("Formula " + tqbfId + " aborted.");
+				logger.info("Still running: " + this.formulaDesignations.keySet());
 			}
 		}
 		

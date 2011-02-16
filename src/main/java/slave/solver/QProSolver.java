@@ -110,8 +110,8 @@ public class QProSolver extends Solver {
 		
 		while (!resultHandler.hasResult()) {
 			try {
-//				resultHandler.waitFor(this.timeout * 1000);
-				resultHandler.waitFor();
+				resultHandler.waitFor((this.timeout * 1000) + 2000);
+//				resultHandler.waitFor();
 				watchdog.destroyProcess();
 			} catch (InterruptedException e1) {
 			}

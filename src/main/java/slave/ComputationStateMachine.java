@@ -38,6 +38,7 @@ public class ComputationStateMachine implements ResultHandler{
 	}
 	
 	synchronized public void startComputation() {
+		logger.info("Starting formula " + tqbfId + "...");
 		switch(state) {
 			case START:				
 				compute();
@@ -49,6 +50,7 @@ public class ComputationStateMachine implements ResultHandler{
 	}
 	
 	synchronized public void abortComputation() {
+		logger.info("Aborting formula " + tqbfId + "...");
 		switch(state) {
 			case COMPUTING:
 				abort();
@@ -60,6 +62,7 @@ public class ComputationStateMachine implements ResultHandler{
 	}
 	
 	synchronized public void completeComputation(Result r) {
+		logger.info("Completing formula " + tqbfId + "...");
 		switch(state) {
 			case COMPUTING:
 				complete(r);
