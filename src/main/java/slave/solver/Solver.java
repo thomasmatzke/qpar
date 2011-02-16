@@ -26,7 +26,7 @@ public abstract class Solver implements Runnable {
 	
 	volatile protected boolean killed = false;
 	protected boolean run = true;
-	
+		
 	public Solver(TransmissionQbf tqbf, ResultHandler handler) {
 		this.handler = handler;
 		this.tqbf = tqbf;
@@ -60,7 +60,7 @@ public abstract class Solver implements Runnable {
 	}
 
 	protected void returnWithSuccess(String tqbfId, String jobId,
-			boolean result, long solverTime) {
+			boolean result, long solverTime, long overheadTime) {
 		Result r = new Result(tqbfId, jobId);
 
 		if (result)
@@ -71,13 +71,15 @@ public abstract class Solver implements Runnable {
 		if (solverTime > 0)
 			r.solverTime = solverTime;
 
+		r.overheadTime = overheadTime;
+		
 		logger.info("Returning result for formula " + tqbfId + ": " + r.type);
 		this.handler.handleResult(r);
 
 	}
 	
 	protected void returnWithSuccess(String tqbfId, String jobId, boolean result) {
-		returnWithSuccess(tqbfId, jobId, result, 0);
+		returnWithSuccess(tqbfId, jobId, result, 0, 0);
 	}
 
 }

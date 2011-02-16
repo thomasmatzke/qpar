@@ -26,6 +26,7 @@ public class Evaluation {
 	private HashMap<File, Boolean> 	results 		= new HashMap<File, Boolean>();
 	public double meanSolverTime;
 	public double meanMaxSolverTime;
+	public double meanOverheadTime;
 	
 	public Evaluation(	File 	directory,
 						String 	heuristicId,
@@ -40,7 +41,6 @@ public class Evaluation {
 	}
 	
 	public void evaluate() {
-		int nonEmptyCtr = 0;
 		for(File f : this.directory.listFiles()) {
 			if(f.getName().equals("evaluation.txt"))
 				continue;
@@ -69,11 +69,16 @@ public class Evaluation {
 				// Do the stats
 				synchronized(job.solverTimes) {
 					if (!job.solverTimes.isEmpty()) {
-						nonEmptyCtr++;
 						this.meanSolverTime += job.meanSolverTime();
 						this.meanMaxSolverTime += job.maxSolverTime();
 					}
 				}
+				synchronized(job.overheadTimes) {
+					if (!job.overheadTimes.isEmpty()) {
+						this.meanOverheadTime += job.meanOverheadTime();
+					}
+				}
+				
 			} catch(Throwable t) {
 				logger.error("Evaluation.java", t);
 				QPar.sendExceptionMail(t);
@@ -82,12 +87,16 @@ public class Evaluation {
 		
 	}
 
+	public String meanOverheadResultString() {
+		return String.format("%.2f", (double)this.meanOverheadTime/1000.00);
+	}
+	
 	public String meanResultString() {
-		return String.format("%.2f", this.meanSolverTime/1000.00);
+		return String.format("%.2f", (double)this.meanSolverTime/1000.00);
 	}
 	
 	public String maxResultString() {
-		return String.format("%.2f", this.meanMaxSolverTime/1000.00);
+		return String.format("%.2f", (double)this.meanMaxSolverTime/1000.00);
 	}
 	
 	public String toString() {

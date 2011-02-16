@@ -40,6 +40,9 @@ public class QProSolver extends Solver {
 
 	private Date qproProcessStartedAt = null;
 	private Date qproProcessStoppedAt = null;
+	
+	private Date overheadStartedAt = null;
+	private Date overheadStoppedAt = null;
 
 	private ExecuteWatchdog watchdog = null;
 
@@ -51,7 +54,10 @@ public class QProSolver extends Solver {
 	}
 
 	public void run() {
+		this.overheadStartedAt = new Date();
 		this.inputString = toInputString(this.tqbf);
+		this.overheadStoppedAt = new Date();
+		
 		if (inputString.equals("true")) {
 			logger.info("Formula collapsed");
 			returnWithSuccess(tqbfId, jobId, true);
@@ -141,13 +147,15 @@ public class QProSolver extends Solver {
 
 		long solverTime = this.qproProcessStoppedAt.getTime()
 				- this.qproProcessStartedAt.getTime();
+		long overheadTime = this.overheadStoppedAt.getTime()
+				- this.overheadStartedAt.getTime();
 		// If qpro returns 1 the subformula is satisfiable
 		if (readString.startsWith("1")) {
-			returnWithSuccess(tqbfId, jobId, true, solverTime);
+			returnWithSuccess(tqbfId, jobId, true, solverTime, overheadTime);
 
 			// IF qpro returns 0 the subformula is unsatisfiable
 		} else if (readString.startsWith("0")) {
-			returnWithSuccess(tqbfId, jobId, false, solverTime);
+			returnWithSuccess(tqbfId, jobId, false, solverTime, overheadTime);
 			// anything else is an error
 		} else {
 			String errorString = "Unexpected result from solver.\n"

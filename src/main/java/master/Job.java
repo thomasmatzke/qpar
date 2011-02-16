@@ -50,6 +50,7 @@ public class Job {
 	public volatile ConcurrentMap<String, SlaveRemote> formulaDesignations = new ConcurrentHashMap<String, SlaveRemote>();
 	public volatile BlockingQueue<String> acknowledgedComputations = new LinkedBlockingQueue<String>();
 	public ArrayList<Long> solverTimes = new ArrayList<Long>();
+	public ArrayList<Long> overheadTimes = new ArrayList<Long>();
 	private String heuristic, id, inputFileString, outputFileString, solver;
 	private int usedCores = 0, resultCtr = 0;
 	
@@ -343,6 +344,10 @@ public class Job {
 			synchronized(this.solverTimes) {
 				this.solverTimes.add(r.solverTime);
 			}
+			synchronized(this.overheadTimes) {
+				this.overheadTimes.add(r.overheadTime);
+			}
+
 			
 			boolean solved = formula.mergeQbf(r.tqbfId, tqbfResult);
 			logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + getId() + " (" + r.type + ")");
@@ -502,8 +507,6 @@ public class Job {
 			}
 		}
 		double mean = (double) added / (double) solverTimes.size();
-		// assert((minSolverTime() < mean) && (mean < maxSolverTime()));
-//		logger.info("Mean SOlver Time: " + mean);
 		return mean;
 	}
 	
@@ -512,8 +515,18 @@ public class Job {
 		synchronized(solverTimes) {
 			maxTime = Collections.max(solverTimes);
 		}
-//		logger.info("Mean Max Solver Time: " + maxTime);
 		return maxTime;
+	}
+	
+	public double meanOverheadTime() {
+		long added = 0;
+		synchronized (overheadTimes) {
+			for (long time : overheadTimes) {
+				added += time;
+			}
+		}
+		double mean = (double) added / (double) overheadTimes.size();
+		return mean;
 	}
 
 }

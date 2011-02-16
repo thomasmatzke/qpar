@@ -122,6 +122,8 @@ public class LogarithmicEvaluationSuite {
 		
 		report += maxTimesReport() + "\n";
 		
+		report += overheadTimesReport() + "\n";
+		
 	}
 
 	public String getReport() {
@@ -201,6 +203,32 @@ public class LogarithmicEvaluationSuite {
 			line.append("" + c + "\t");
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
 				line.append(result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)].meanResultString() + "\t");
+			}		
+			//line = line.trim();
+			line.append("\n");
+			report.append(line);
+			idx++;
+		}
+		
+		return report.toString();
+	}
+	
+	public String overheadTimesReport() {
+		StringBuffer report = new StringBuffer();
+
+		report.append("Mean Overheadtimes statistics: \n");
+		report.append("cores\t");
+		for(String h : HeuristicFactory.getAvailableHeuristics()) {
+			report.append(String.format("%s_meanOverhead\t", h));
+		}
+		//report = report.trim() + "\n";
+		report.append("\n");
+		int idx = 0;
+		for(int c : coreSet) {
+			StringBuffer line = new StringBuffer(); 
+			line.append("" + c + "\t");
+			for(String h : HeuristicFactory.getAvailableHeuristics()) {
+				line.append(result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)].meanOverheadResultString() + "\t");
 			}		
 			//line = line.trim();
 			line.append("\n");

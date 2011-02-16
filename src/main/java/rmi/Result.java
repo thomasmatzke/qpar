@@ -4,6 +4,11 @@ import java.io.Serializable;
 
 public class Result implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3176636668860263799L;
+
 	public enum Type { TRUE, FALSE, ERROR };
 	public Type type = null;
 	public Exception exception;
