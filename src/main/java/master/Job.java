@@ -103,45 +103,6 @@ public class Job {
 		return jobs;
 	}
 
-	public void abort(String why) {
-		synchronized(this.statusLock) {
-			if(this.status != Status.RUNNING)
-				return;
-			
-			logger.info("Job abort. Reason: " + why);
-			abortComputations();
-			this.status = Status.ERROR;
-			if (tableModel != null)
-			tableModel.fireTableDataChanged();
-			this.freeResources();
-		}
-	}
-
-	private void abortComputations() {
-		synchronized(this.statusLock) {
-			if(this.formulaDesignations == null)
-				return;
-			String tqbfId = null;
-			while (this.formulaDesignations.size() > 0) {
-				try {
-					tqbfId = this.acknowledgedComputations.take();
-				} catch (InterruptedException e) {
-				}
-				logger.info("Aborting Formula " + tqbfId + " ...");
-				SlaveRemote designation = this.formulaDesignations.get(tqbfId);
-				if (designation != null) {
-					try {
-						designation.abortFormula(tqbfId);
-					} catch (RemoteException e) {
-						logger.error("RMI fail", e);
-					}
-					this.formulaDesignations.remove(tqbfId);
-					logger.info("Formula " + tqbfId + " aborted.");
-				}
-			}
-		}
-	}
-
 	public void startBlocking() {
 		this.start();
 		long restTimeout = this.timeout * 1000;
@@ -277,6 +238,44 @@ public class Job {
 		}
 	}
 
+	public void abort(String why) {
+		synchronized(this.statusLock) {
+			if(this.status != Status.RUNNING)
+				return;
+			
+			logger.info("Job abort. Reason: " + why);
+			abortComputations();
+			this.status = Status.ERROR;
+			if (tableModel != null)
+			tableModel.fireTableDataChanged();
+			this.freeResources();
+		}
+	}
+
+	private void abortComputations() {
+		if(this.formulaDesignations == null)
+			return;
+		String tqbfId = null;
+		while (this.formulaDesignations.size() > 0) {
+			try {
+				tqbfId = this.acknowledgedComputations.take();
+			} catch (InterruptedException e) {
+			}
+			logger.info("Aborting Formula " + tqbfId + " ...");
+			SlaveRemote designation = this.formulaDesignations.get(tqbfId);
+			if (designation != null) {
+				try {
+					designation.abortFormula(tqbfId);
+				} catch (RemoteException e) {
+					logger.error("RMI fail", e);
+				}
+				this.formulaDesignations.remove(tqbfId);
+				logger.info("Formula " + tqbfId + " aborted.");
+			}
+		}
+		
+	}
+	
 	public void setResult(boolean r) {
 		this.jobResult = r;
 	}
