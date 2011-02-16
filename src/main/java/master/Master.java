@@ -227,4 +227,11 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 		}
 	}
 
+	@Override
+	public void displaySlaveMessage(String slave, String message) throws RemoteException {
+		logger.info("Slave " + slave + " said: " + message);
+	}
+
+	
+	
 }

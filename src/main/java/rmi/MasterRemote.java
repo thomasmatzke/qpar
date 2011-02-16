@@ -15,4 +15,6 @@ public interface MasterRemote extends Remote {
 	public void ping() throws RemoteException;
 	
 	public void notifyComputationStarted(String tqbfId) throws RemoteException;
+	
+	public void displaySlaveMessage(String slave, String message) throws RemoteException;
 }

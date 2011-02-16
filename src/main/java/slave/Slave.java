@@ -45,11 +45,21 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	
 	transient public FormulaListener formulaListener = null;
 	
+	public static String hostname = null;
+	
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
 		//super(0, new ZipClientSocketFactory(), new ZipServerSocketFactory() );
 		this.masterIp = masterIp;
+		
+		try {
+			Slave.hostname = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e1) {
+			logger.fatal("Cant get hostname", e1);
+			System.exit(-1);
+		}
+		
 		logger.info("Starting Slave...");
-				
+		
 		QPar.loadConfig();
 	
 		MySignalHandler handler = new MySignalHandler(this);
@@ -172,7 +182,7 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 
 	@Override
 	public String getHostName() throws RemoteException, UnknownHostException {
-		return InetAddress.getLocalHost().getHostName();
+		return this.hostname;
 	}
 
 	@Override

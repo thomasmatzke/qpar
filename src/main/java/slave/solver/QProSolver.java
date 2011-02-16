@@ -6,11 +6,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.Random;
 
 import main.java.StreamGobbler;
 import main.java.logic.TransmissionQbf;
+import main.java.slave.Slave;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
@@ -198,6 +200,11 @@ public class QProSolver extends Solver {
 	@Override
 	public void kill() {
 		synchronized(killMutex) {
+			try {
+				Slave.master.displaySlaveMessage(Slave.hostname, "Killing qpro of formula " + this.tqbfId);
+			} catch (RemoteException e) {
+				logger.error("", e);
+			}
 			if(this.run == false)
 				return;
 			if(watchdog != null)

@@ -50,7 +50,11 @@ public class ComputationStateMachine implements ResultHandler{
 	}
 	
 	synchronized public void abortComputation() {
-		logger.info("Aborting formula " + tqbfId + "...");
+		try {
+			Slave.master.displaySlaveMessage(Slave.hostname, "Aborting formula " + tqbfId + "...");
+		} catch (RemoteException e) {
+			logger.error("", e);
+		}
 		switch(state) {
 			case COMPUTING:
 				abort();
