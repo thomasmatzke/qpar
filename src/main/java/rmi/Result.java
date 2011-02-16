@@ -9,6 +9,7 @@ public class Result implements Serializable {
 	public Exception exception;
 	public String tqbfId, jobId;
 	public long solverTime = 0;
+	public long overheadTime = 0;
 	
 	public Result(String tqbfId, String jobId) {
 		this.tqbfId = tqbfId;

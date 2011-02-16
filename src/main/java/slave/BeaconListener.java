@@ -42,7 +42,7 @@ public class BeaconListener implements Runnable {
 				current = newAddress;
 				logger.info("Received CHANGED server beacon. Beacon contains server address " + newAddress);
 				slave.masterIp = newAddress.getHostAddress();
-				slave.reconnect();
+				slave.connect();
 			}
 		} catch (IOException e) {
 			logger.error("Problem while listening for beacon", e);

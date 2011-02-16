@@ -30,7 +30,7 @@ import sun.misc.Signal;
  * @author thomasm
  *
  */
-public class Slave extends UnicastRemoteObject implements SlaveRemote  {
+public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	/**
 	 * 
 	 */
@@ -40,42 +40,17 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	public String masterIp;
 	
 	public boolean connected = false;
-//	public Hashtable<String, Solver> threads = new Hashtable<String, Solver>();
 	public static MasterRemote master = null;
+	
+	public String masterName = null;
 	
 	transient public FormulaListener formulaListener = null;
 	
 	public static String hostname = null;
 	
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
-		//super(0, new ZipClientSocketFactory(), new ZipServerSocketFactory() );
-		this.masterIp = masterIp;
-		
-		try {
-			Slave.hostname = InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e1) {
-			logger.fatal("Cant get hostname", e1);
-			System.exit(-1);
-		}
-		
 		logger.info("Starting Slave...");
-		
-		QPar.loadConfig();
-	
-		MySignalHandler handler = new MySignalHandler(this);
-		Signal.handle(new Signal("INT"), handler);
-		Signal.handle(new Signal("TERM"), handler);
-		//Signal.handle(new Signal("HUP"), handler);
-		
-		try {
-			this.formulaListener = new FormulaListener(11111);
-			new Thread(this.formulaListener).start();
-		} catch (IOException e) {
-			logger.fatal("Couldnt start formulalistener", e);
-			System.exit(-1);
-		}
-		
-		logger.info("Available Solvers are: " + availableSolvers);
+			
 		if (masterIp == null) {
 			// so no ip was set...listen for the beacon...
 			try {
@@ -87,8 +62,28 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 			} catch (IOException e) {
 				logger.error("Cant start beaconlistener", e);
 			}
+		} else {
+			this.masterIp 	= masterIp;
 		}
 		
+		this.masterName = "rmi://" + this.masterIp + ":1099/Master";
+		
+		try {
+			Slave.hostname = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e1) {
+			logger.fatal("Cant get hostname", e1);
+			System.exit(-1);
+		}
+				
+		QPar.loadConfig();
+	
+		MySignalHandler handler = new MySignalHandler(this);
+		Signal.handle(new Signal("INT"), handler);
+		Signal.handle(new Signal("TERM"), handler);
+		//Signal.handle(new Signal("HUP"), handler);
+				
+		logger.info("Available Solvers are: " + availableSolvers);
+				
 		connect();
 		
 		new PingTimer(10, this);
@@ -99,13 +94,19 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 		
 	
 
-	public void connect() throws InterruptedException {
-		// Connect to master
-		String masterName = "rmi://" + masterIp + ":1099/Master";
-		
+	public void connect() {
+		// if already connected clean up mess
+		if(connected) {
+			logger.info("Already connected. Reconnecting...");
+			killAllThreads();
+			this.formulaListener.stop();
+			connected = false;		
+		}
+			
 		while(!connected){
-		
 			try {
+				this.formulaListener = new FormulaListener(11111);
+				new Thread(this.formulaListener).start();			
 				logger.info("Looking up " + masterName + "...");
 				master = (MasterRemote)Naming.lookup(masterName);
 				logger.info("Registering with Master...");
@@ -113,40 +114,21 @@ public class Slave extends UnicastRemoteObject implements SlaveRemote  {
 				connected = true;
 				break;
 			} catch (MalformedURLException e) {
-				logger.fatal("Wrong address? Exception was: " + e);
-				System.exit(-1);
+				logger.fatal("Wrong address? Exception was: ", e);
 			} catch (RemoteException e) {
-				logger.error("Reconnecting...");
+				logger.error("No response from master.");
 			} catch (NotBoundException e) {
 				logger.error("Something is not bound :P", e);
 			} catch (UnknownHostException e) {
 				logger.fatal("Wrong address?", e);
-				System.exit(-1);
+			} catch (IOException e) {
+				logger.error(e);
 			}
+			this.formulaListener.stop();
 			logger.info("Could not connect. Trying again in 5 seconds...");		
-			Thread.sleep(5000);
+			try { Thread.sleep(5000); } catch (InterruptedException e) {}
 		}
-	}
-	
-	synchronized public void reconnect() {
-		connected = false;
-		logger.warn("Killing threads...");
-		killAllThreads();
-		this.formulaListener.stop();
-		try {
-			this.formulaListener = new FormulaListener(11111);
-			new Thread(this.formulaListener).start();
-		} catch (IOException e) {
-			logger.fatal(e);
-			System.exit(-1);
-		}
-		logger.warn("Reconnecting...");
-		try {
-			connect();
-		} catch (InterruptedException e1) {}
-	}
-	
-	
+	}	
 		
 	public static void shutdownHost() {
 	    String shutdownCommand = "";

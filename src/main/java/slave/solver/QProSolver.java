@@ -51,9 +51,6 @@ public class QProSolver extends Solver {
 	}
 
 	public void run() {
-
-		// generateQproInput();
-
 		this.inputString = toInputString(this.tqbf);
 		if (inputString.equals("true")) {
 			logger.info("Formula collapsed");
@@ -200,11 +197,6 @@ public class QProSolver extends Solver {
 	@Override
 	public void kill() {
 		synchronized(killMutex) {
-			try {
-				Slave.master.displaySlaveMessage(Slave.hostname, "Killing qpro of formula " + this.tqbfId);
-			} catch (RemoteException e) {
-				logger.error("", e);
-			}
 			if(this.run == false)
 				return;
 			if(watchdog != null)
