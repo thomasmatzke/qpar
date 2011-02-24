@@ -495,7 +495,7 @@ public class Shell implements Runnable{
 	private void viewjobs() {
 		puts("JOBID\tSTARTED\tFINISHED\tSTATUS");
 		for(Job j : Job.getJobs().values()) {
-			puts(j.getId() + "\t" + j.getStartedAt() + "\t" + j.getStoppedAt() + "\t" + j.getStatus());
+			puts(j.getId() + "\t" + j.getStartedAt() + "\t" + j.getSolvedAt() + "\t" + j.getStatus());
 		}
 	}
 	

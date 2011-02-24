@@ -32,8 +32,7 @@ public class SimpleProbNetHeuristic extends Heuristic {
 			sorted.addAll(universals);
 			sorted.addAll(existentials);
 		}
-		
-		
+				
 		return sorted;
 	}
 

@@ -33,7 +33,7 @@ public class JobsTableModel extends AbstractTableModel {
 		case 1:
 			return job.getStartedAt();
 		case 2:
-			return job.getStoppedAt();
+			return job.getSolvedAt();
 		case 3:
 			switch(job.getStatus()) {
 				case READY:

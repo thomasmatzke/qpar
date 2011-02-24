@@ -58,7 +58,7 @@ public class Job {
 	private volatile Object statusLock = new Object(); 
 	
 	private List<TransmissionQbf> subformulas;
-	private Date startedAt = null, stoppedAt = null;
+	private Date startedAt = null, solvedAt = null;
 
 	public Job() {
 		logger.setLevel(QPar.logLevel);
@@ -111,24 +111,30 @@ public class Job {
 //		logger.info("rest timeout initial: " + restTimeout);
 		while(true) {
 			long waited = System.currentTimeMillis();
-			synchronized(this) { 
+			synchronized(this) {
+				if(this.status == Status.COMPLETE || this.status == Status.ERROR) {
+					return;
+				}
 				try { this.wait(restTimeout); } catch (InterruptedException e) {} 
 			}
 			waited = System.currentTimeMillis() - waited;
 //			logger.info("waited: " + waited);
 			restTimeout -= waited;
 //			logger.info("Rest timeout " + restTimeout);
+			
 			synchronized(this.statusLock) {
+				
+				if(this.status == Status.COMPLETE || this.status == Status.ERROR) {
+					return;
+				}
+				
 				if(restTimeout <= 0) {
 					this.status = Status.TIMEOUT;
 					logger.info("Timeout reached. Job: " + this.id + ", Timeout: " + this.timeout);
 					abortComputations();
 					return;
 				}			
-			
-				if(this.status == Status.COMPLETE || this.status == Status.ERROR) {
-					return;
-				}
+				
 			}
 		}
 		
@@ -136,6 +142,7 @@ public class Job {
 	}
 
 	public void start() {
+		this.startedAt = new Date();
 		int availableCores = 0;
 		this.setStatus(Status.RUNNING);
 		if (tableModel != null)
@@ -189,7 +196,6 @@ public class Job {
 
 		logger.debug("Computationslots generated: " + slotStr.trim());
 
-		this.startedAt = new Date();
 		try {
 			this.subformulas = formula.splitQbf(Math.min(availableCores,
 					usedCores), HeuristicFactory.getHeuristic(
@@ -275,7 +281,7 @@ public class Job {
 				logger.info("Still running: " + this.formulaDesignations.keySet());
 			}
 		}
-		
+		logger.info("All formulas aborted.");
 	}
 	
 	public void setResult(boolean r) {
@@ -296,20 +302,20 @@ public class Job {
 	public long totalMillis() {
 		// if(this.status != Job.COMPLETE)
 		// return -1;
-		return this.getStoppedAt().getTime() - this.getStartedAt().getTime();
+		return this.getSolvedAt().getTime() - this.getStartedAt().getTime();
 	}
 
 	public long totalSecs() {
 		// if(this.status != Job.COMPLETE)
 		// return -1;
-		return (this.getStoppedAt().getTime() - this.getStartedAt().getTime()) / 1000;
+		return (this.getSolvedAt().getTime() - this.getStartedAt().getTime()) / 1000;
 	}
 
 	private String resultText() {
 		String txt;
 		txt = "Job Id: " + this.getId() + "\n" + "Started at: "
 				+ this.getStartedAt() + "\n" + "Stopped at: "
-				+ this.getStoppedAt() + "\n" + "Total secs: " + totalSecs()
+				+ this.getSolvedAt() + "\n" + "Total secs: " + totalSecs()
 				+ "\n" + "In millis: " + totalMillis() + "\n" + "Solver: "
 				+ this.getSolver() + "\n" + "Heuristic: " + this.getHeuristic()
 				+ "\n" + "Result: "
@@ -322,11 +328,12 @@ public class Job {
 		synchronized(this.statusLock) {
 			if(this.status != Status.RUNNING)
 				return;
-			this.setStoppedAt(new Date());
+			
 			if(r.type == Result.Type.ERROR) {
 				logger.error("Slave returned error for subformula: " + r.tqbfId, r.exception);
 				this.status = Status.ERROR;
 				this.abortComputations();
+				synchronized(this) { this.notifyAll(); }
 				return;
 			} 
 			
@@ -352,9 +359,10 @@ public class Job {
 			boolean solved = formula.mergeQbf(r.tqbfId, tqbfResult);
 			logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + getId() + " (" + r.type + ")");
 			this.formulaDesignations.remove(r.tqbfId);
-			if (solved)
+			if (solved) {
+				this.setSolvedAt(new Date());
 				fireJobCompleted(formula.getResult());
-			else {
+			} else {
 				if (resultCtr == subformulas.size()) {
 					// Received all subformulas but still no result...something is
 					// wrong
@@ -434,8 +442,8 @@ public class Job {
 		return status;
 	}
 
-	public Date getStoppedAt() {
-		return stoppedAt;
+	public Date getSolvedAt() {
+		return solvedAt;
 	}
 
 	public void setFormula(Qbf formula) {
@@ -477,10 +485,10 @@ public class Job {
 		}
 	}
 
-	public void setStoppedAt(Date stoppedAt) {
+	public void setSolvedAt(Date stoppedAt) {
 		// Only allow this once, in case of an erroneous second call
-		if (this.stoppedAt == null)
-			this.stoppedAt = stoppedAt;
+		if (this.solvedAt == null)
+			this.solvedAt = stoppedAt;
 	}
 
 	public static AbstractTableModel getTableModel() {
