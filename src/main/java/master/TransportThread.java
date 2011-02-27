@@ -32,7 +32,7 @@ class TransportThread implements Runnable {
 	@Override
 	public void run() {
 		try {
-			Job.logger.info("Sending formula " + sub.getId() + " ...");
+			Job.logger.info("Sending formula " + sub.id + " ...");
 			// oos = new ObjectOutputStream(senderSocket.getOutputStream());
 
 			BufferedOutputStream bos = new BufferedOutputStream(
@@ -47,10 +47,10 @@ class TransportThread implements Runnable {
 			senderSocket.close();
 			double time = (stop - start) / 1000.00;
 			long kiB = cos.getByteCount() / 1024;
-			Job.logger.info("Formula " + sub.getId() + " sent to host " + s.getHostName() + "... (" + kiB
+			Job.logger.info("Formula " + sub.id + " sent to host " + s.getHostName() + "... (" + kiB
 					+ "kiB, " + time + " seconds, " + kiB / time + "kiB/s)");
 		} catch (IOException e) {
-			Job.logger.error("While sending formula " + sub.getId(), e);
+			Job.logger.error("While sending formula " + sub.id, e);
 		}
 	}
 }

@@ -14,7 +14,7 @@ public class SimpleSolver extends Solver {
 
 	public SimpleSolver(TransmissionQbf tqbf, ResultHandler handler) {
 		super(tqbf, handler);
-		new Result(tqbf.getId(), tqbf.solverId);
+		new Result(tqbf.id, tqbf.solverId);
 	}
 
 	

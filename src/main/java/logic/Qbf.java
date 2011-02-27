@@ -33,13 +33,13 @@ public class Qbf {
 
 	Heuristic h = null;
 	private static int idCounter = 0;
-	public DTNode decisionRoot = null;
+	
 	private HashMap<Integer, Integer> literalCount = new HashMap<Integer, Integer>();	
 	public Vector<Integer> eVars = new Vector<Integer>();
 	public Vector<Integer> aVars = new Vector<Integer>();
 	public Vector<Integer> vars  = new Vector<Integer>();
 	public SimpleNode root = null;
-	public int id;
+//	public int id;
 	
 	public DependencyNode dependencyGraphRoot;
 		
@@ -54,8 +54,7 @@ public class Qbf {
 	public Qbf(String filename) throws IOException {
 		assert(filename != null);
 		logger.setLevel(QPar.logLevel);
-		idCounter++;
-		this.id = idCounter;
+//		this.id = Qbf.getUniqueId();
 		
 		long start = System.currentTimeMillis();
 		// parse the formula, get various vectors of vars
@@ -107,145 +106,15 @@ public class Qbf {
 			logger.debug("Dependencyree: \n" + dependencyGraphRoot.dump());
 	}
 
-	/**
-	* split a QBF to two or more subQBFs by assigning truth values to some of
-	* the variables.
-	* V2: Uses exactly n cores now
-	* @param n Number of subformulas to return
-	* @return A list of n TransmissionQbfs, each a subformula of the whole QBF
-	 * @throws IOException 
-	*/
-	public synchronized List<TransmissionQbf> splitQbf(int n, Heuristic h) throws IOException {
-		logger.debug("Splitting into " + n + " subformulas...");
-		long start = System.currentTimeMillis();
-		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
-		logger.debug("Heuristic returned variable-assignment order: " + Arrays.toString(order));
-			
-		int leafCtr = 1;
-		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
-		decisionRoot = new DTNode(DTNode.DTNodeType.TQBF);
-		leaves.addFirst(decisionRoot);
-		
-		// Generate the tree
-		logger.debug("Generating decision tree...");
-		while(leafCtr < n) {
-			DTNode leaf 		= leaves.pollLast();
-			Integer splitVar 	= order[leaf.getDepth()]; 
-			if(aVars.contains(splitVar)) {
-				leaf.setType(DTNode.DTNodeType.AND);
-			} else if(eVars.contains(splitVar)) {
-				leaf.setType(DTNode.DTNodeType.OR);
-			}
-			DTNode negChild = new DTNode(DTNode.DTNodeType.TQBF);
-			negChild.variablesAssignedFalse.add(splitVar);
-			negChild.setParent(leaf);
-			negChild.getDepth();
-			DTNode posChild = new DTNode(DTNode.DTNodeType.TQBF);
-			posChild.variablesAssignedTrue.add(splitVar);
-			posChild.setParent(leaf);
-			posChild.getDepth();
-			leaf.addChild(negChild); leaf.addChild(posChild);
-			leaves.addFirst(negChild); leaves.addFirst(posChild);
-			leafCtr++;
-		} 
-		
-//logger.info("\n" + decisionRoot.dump());
-		
-		assert(leaves.size() == n);
-		
-		logger.debug("Generating TransmissionQbfs...");
-		List<TransmissionQbf> tqbfs = new ArrayList<TransmissionQbf>();
-		
-		// We only want to serialize the tree once
-		
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutputStream out;
-		out = new ObjectOutputStream(bos);
-		out.writeObject(root);
-		out.close();
-		byte[] serializedFormula = bos.toByteArray();
-		
-		// Generate ids for leaves and corresponding tqbfs
-		int idCtr = 0;
-		for(DTNode node : leaves) {
-			String id = Integer.toString(this.id) + "." +  Integer.toString(idCtr++);
-			node.setId(id);
-			TransmissionQbf tqbf = new TransmissionQbf();
-			tqbf.setId(id);
-			tqbf.falseVars.addAll(node.variablesAssignedFalse);
-			tqbf.trueVars.addAll(node.variablesAssignedTrue);
-			tqbf.setRootNode(root);
-			tqbf.serializedFormula = serializedFormula;
-			
-			tqbf.setEVars(this.eVars);
-			tqbf.setAVars(this.aVars);
-			Vector<Integer> tmpVars = new Vector<Integer>();
-			tmpVars.addAll(aVars);
-			tmpVars.addAll(eVars);
-			tqbf.setVars(tmpVars);
-			tqbfs.add(tqbf);
-		}
-		assert(tqbfs.size() == n);
-		long end = System.currentTimeMillis();
-		logger.debug("Formula splitted. Took " + (end-start)/1000 + " seconds.");
-		return tqbfs;
+	synchronized private static int getUniqueId() {
+		idCounter++;
+		return idCounter;
 	}
-
-
-	/**
-	* merge 
-	* the variables.
-	* @param id Identifier of a certain subformula (= index in the subQbfs List)
-	* @param result The result of the evaluated subformula
-	* @return TRUE if the formula is already solved, FALSE if otherwise
-	*/
-	public boolean mergeQbf(String tqbfId, boolean result) {
-		synchronized(mergeLock) {
-			if(decisionRoot.hasTruthValue())
-				return true;
-			
-			// find the corresponding node in the decisiontree
-			DTNode tmp = decisionRoot.getNode(tqbfId);
-			
-			
-			if(tmp == null) {
-				// The node has been cut off from the root by another reduce()
-				// The result is thus irrelevant
-				return decisionRoot.hasTruthValue();
-			}
-						
-			// set the nodes truth value
-			tmp.setTruthValue(result);
-	
-			// reduce the tree
-			tmp.reduce();
-	
-			// check the root for a truth value and return
-			return decisionRoot.hasTruthValue();
-		}
-	}
-	
 	
 	public boolean isUniversalQuantified(Integer v) {
 		return aVars.contains(v);
 	}
 	
-	/**
-	* getter method for solved
-	* @return TRUE if there's a result, FALSE otherwise
-	*/
-	public synchronized boolean isSolved() {
-		return decisionRoot.hasTruthValue();
-	}
-	
-	/**
-	* getter method for satisfiable
-	* @return TRUE the QBF is satisfiable, FALSE if not
-	*/
-	public synchronized boolean getResult() {
-		return decisionRoot.getTruthValue();
-	}
-
 	public HashMap<Integer, Integer> getLiteralCount() {
 		return literalCount;
 	}

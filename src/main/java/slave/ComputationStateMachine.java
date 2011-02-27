@@ -29,7 +29,7 @@ public class ComputationStateMachine implements ResultHandler{
 	
 	public ComputationStateMachine(TransmissionQbf tqbf) {
 		this.tqbf = tqbf;
-		this.tqbfId = tqbf.getId();
+		this.tqbfId = tqbf.id;
 		this.solverId = tqbf.solverId;
 	}
 	

@@ -29,7 +29,7 @@ public class TransmissionQbf implements Serializable {
 	private transient SimpleNode root = null;
 	public byte[] serializedFormula = null;
 	
-	private String id;
+	public String id;
 	public long timeout;
 	public String jobId;
 	private Vector<Integer> eVars = new Vector<Integer>();
@@ -263,15 +263,6 @@ public class TransmissionQbf implements Serializable {
 		// logger.info("Eliminating vars(" + orphans.size() + "): " + orphans);
 		aVars.removeAll(orphans);
 		eVars.removeAll(orphans);
-	}
-
-	// getter/setter, too self-explanatory for javadoc :)
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
 	}
 
 	public SimpleNode getRootNode() {

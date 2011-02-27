@@ -1,4 +1,4 @@
-package main.java.master;
+package main.java.evaluation;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import main.java.logic.heuristic.HeuristicFactory;
+import main.java.master.Mailer;
 import main.java.master.console.Shell;
 
 import org.apache.log4j.Logger;
@@ -17,20 +18,20 @@ public class LogarithmicEvaluationSuite {
 
 	static Logger logger = Logger.getLogger(LogarithmicEvaluationSuite.class);
 	
-	private File directory;
-	private int startCores, stopCores;
-	private long timeout; //in seconds
-	private String solverId;
+	protected File directory;
+	protected int startCores, stopCores;
+	protected long timeout; //in seconds
+	protected String solverId;
 	
-	private String report = null;
+	protected String report = null;
 	
-	private Date startedAt = null;
-	private Date stoppedAt = null;
+	protected Date startedAt = null;
+	protected Date stoppedAt = null;
 	
 	public boolean correctness	= true;
-	Evaluation[][]	result		= null; 
+	SerialEvaluation[][]	result		= null; 
 	
-	private ArrayList<Integer> coreSet;
+	protected ArrayList<Integer> coreSet;
 	
 	public LogarithmicEvaluationSuite(String dir, int startCores, int stopCores, long timeout, String solverId) {
 		if(!isBaseTwo(startCores) || !isBaseTwo(stopCores)) {
@@ -46,7 +47,7 @@ public class LogarithmicEvaluationSuite {
 		
 		coreSet = getNeededRuns(startCores, stopCores);
 		
-		result = new Evaluation[coreSet.size()][HeuristicFactory.getAvailableHeuristics().size()];
+		result = new SerialEvaluation[coreSet.size()][HeuristicFactory.getAvailableHeuristics().size()];
 		
 	}
 	
@@ -61,7 +62,7 @@ public class LogarithmicEvaluationSuite {
 		int idx = 0;
 		for(int cores : coreSet) {
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
-				Evaluation e = new Evaluation(directory, h, solverId, timeout, cores);
+				SerialEvaluation e = new SerialEvaluation(directory, h, solverId, timeout, cores);
 				result[idx][HeuristicFactory.getAvailableHeuristics().indexOf(h)] = e;
 				e.evaluate();
 				
@@ -79,7 +80,7 @@ public class LogarithmicEvaluationSuite {
 				
 	}
 	
-	private void writeReport() {
+	protected void writeReport() {
 		try {
 			BufferedWriter out = new BufferedWriter(new FileWriter(directory.getAbsolutePath() + File.separator + "evaluation.txt"));
 			out.write(report);
@@ -89,7 +90,7 @@ public class LogarithmicEvaluationSuite {
 		}
 	}
 
-	private void generateReport() {
+	protected void generateReport() {
 		report = "Logarithmic Evaluation Suite Report\n" +
 						"Started: " + startedAt + "\n" +
 						"Stopped: " + stoppedAt + "\n" +

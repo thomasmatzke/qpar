@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.master.Master;
+import main.java.master.SlaveRegistry;
 import main.java.rmi.SlaveRemote;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,18 +30,16 @@ public class SlavesTableModel extends AbstractTableModel {
 
 	
 	public int getRowCount() {
-		return Master.getSlaves().size();
+		return SlaveRegistry.instance().getSlaves().size();
 	}
 
 	
 	public Object getValueAt(int row, int col) {
-		SlaveRemote slave = new ArrayList<SlaveRemote>(Master.getSlaves().values()).get(row);
+		SlaveRemote slave = new ArrayList<SlaveRemote>(SlaveRegistry.instance().getSlaves().values()).get(row);
 		try {
 			switch (col) {
-				case 0:
-				
+				case 0:				
 					return slave.getHostName();
-				
 				case 1:
 					return slave.getCores();
 				case 2:

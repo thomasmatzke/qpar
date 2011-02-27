@@ -29,4 +29,6 @@ public interface SlaveRemote extends Remote {
 	
 	public void setExceptionNotifierAddress(String address) throws RemoteException;
 	
+	public int freeCores() throws RemoteException;
+	
 }

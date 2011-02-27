@@ -24,6 +24,7 @@ import javax.swing.ListSelectionModel;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.master.Job;
 import main.java.master.Master;
+import main.java.master.SlaveRegistry;
 import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.Level;
@@ -251,7 +252,7 @@ public class ProgramWindow extends JFrame {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					Set<String> solvers;
 					try {
-						solvers = Master.getAllAvaliableSolverIds();
+						solvers = SlaveRegistry.instance().getAllAvaliableSolverIds();
 					} catch (RemoteException e1) {
 						logger.error("RMi fail", e1);
 						solvers = new HashSet<String>();
@@ -396,7 +397,7 @@ public class ProgramWindow extends JFrame {
 
 	private void killSelectedSlave() {
 		int row = getSlavesTable().getSelectedRow();
-		SlaveRemote slave = Master.getSlaves().get(row);
+		SlaveRemote slave = SlaveRegistry.instance().getSlaves().get(row);
 		try {
 			slave.kill("User command");
 		} catch (RemoteException e) {

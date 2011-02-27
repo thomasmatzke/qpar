@@ -33,9 +33,9 @@ public class FormulaReceiver implements Runnable {
 			TransmissionQbf tqbf = (TransmissionQbf) ois.readObject();
 			ois.close();
 			sock.close();
-			logger.info("Received formula " + tqbf.getId());
+			logger.info("Received formula " + tqbf.id);
 			ComputationStateMachine m = new ComputationStateMachine(tqbf);
-			ComputationStateMachine.computations.put(tqbf.getId(), m);
+			ComputationStateMachine.computations.put(tqbf.id, m);
 			m.startComputation();
 		} catch (IOException e) {
 			logger.error("Couldnt read object", e);

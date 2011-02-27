@@ -12,17 +12,22 @@ import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 import main.java.QPar;
+import main.java.evaluation.EvaluationSuite;
+import main.java.evaluation.LogarithmicEvaluationSuite;
+import main.java.evaluation.ParLogEvalSuite;
+import main.java.evaluation.SerialEvaluation;
 import main.java.logic.heuristic.HeuristicFactory;
-import main.java.master.Evaluation;
 import main.java.master.Job;
-import main.java.master.LogarithmicEvaluationSuite;
 import main.java.master.Mailer;
 import main.java.master.Master;
+import main.java.master.SlaveRegistry;
 import main.java.rmi.SlaveRemote;
+import main.java.slave.solver.SolverFactory;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -109,6 +114,9 @@ public class Shell implements Runnable{
 			case LOGEVAL:
 				logeval(token);
 				break;
+			case PARLOGEVAL:
+				parlogeval(token);
+				break;
 			case MAIL_EVALUATION_REPORT:
 				set_report_address(token);
 				break;
@@ -166,6 +174,36 @@ public class Shell implements Runnable{
 		
 	}
 	
+	private void parlogeval(StringTokenizer token) {
+		String	directory				= null;
+		String	solver					= null;
+		int 	cores_min				= 1;
+		int 	cores_max				= 1;
+		long 	timeout					= 60000;
+		
+		try {
+			directory 			= token.nextToken();
+			cores_min			= Integer.parseInt(token.nextToken());
+			cores_max			= Integer.parseInt(token.nextToken());
+			solver 				= token.nextToken();
+			timeout				= Integer.parseInt(token.nextToken());
+		} catch(NoSuchElementException e) {
+			puts("Syntax: PARLOGEVAL directory_path_to_formulas coresMin coresMax solver timeout");
+			return;
+		}
+		List<String> heuristics = new ArrayList<String>();
+		heuristics.add("simple");
+		heuristics.add("rand");
+		heuristics.add("litcount");
+		heuristics.add("probnet");
+		
+		EvaluationSuite eval = new ParLogEvalSuite(new File(directory), cores_min, cores_max, solver, heuristics, timeout);
+		eval.evaluate();
+		
+		if(Mailer.email != null && Mailer.server != null && Mailer.user != null && Mailer.pass != null)
+			Mailer.send_mail(Mailer.email, Mailer.server, Mailer.user, Mailer.pass, "ParLogEval Report", eval.getReport());
+	}
+
 	private void logeval(StringTokenizer token) {
 		String	directory				= null;
 		int 	cores_min				= 1;
@@ -211,7 +249,7 @@ public class Shell implements Runnable{
 	 * Syntax: SHUTDOWNALLSLAVES
 	 */
 	private void shutdownallslaves() {
-		for(SlaveRemote s : Master.getSlaves().values()) {
+		for(SlaveRemote s : SlaveRegistry.instance().getSlaves().values()) {
 			try {
 				s.shutdown();
 			} catch (RemoteException e) {
@@ -289,7 +327,7 @@ public class Shell implements Runnable{
 		}
 		report = report.trim() + "\n";
 				
-		Evaluation[][]	result	= new Evaluation[cores_max-cores_min+1][heuristics.size()];
+		SerialEvaluation[][]	result	= new SerialEvaluation[cores_max-cores_min+1][heuristics.size()];
 		
 		// Wait for #cores
 		waitforslaves(cores_max, solverId);
@@ -297,7 +335,7 @@ public class Shell implements Runnable{
 		for(int c = cores_min; c <= cores_max; c++) {
 			String line = "" + c + "\t";
 			for(String h : HeuristicFactory.getAvailableHeuristics()) {
-				Evaluation e = new Evaluation(directory, h, solverId, timeout, c);
+				SerialEvaluation e = new SerialEvaluation(directory, h, solverId, timeout, c);
 				result[c-cores_min][heuristics.indexOf(h)] = e;
 				e.evaluate();
 				line += e.toString() + "\t";
@@ -363,7 +401,7 @@ public class Shell implements Runnable{
 	 * Syntax: KILLALLSLAVES
 	 */
 	private void killallslaves() {
-		for(SlaveRemote s : Master.getSlaves().values()) {
+		for(SlaveRemote s : SlaveRegistry.instance().getSlaves().values()) {
 			try {
 				s.kill("User request");
 			} catch (RemoteException e) {
@@ -429,7 +467,7 @@ public class Shell implements Runnable{
 		
 		while(true) {
 			try {
-				if(waitfor_cores <= Master.getCoresWithSolver(solverId)) {
+				if(waitfor_cores <= SlaveRegistry.instance().getCoresWithSolver(solverId)) {
 					return;
 				}
 			} catch (RemoteException e) {
@@ -480,7 +518,7 @@ public class Shell implements Runnable{
 		if(token.hasMoreTokens()) {
 			String hostname = token.nextToken();
 			try {
-				Master.getSlaves().get(hostname).kill("User command");
+				SlaveRegistry.instance().getSlaves().get(hostname).kill("User command");
 			} catch (RemoteException e) {
 				logger.error("RMI fail", e);
 			}
@@ -495,7 +533,7 @@ public class Shell implements Runnable{
 	private void viewjobs() {
 		puts("JOBID\tSTARTED\tFINISHED\tSTATUS");
 		for(Job j : Job.getJobs().values()) {
-			puts(j.getId() + "\t" + j.getStartedAt() + "\t" + j.getSolvedAt() + "\t" + j.getStatus());
+			puts(j.id + "\t" + j.getStartedAt() + "\t" + j.getSolvedAt() + "\t" + j.getStatus());
 		}
 	}
 	
@@ -504,7 +542,7 @@ public class Shell implements Runnable{
 	 */
 	private void viewslaves() {
 		puts("HOSTNAME\tCORES\tCURRENT_JOBS");
-		for(SlaveRemote s : Master.getSlaves().values()) {
+		for(SlaveRemote s : SlaveRegistry.instance().getSlaves().values()) {
 			try {
 				puts(s.getHostName() + "\t" + s.getCores() + "\t" + StringUtils.join(s.getCurrentJobs(), ","));
 			} catch (RemoteException e) {
@@ -551,7 +589,7 @@ public class Shell implements Runnable{
 			String 	solverid 	= token.nextToken();
 			String 	heuristic 	= token.nextToken();
 			int		maxCores	= Integer.parseInt(token.nextToken());
-			Job.createJob(input_path, output_path, solverid, heuristic, 0, maxCores);
+			new Job(input_path, output_path, solverid, heuristic, 0, maxCores);
 			
 		} catch(NoSuchElementException e) {
 			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic max_cores");

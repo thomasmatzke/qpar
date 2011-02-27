@@ -30,7 +30,7 @@ public abstract class Solver implements Runnable {
 	public Solver(TransmissionQbf tqbf, ResultHandler handler) {
 		this.handler = handler;
 		this.tqbf = tqbf;
-		this.tqbfId = tqbf.getId();
+		this.tqbfId = tqbf.id;
 		this.jobId = tqbf.jobId;
 		this.timeout = tqbf.timeout;
 	}

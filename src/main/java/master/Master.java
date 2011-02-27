@@ -8,10 +8,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -49,7 +46,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 	private static Thread shellthread;
 	private static Shell shell;
 	private static boolean startGui = false;
-	private static HashMap<String, SlaveRemote> slaves = new HashMap<String, SlaveRemote>();
+	
 	public static AbstractTableModel slaveTableModel;
 	
 	
@@ -89,23 +86,23 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 	}
 	
 	public static void removeSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
-		slaves.remove(slave.getHostName());
+		SlaveRegistry.instance().removeSlave(slave.getHostName());
 		if (slaveTableModel != null) {
 			slaveTableModel.fireTableDataChanged();
 		}
 	}
 	
 	public static void addSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
-		slaves.put(slave.getHostName(), slave);
-		logger.debug("Adding Slave: " + slave);
+		logger.debug("Adding Slave: " + slave + "...");
+		SlaveRegistry.instance().put(slave.getHostName(), slave);
 		if (slaveTableModel != null) {
 			slaveTableModel.fireTableDataChanged();
 		}
 	}
 	
-	public static HashMap<String, SlaveRemote> getSlaves() {
-		return slaves;
-	}
+//	public static HashMap<String, SlaveRemote> getSlaves() {
+//		return slaves;
+//	}
 	
 
 	private static void usage() {
@@ -140,9 +137,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 			ref.setMailInfo(QPar.mailServer, QPar.mailUser, QPar.mailPass);
 		if(QPar.exceptionNotifierAddress != null)
 			ref.setExceptionNotifierAddress(QPar.exceptionNotifierAddress);
-		synchronized(slaves) {
-			Master.addSlave(ref);
-		}
+		Master.addSlave(ref);
 		synchronized(Master.getShellThread()) {
 			Master.getShellThread().notify();
 		}
@@ -152,34 +147,6 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 	public void returnResult(Result r) throws RemoteException {
 		logger.info("Result returned. Job: " + r.jobId + ", tqbfId: " + r.tqbfId + ", ResultType: " + r.type.toString());
 		Job.getJobs().get(r.jobId).handleResult(r);
-	}
-
-	public static int getCoresWithSolver(String solver) throws RemoteException {
-		int c = 0;
-		synchronized(slaves) {
-			for(SlaveRemote s : Master.getSlaves().values()) {
-				if(s.getSolvers().contains(solver))
-					c += s.getCores();
-			}
-		}
-		return c;
-	}
-
-	public static ArrayList<SlaveRemote> getSlavesWithSolver(String solver) throws RemoteException {
-		ArrayList<SlaveRemote> slaves = new ArrayList<SlaveRemote>();
-		for(SlaveRemote s : Master.getSlaves().values()) {
-			if(s.getSolvers().contains(solver))
-				slaves.add(s);
-		}
-		return slaves;
-	}
-
-	public static Set<String> getAllAvaliableSolverIds() throws RemoteException {
-		Set<String> solverIds = new HashSet<String>();
-		for(SlaveRemote s : Master.getSlaves().values()) {
-			solverIds.addAll(s.getSolvers());
-		}
-		return solverIds;
 	}
 
 	@Override
@@ -220,11 +187,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 		logger.info("Computation started on formula " + tqbfId);
 		String jobPrefix = tqbfId.split("\\.")[0];
 		Job job = Job.getJobs().get(jobPrefix);
-		try {
-			job.acknowledgedComputations.put(tqbfId);
-		} catch (InterruptedException e) {
-			logger.error("", e);
-		}
+		job.notifyComputationStarted(tqbfId);
 	}
 
 	@Override

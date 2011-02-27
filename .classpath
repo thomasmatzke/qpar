@@ -10,5 +10,6 @@
 	<classpathentry kind="lib" path="lib/mail.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.0-beta.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.8.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-exec-1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

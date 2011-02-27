@@ -29,7 +29,7 @@ public class JobsTableModel extends AbstractTableModel {
 		Job job = Job.getJobs().get(row);
 		switch (col) {
 		case 0:
-			return job.getId();
+			return job.id;
 		case 1:
 			return job.getStartedAt();
 		case 2:

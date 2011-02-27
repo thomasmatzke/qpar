@@ -292,7 +292,7 @@ public class CreateJobDialog extends JDialog {
 					}
 					// TODO: Let set timeout & maxcores via GUI
 					if(new File(formulaTextField.getText()).exists()) {
-						Job.createJob(getFormulaTextField().getText(),
+						new Job(getFormulaTextField().getText(),
 								getOutputFileTextField().getText(),
 								(String) getSolverComboBox().getSelectedItem(),
 								(String) getHeuristicComboBox().getSelectedItem(),

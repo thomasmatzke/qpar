@@ -1,5 +1,6 @@
 package main.java.slave.solver;
 
+import java.util.ArrayList;
 import java.util.Vector;
 
 import main.java.logic.TransmissionQbf;
@@ -11,16 +12,16 @@ import main.java.logic.TransmissionQbf;
  * 
  */
 public class SolverFactory {
-	private static Vector<String> solvers;
+	private static ArrayList<String> solvers;
 
 	/**
 	 * Returns all available/implemented solvers.
 	 * 
 	 * @return
 	 */
-	public static Vector<String> getavailableSolvers() {
+	public static ArrayList<String> getavailableSolvers() {
 		if (solvers == null) {
-			solvers = new Vector<String>();
+			solvers = new ArrayList<String>();
 			solvers.add("qpro");
 			solvers.add("simple");
 		}

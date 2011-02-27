@@ -1,9 +1,11 @@
-package main.java.master;
+package main.java.evaluation;
 
 import java.io.File;
 import java.util.HashMap;
 
 import main.java.QPar;
+import main.java.master.Job;
+import main.java.master.Job.Status;
 
 import org.apache.log4j.Logger;
 
@@ -12,23 +14,23 @@ import org.apache.log4j.Logger;
  * @author thomasm
  *
  */
-public class Evaluation {
+public class SerialEvaluation implements Evaluation {
 
-	static 	Logger 	logger = Logger.getLogger(Evaluation.class);
-	private File 	directory;
-	private String 	heuristicId, solverId;
-	private long	timeout; // timeout in seconds
-	private int		cores;
+	static 	Logger 	logger = Logger.getLogger(SerialEvaluation.class);
+	protected File 	directory;
+	protected String 	heuristicId, solverId;
+	protected long	timeout; // timeout in seconds
+	protected int		cores;
 	
-	private int 					timeouts		= 0;
-	private int 					errors			= 0;
-	private long 					elapsedTotal 	= 0;
-	private HashMap<File, Boolean> 	results 		= new HashMap<File, Boolean>();
+	protected int 					timeouts		= 0;
+	protected int 					errors			= 0;
+	protected long 					elapsedTotal 	= 0;
+	protected HashMap<File, Boolean> 	results 		= new HashMap<File, Boolean>();
 	public double meanSolverTime;
 	public double meanMaxSolverTime;
 	public double meanOverheadTime;
 	
-	public Evaluation(	File 	directory,
+	public SerialEvaluation(	File 	directory,
 						String 	heuristicId,
 						String 	solverId,
 						long 	timeout,
@@ -45,7 +47,7 @@ public class Evaluation {
 			if(f.getName().equals("evaluation.txt"))
 				continue;
 			try {
-				Job job = Job.createJob(f.getAbsolutePath(), null, solverId, heuristicId, timeout, cores);
+				Job job = new Job(f.getAbsolutePath(), null, solverId, heuristicId, timeout, cores);
 							
 				job.startBlocking();
 				

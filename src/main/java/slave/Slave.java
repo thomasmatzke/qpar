@@ -279,5 +279,11 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 		new Slave(ap.nextParam());
 					
 	}
+
+	@Override
+	public int freeCores() throws RemoteException {
+		return this.getCores() - ComputationStateMachine.computations.size();
+	}
+
 	
 }

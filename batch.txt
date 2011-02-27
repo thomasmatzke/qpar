@@ -1,25 +1,30 @@
 MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
 
-LOGEVAL testing/semaphore_small 1 8 qpro 60
-LOGEVAL testing/semaphore_medium 1 8 qpro 60
-LOGEVAL testing/semaphore_big 1 8 qpro 60
+PARLOGEVAL testing/boole 1 4 qpro 60
+#PARLOGEVAL testing/semaphore_small 1 4 qpro 60
+#PARLOGEVAL testing/ring_medium 1 4 qpro 60
+#PARLOGEVAL testing/semaphore_medium 1 4 qpro 60
 
-LOGEVAL testing/ring_small 1 8 qpro 60
-LOGEVAL testing/ring_medium 1 8 qpro 60
-LOGEVAL testing/ring_big 1 8 qpro 60
+#LOGEVAL testing/semaphore_small 1 4 qpro 60
+#LOGEVAL testing/semaphore_medium 1 4 qpro 60
+#LOGEVAL testing/semaphore_big 1 4 qpro 60
 
-#logeval testing/counter_test 1 4 qpro 60
+#LOGEVAL testing/ring_small 4 4 qpro 1
+#LOGEVAL testing/ring_medium 1 4 qpro 60
+#LOGEVAL testing/ring_big 1 4 qpro 1
+
+#logeval testing/boole 1 4 qpro 60
 #LOGEVAL testing/counter_small 1 4 qpro 60
 #LOGEVAL testing/counter_medium 1 4 qpro 60
-#LOGEVAL testing/counter_big 1 4 qpro 60
+#LOGEVAL testing/counter_big 2 4 qpro 60
 #LOGEVAL testing/counter_biggest 4 4 qpro 60
 
 #LOGEVAL testing/ncf_small 1 4 qpro 60
 #LOGEVAL testing/ncf_medium 1 4 qpro 60
-#LOGEVAL testing/ncf_big 1 4 qpro 60
+#LOGEVAL testing/ncf_big 1 4 qpro 30
 
-#LOGEVAL testing/consistency_big 1 64 qpro 60
-#LOGEVAL testing/consistency_bigger 1 64 qpro 60
+#LOGEVAL testing/consistency_big 4 4 qpro 60
+#LOGEVAL testing/consistency_bigger 1 4 qpro 60
 
 #LOGEVAL testing/dme_big 1 4 qpro 60
 #LOGEVAL testing/dme_small 1 4 qpro 60

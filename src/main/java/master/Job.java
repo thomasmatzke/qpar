@@ -1,16 +1,22 @@
 package main.java.master;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Vector;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -20,8 +26,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
+import main.java.logic.DTNode;
 import main.java.logic.Qbf;
 import main.java.logic.TransmissionQbf;
+import main.java.logic.heuristic.Heuristic;
 import main.java.logic.heuristic.HeuristicFactory;
 import main.java.logic.parser.TokenMgrError;
 import main.java.master.console.Shell;
@@ -31,13 +39,13 @@ import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.Logger;
 
-public class Job {
+public class Job extends Observable{
 
 	public enum Status {
 		READY, RUNNING, COMPLETE, ERROR, TIMEOUT
 	}
 
-	private static int idCounter = 0;
+	private static volatile int idCounter = 0;
 	private static Map<String, Job> jobs = new HashMap<String, Job>();
 	private static AbstractTableModel tableModel;
 	static Logger logger = Logger.getLogger(Job.class);
@@ -45,14 +53,16 @@ public class Job {
 	private boolean jobResult;
 	private long timeout = 0;
 	private Qbf formula;
+	public DTNode decisionRoot = null;
 	public byte[] serializedFormula;
 
 	public volatile ConcurrentMap<String, SlaveRemote> formulaDesignations = new ConcurrentHashMap<String, SlaveRemote>();
 	public volatile BlockingQueue<String> acknowledgedComputations = new LinkedBlockingQueue<String>();
+	public volatile int startedComputations = 0;	
 	public ArrayList<Long> solverTimes = new ArrayList<Long>();
 	public ArrayList<Long> overheadTimes = new ArrayList<Long>();
-	private String heuristic, id, inputFileString, outputFileString, solver;
-	private int usedCores = 0, resultCtr = 0;
+	public String heuristic, id, inputFileString, outputFileString, solver;
+	public int usedCores = 0, resultCtr = 0;
 	
 	public volatile Status status;
 	private volatile Object statusLock = new Object(); 
@@ -60,8 +70,24 @@ public class Job {
 	private List<TransmissionQbf> subformulas;
 	private Date startedAt = null, solvedAt = null;
 
-	public Job() {
-		logger.setLevel(QPar.logLevel);
+	public Job(String inputFile, String outputFile,	String solverId, String heuristicId, long timeout, int maxCores) {
+//		Job job = new Job();
+		this.usedCores = maxCores;
+		this.setTimeout(timeout);
+		this.setId(allocateJobId());
+		this.setInputFileString(inputFile);
+		this.setOutputFileString(outputFile);
+		this.setSolver(solverId);
+		this.setHeuristic(heuristicId);
+		this.setStatus(Status.READY);
+		addJob(this);
+		logger.info("Job created. \n" + "	JobId:        " + this.id + "\n"
+				+ "	HeuristicId:  " + this.getHeuristic() + "\n"
+				+ "	SolverId:     " + this.getSolver() + "\n"
+				+ "	#Cores:       " + this.usedCores + "\n"
+				+ "	Inputfile:    " + this.getInputFileString() + "\n"
+				+ "	Outputfile:   " + this.getOutputFileString() + "\n");
+//		return job;
 	}
 
 	private static void addJob(Job job) {
@@ -72,31 +98,11 @@ public class Job {
 		logger.info("Job added. JobId: " + job.id);
 	}
 
-	private static String allocateJobId() {
+	synchronized private static String allocateJobId() {
 		idCounter++;
 		return Integer.valueOf(idCounter).toString();
 	}
-
-	public static Job createJob(String inputFile, String outputFile,
-			String solverId, String heuristicId, long timeout, int maxCores) {
-		Job job = new Job();
-		job.usedCores = maxCores;
-		job.setTimeout(timeout);
-		job.setId(allocateJobId());
-		job.setInputFileString(inputFile);
-		job.setOutputFileString(outputFile);
-		job.setSolver(solverId);
-		job.setHeuristic(heuristicId);
-		job.setStatus(Status.READY);
-		addJob(job);
-		logger.info("Job created. \n" + "	JobId:        " + job.getId() + "\n"
-				+ "	HeuristicId:  " + job.getHeuristic() + "\n"
-				+ "	SolverId:     " + job.getSolver() + "\n"
-				+ "	Inputfile:    " + job.getInputFileString() + "\n"
-				+ "	Outputfile:   " + job.getOutputFileString() + "\n");
-		return job;
-	}
-
+	
 	public static Map<String, Job> getJobs() {
 		if (jobs == null) {
 			jobs = new HashMap<String, Job>();
@@ -113,7 +119,7 @@ public class Job {
 			long waited = System.currentTimeMillis();
 			synchronized(this) {
 				if(this.status == Status.COMPLETE || this.status == Status.ERROR) {
-					return;
+					break;
 				}
 				try { this.wait(restTimeout); } catch (InterruptedException e) {} 
 			}
@@ -125,20 +131,20 @@ public class Job {
 			synchronized(this.statusLock) {
 				
 				if(this.status == Status.COMPLETE || this.status == Status.ERROR) {
-					return;
+					break;
 				}
 				
 				if(restTimeout <= 0) {
 					this.status = Status.TIMEOUT;
 					logger.info("Timeout reached. Job: " + this.id + ", Timeout: " + this.timeout);
 					abortComputations();
-					return;
+					break;
 				}			
 				
 			}
 		}
-		
-		
+		setChanged();
+        notifyObservers();
 	}
 
 	public void start() {
@@ -162,11 +168,12 @@ public class Job {
 		ArrayList<SlaveRemote> slots = new ArrayList<SlaveRemote>();
 		ArrayList<SlaveRemote> slaves;
 		try {
-			slaves = Master.getSlavesWithSolver(this.solver);
+			slaves = SlaveRegistry.instance().getSlavesWithSolver(this.solver);
 
 			for (SlaveRemote slave : slaves) {
-				availableCores += slave.getCores();
-				for (int i = 0; i < slave.getCores(); i++) {
+				int freeCores = slave.freeCores();
+				availableCores += freeCores;
+				for (int i = 0; i < freeCores; i++) {
 					slots.add(slave);
 				}
 			}
@@ -197,9 +204,7 @@ public class Job {
 		logger.debug("Computationslots generated: " + slotStr.trim());
 
 		try {
-			this.subformulas = formula.splitQbf(Math.min(availableCores,
-					usedCores), HeuristicFactory.getHeuristic(
-					this.getHeuristic(), this.formula));
+			this.subformulas = splitQbf();
 		} catch (IOException e1) {
 			logger.error("Couldnt split formula", e1);
 			this.setStatus(Status.ERROR);
@@ -212,7 +217,7 @@ public class Job {
 			return;
 		}
 
-		logger.info("Job started " + this.id + "...\n" + 
+		logger.info("Job started " + this.id + " ...\n" + 
 				"	Started at:  " + startedAt + "\n" + 
 				"	Subformulas: " + this.subformulas.size() + "\n" + 
 				"	Cores(avail):" + availableCores + "\n" +
@@ -225,7 +230,7 @@ public class Job {
 				if (this.getStatus() != Status.RUNNING)
 					return;
 				sub.solverId = this.solver;
-				sub.jobId = this.getId();
+				sub.jobId = this.id;
 				sub.timeout = this.timeout;
 				SlaveRemote s = slots.get(slotIndex);
 				slotIndex += 1;
@@ -240,11 +245,115 @@ public class Job {
 				} catch (IOException e) {
 					logger.error("Something in IO failed...", e);
 				}
-				formulaDesignations.put(sub.getId(), s);
+				formulaDesignations.put(sub.id, s);
 			}
 		}
 	}
 
+	public List<TransmissionQbf> splitQbf() throws IOException {
+		logger.debug("Splitting into " + usedCores + " subformulas...");
+		long start = System.currentTimeMillis();
+		Heuristic h = HeuristicFactory.getHeuristic(this.getHeuristic(), formula);
+		logger.info("Generating variable order...");
+		long heuristicTime = System.currentTimeMillis();
+		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
+		heuristicTime = System.currentTimeMillis() - heuristicTime;
+		logger.info("Variable order generated. Took " + heuristicTime/1000 + " seconds.");
+		logger.debug("Heuristic returned variable-assignment order: " + Arrays.toString(order));
+			
+		int leafCtr = 1;
+		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
+		decisionRoot = new DTNode(DTNode.DTNodeType.TQBF);
+		leaves.addFirst(decisionRoot);
+		
+		// Generate the tree
+		logger.debug("Generating decision tree...");
+		while(leafCtr < usedCores) {
+			DTNode leaf 		= leaves.pollLast();
+			Integer splitVar 	= order[leaf.getDepth()]; 
+			if(formula.aVars.contains(splitVar)) {
+				leaf.setType(DTNode.DTNodeType.AND);
+			} else if(formula.eVars.contains(splitVar)) {
+				leaf.setType(DTNode.DTNodeType.OR);
+			}
+			DTNode negChild = new DTNode(DTNode.DTNodeType.TQBF);
+			negChild.variablesAssignedFalse.add(splitVar);
+			negChild.setParent(leaf);
+			negChild.getDepth();
+			DTNode posChild = new DTNode(DTNode.DTNodeType.TQBF);
+			posChild.variablesAssignedTrue.add(splitVar);
+			posChild.setParent(leaf);
+			posChild.getDepth();
+			leaf.addChild(negChild); leaf.addChild(posChild);
+			leaves.addFirst(negChild); leaves.addFirst(posChild);
+			leafCtr++;
+		} 
+		
+//logger.info("\n" + decisionRoot.dump());
+		
+		assert(leaves.size() == usedCores);
+		
+		logger.debug("Generating TransmissionQbfs...");
+		List<TransmissionQbf> tqbfs = new ArrayList<TransmissionQbf>();
+		
+		// We only want to serialize the tree once
+		
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream out;
+		out = new ObjectOutputStream(bos);
+		out.writeObject(formula.root);
+		out.close();
+		byte[] serializedFormula = bos.toByteArray();
+		
+		// Generate ids for leaves and corresponding tqbfs
+		int idCtr = 0;
+		for(DTNode node : leaves) {
+			String id = this.id + "." + Integer.toString(idCtr++);
+			node.setId(id);
+			TransmissionQbf tqbf = new TransmissionQbf();
+			tqbf.falseVars.addAll(node.variablesAssignedFalse);
+			tqbf.trueVars.addAll(node.variablesAssignedTrue);
+			tqbf.setRootNode(formula.root);
+			tqbf.serializedFormula = serializedFormula;
+			tqbf.id = id;
+			tqbf.setEVars(formula.eVars);
+			tqbf.setAVars(formula.aVars);
+			Vector<Integer> tmpVars = new Vector<Integer>();
+			tmpVars.addAll(formula.aVars);
+			tmpVars.addAll(formula.eVars);
+			tqbf.setVars(tmpVars);
+			tqbfs.add(tqbf);
+		}
+		assert(tqbfs.size() == usedCores);
+		long end = System.currentTimeMillis();
+		logger.debug("Formula splitted. Took " + (end-start)/1000 + " seconds.");
+		return tqbfs;
+	}
+	
+	public boolean mergeQbf(String tqbfId, boolean result) {
+		if(decisionRoot.hasTruthValue())
+			return true;
+		
+		// find the corresponding node in the decisiontree
+		DTNode tmp = decisionRoot.getNode(tqbfId);
+		
+		
+		if(tmp == null) {
+			// The node has been cut off from the root by another reduce()
+			// The result is thus irrelevant
+			return decisionRoot.hasTruthValue();
+		}
+					
+		// set the nodes truth value
+		tmp.setTruthValue(result);
+
+		// reduce the tree
+		tmp.reduce();
+
+		// check the root for a truth value and return
+		return decisionRoot.hasTruthValue();
+	}
+	
 	public void abort(String why) {
 		synchronized(this.statusLock) {
 			if(this.status != Status.RUNNING)
@@ -313,7 +422,7 @@ public class Job {
 
 	private String resultText() {
 		String txt;
-		txt = "Job Id: " + this.getId() + "\n" + "Started at: "
+		txt = "Job Id: " + this.id + "\n" + "Started at: "
 				+ this.getStartedAt() + "\n" + "Stopped at: "
 				+ this.getSolvedAt() + "\n" + "Total secs: " + totalSecs()
 				+ "\n" + "In millis: " + totalMillis() + "\n" + "Solver: "
@@ -356,19 +465,19 @@ public class Job {
 			}
 
 			
-			boolean solved = formula.mergeQbf(r.tqbfId, tqbfResult);
-			logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + getId() + " (" + r.type + ")");
+			boolean solved = mergeQbf(r.tqbfId, tqbfResult);
+			logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + this.id + " (" + r.type + ")");
 			this.formulaDesignations.remove(r.tqbfId);
 			if (solved) {
 				this.setSolvedAt(new Date());
-				fireJobCompleted(formula.getResult());
+				fireJobCompleted(decisionRoot.getTruthValue());
 			} else {
 				if (resultCtr == subformulas.size()) {
 					// Received all subformulas but still no result...something is
 					// wrong
 					logger.fatal("Merging broken!");
 					logger.fatal("Dumping decisiontree: \n"
-							+ formula.decisionRoot.dump());
+							+ decisionRoot.dump());
 					System.exit(-1);
 				}
 			}
@@ -381,7 +490,7 @@ public class Job {
 		this.setResult(result);
 		
 		synchronized(this) { this.notifyAll(); }
-		
+				
 		logger.info("Job complete. Resolved to: " + result
 				+ ". Aborting computations.");
 		this.abortComputations();
@@ -400,7 +509,7 @@ public class Job {
 			}
 		}
 
-		if (Shell.getWaitfor_jobid().equals(this.getId())) {
+		if (Shell.getWaitfor_jobid().equals(this.id)) {
 			synchronized (Master.getShellThread()) {
 				Master.getShellThread().notify();
 			}
@@ -416,10 +525,6 @@ public class Job {
 
 	public String getHeuristic() {
 		return heuristic;
-	}
-
-	public String getId() {
-		return id;
 	}
 
 	public String getInputFileString() {
@@ -536,5 +641,32 @@ public class Job {
 		double mean = (double) added / (double) overheadTimes.size();
 		return mean;
 	}
+	
+	public void notifyComputationStarted(String tqbfId) {
+		try {
+			acknowledgedComputations.put(tqbfId);
+			this.startedComputations++;
+			setChanged();
+	        notifyObservers();
+		} catch (InterruptedException e) {
+			logger.error("", e);
+		}
+	}
+	
+	/**
+	* getter method for solved
+	* @return TRUE if there's a result, FALSE otherwise
+	*/
+//	synchronized public boolean isSolved() {
+//		return decisionRoot.hasTruthValue();
+//	}
+	
+//	/**
+//	* getter method for satisfiable
+//	* @return TRUE the QBF is satisfiable, FALSE if not
+//	*/
+//	synchronized public boolean getResult() {
+//		return decisionRoot.getTruthValue();
+//	}
 
 }
