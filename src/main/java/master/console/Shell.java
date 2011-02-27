@@ -200,8 +200,18 @@ public class Shell implements Runnable{
 		EvaluationSuite eval = new ParLogEvalSuite(new File(directory), cores_min, cores_max, solver, heuristics, timeout);
 		eval.evaluate();
 		
+		String report = eval.getReport();
+		
+		try {
+			BufferedWriter out = new BufferedWriter(new FileWriter(new File(directory).getAbsolutePath() + File.separator + "evaluation.txt"));
+			out.write(report);
+			out.flush();
+		} catch (IOException e) {
+			logger.error("While writing report: ", e);
+		}
+		
 		if(Mailer.email != null && Mailer.server != null && Mailer.user != null && Mailer.pass != null)
-			Mailer.send_mail(Mailer.email, Mailer.server, Mailer.user, Mailer.pass, "ParLogEval Report", eval.getReport());
+			Mailer.send_mail(Mailer.email, Mailer.server, Mailer.user, Mailer.pass, "ParLogEval Report", report);
 	}
 
 	private void logeval(StringTokenizer token) {
