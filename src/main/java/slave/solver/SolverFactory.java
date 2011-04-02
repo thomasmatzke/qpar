@@ -1,9 +1,8 @@
 package main.java.slave.solver;
 
 import java.util.ArrayList;
-import java.util.Vector;
 
-import main.java.logic.TransmissionQbf;
+import main.java.master.TQbf;
 
 /**
  * A solver-factory
@@ -23,7 +22,6 @@ public class SolverFactory {
 		if (solvers == null) {
 			solvers = new ArrayList<String>();
 			solvers.add("qpro");
-			solvers.add("simple");
 		}
 		return solvers;
 	}
@@ -34,17 +32,9 @@ public class SolverFactory {
 	 * @param id
 	 * @return
 	 */
-	public static Solver getSolver(String id, ResultHandler handler, TransmissionQbf tqbf) {
+	public static Solver getSolver(String id, ResultHandler handler, TQbf tqbf) {
 		if (id.equals("qpro")) {
 			Solver q = new QProSolver(tqbf,handler);
-			Thread t = new Thread(q);
-			q.setThread(t);
-			return q;
-		}
-		if (id.equals("simple")) {
-			Solver q = new SimpleSolver(tqbf, handler);
-			Thread t = new Thread(q);
-			q.setThread(t);
 			return q;
 		}
 		return null;

@@ -41,6 +41,7 @@ public class MulticastBeacon implements Runnable {
 		
 	@Override
 	public void run() {
+		
 		while(run) {
 			
 			try {

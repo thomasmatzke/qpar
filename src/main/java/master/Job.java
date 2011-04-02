@@ -5,22 +5,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Vector;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
@@ -28,22 +24,24 @@ import javax.swing.table.AbstractTableModel;
 import main.java.QPar;
 import main.java.logic.DTNode;
 import main.java.logic.Qbf;
-import main.java.logic.TransmissionQbf;
 import main.java.logic.heuristic.Heuristic;
 import main.java.logic.heuristic.HeuristicFactory;
-import main.java.logic.parser.TokenMgrError;
-import main.java.master.console.Shell;
+import main.java.rmi.RemoteObservable;
+import main.java.rmi.RemoteObserver;
 import main.java.rmi.Result;
 import main.java.rmi.Result.Type;
-import main.java.rmi.SlaveRemote;
+import main.java.rmi.WrappedObserver;
+import main.java.scheduling.Distributor;
 
 import org.apache.log4j.Logger;
 
-public class Job extends Observable{
+public class Job extends Observable implements RemoteObserver, RemoteObservable {
 
-	public enum Status {
+	public enum State {
 		READY, RUNNING, COMPLETE, ERROR, TIMEOUT
 	}
+
+	private volatile State state;
 
 	private static volatile int idCounter = 0;
 	private static Map<String, Job> jobs = new HashMap<String, Job>();
@@ -56,22 +54,16 @@ public class Job extends Observable{
 	public DTNode decisionRoot = null;
 	public byte[] serializedFormula;
 
-	public volatile ConcurrentMap<String, SlaveRemote> formulaDesignations = new ConcurrentHashMap<String, SlaveRemote>();
-	public volatile BlockingQueue<String> acknowledgedComputations = new LinkedBlockingQueue<String>();
-	public volatile int startedComputations = 0;	
-	public ArrayList<Long> solverTimes = new ArrayList<Long>();
-	public ArrayList<Long> overheadTimes = new ArrayList<Long>();
-	public String heuristic, id, inputFileString, outputFileString, solver;
-	public int usedCores = 0, resultCtr = 0;
-	
-	public volatile Status status;
-	private volatile Object statusLock = new Object(); 
-	
-	private List<TransmissionQbf> subformulas;
-	private Date startedAt = null, solvedAt = null;
+	public List<TQbf> subformulas;
 
-	public Job(String inputFile, String outputFile,	String solverId, String heuristicId, long timeout, int maxCores) {
-//		Job job = new Job();
+	public String heuristic, id, inputFileString, outputFileString, solver;
+	public int usedCores = 0;
+
+	private HashMap<State, Date> history = new HashMap<State, Date>();
+
+	private List<Result> results = new ArrayList<Result>();
+
+	public Job(String inputFile, String outputFile, String solverId, String heuristicId, long timeout, int maxCores) throws RemoteException {
 		this.usedCores = maxCores;
 		this.setTimeout(timeout);
 		this.setId(allocateJobId());
@@ -79,15 +71,36 @@ public class Job extends Observable{
 		this.setOutputFileString(outputFile);
 		this.setSolver(solverId);
 		this.setHeuristic(heuristicId);
-		this.setStatus(Status.READY);
+		this.setState(State.READY);
 		addJob(this);
-		logger.info("Job created. \n" + "	JobId:        " + this.id + "\n"
-				+ "	HeuristicId:  " + this.getHeuristic() + "\n"
-				+ "	SolverId:     " + this.getSolver() + "\n"
-				+ "	#Cores:       " + this.usedCores + "\n"
-				+ "	Inputfile:    " + this.getInputFileString() + "\n"
+		logger.info("Job created. \n" + "	JobId:        " + this.id + "\n" + "	HeuristicId:  " + this.getHeuristic() + "\n" + "	SolverId:     "
+				+ this.getSolver() + "\n" + "	#Cores:       " + this.usedCores + "\n" + "	Inputfile:    " + this.getInputFileString() + "\n"
 				+ "	Outputfile:   " + this.getOutputFileString() + "\n");
-//		return job;
+
+		if (tableModel != null)
+			tableModel.fireTableDataChanged();
+		try {
+			this.formula = new Qbf(inputFileString);
+		} catch (Exception e) {
+			logger.error(this.inputFileString, e);
+			this.setState(State.ERROR);
+			return;
+		}
+
+		try {
+			subformulas = splitQbf();
+		} catch (IOException e1) {
+			logger.error("Couldnt split formula", e1);
+			this.setState(State.ERROR);
+			return;
+		}
+
+		for (TQbf tqbf : subformulas) {
+			tqbf.addObserver(this);
+			tqbf.setSolverId(this.solver);
+			tqbf.setJobId(this.id);
+			tqbf.setTimeout(this.timeout);
+		}
 	}
 
 	private static void addJob(Job job) {
@@ -102,7 +115,7 @@ public class Job extends Observable{
 		idCounter++;
 		return Integer.valueOf(idCounter).toString();
 	}
-	
+
 	public static Map<String, Job> getJobs() {
 		if (jobs == null) {
 			jobs = new HashMap<String, Job>();
@@ -110,147 +123,40 @@ public class Job extends Observable{
 		return jobs;
 	}
 
+	synchronized public void triggerTimeout() {
+
+		if (this.getStatus() == State.COMPLETE || this.getStatus() == State.ERROR) {
+			return;
+		}
+		logger.info("Timeout reached. Job: " + this.id + ", Timeout: " + this.timeout);
+		abortComputations();
+		this.setState(State.TIMEOUT);
+
+		notifyAll();
+
+	}
+
 	public void startBlocking() {
 		this.start();
-		long restTimeout = this.timeout * 1000;
-		
-//		logger.info("rest timeout initial: " + restTimeout);
-		while(true) {
-			long waited = System.currentTimeMillis();
-			synchronized(this) {
-				if(this.status == Status.COMPLETE || this.status == Status.ERROR) {
-					break;
+		synchronized (this) {
+			while (this.state == State.RUNNING) {
+				try {
+					this.wait();
+				} catch (InterruptedException e) {
 				}
-				try { this.wait(restTimeout); } catch (InterruptedException e) {} 
-			}
-			waited = System.currentTimeMillis() - waited;
-//			logger.info("waited: " + waited);
-			restTimeout -= waited;
-//			logger.info("Rest timeout " + restTimeout);
-			
-			synchronized(this.statusLock) {
-				
-				if(this.status == Status.COMPLETE || this.status == Status.ERROR) {
-					break;
-				}
-				
-				if(restTimeout <= 0) {
-					this.status = Status.TIMEOUT;
-					logger.info("Timeout reached. Job: " + this.id + ", Timeout: " + this.timeout);
-					abortComputations();
-					break;
-				}			
-				
 			}
 		}
-		setChanged();
-        notifyObservers();
 	}
 
 	public void start() {
-		this.startedAt = new Date();
-		int availableCores = 0;
-		this.setStatus(Status.RUNNING);
-		if (tableModel != null)
-			tableModel.fireTableDataChanged();
-		try {
-			this.formula = new Qbf(inputFileString);
-		} catch (IOException e) {
-			logger.error(this.inputFileString, e);
-			this.setStatus(Status.ERROR);
-			return;
-		} catch (TokenMgrError e) {
-			logger.error(this.inputFileString, e);
-			this.setStatus(Status.ERROR);
-			return;
-		}
+//		new TimeoutTimer(this.timeout, this);
+		this.setState(State.RUNNING);
+		logger.info("Job started " + this.id + " ...\n" + "	Started at:  " + this.history.get(State.RUNNING) + "\n" + "	UsedCores: " + this.usedCores);
 
-		ArrayList<SlaveRemote> slots = new ArrayList<SlaveRemote>();
-		ArrayList<SlaveRemote> slaves;
-		try {
-			slaves = SlaveRegistry.instance().getSlavesWithSolver(this.solver);
-
-			for (SlaveRemote slave : slaves) {
-				int freeCores = slave.freeCores();
-				availableCores += freeCores;
-				for (int i = 0; i < freeCores; i++) {
-					slots.add(slave);
-				}
-			}
-		} catch (RemoteException e) {
-			logger.error(e);
-			this.setStatus(Status.ERROR);
-			return;
-		}
-
-		logger.debug("Available Cores: " + availableCores + ", Used Cores: "
-				+ usedCores);
-
-		Collections.shuffle(slots);
-		String slotStr = "";
-		try {
-			for (SlaveRemote s : slots)
-				slotStr += s.getHostName() + " ";
-		} catch (RemoteException e) {
-			logger.error("RMI fail", e);
-			this.setStatus(Status.ERROR);
-			return;
-		} catch (UnknownHostException e) {
-			logger.error("Host not known...", e);
-			this.setStatus(Status.ERROR);
-			return;
-		}
-
-		logger.debug("Computationslots generated: " + slotStr.trim());
-
-		try {
-			this.subformulas = splitQbf();
-		} catch (IOException e1) {
-			logger.error("Couldnt split formula", e1);
-			this.setStatus(Status.ERROR);
-			return;
-		}
-
-		if (slots.size() < this.subformulas.size()) {
-			logger.error("Not enough cores available for Job. Job failed.");
-			this.setStatus(Status.ERROR);
-			return;
-		}
-
-		logger.info("Job started " + this.id + " ...\n" + 
-				"	Started at:  " + startedAt + "\n" + 
-				"	Subformulas: " + this.subformulas.size() + "\n" + 
-				"	Cores(avail):" + availableCores + "\n" +
-				"	Cores(used): " + usedCores + "\n" + 
-				"	Slaves:      " + slaves.size());
-
-		int slotIndex = 0;
-		for (TransmissionQbf sub : subformulas) {
-			synchronized (this.statusLock) {
-				if (this.getStatus() != Status.RUNNING)
-					return;
-				sub.solverId = this.solver;
-				sub.jobId = this.id;
-				sub.timeout = this.timeout;
-				SlaveRemote s = slots.get(slotIndex);
-				slotIndex += 1;
-
-				try {
-					new Thread(new TransportThread(s, sub, this.solver))
-							.start();
-				} catch (UnknownHostException e) {
-					logger.error("Host not found", e);
-				} catch (RemoteException e) {
-					logger.error("RMI fail", e);
-				} catch (IOException e) {
-					logger.error("Something in IO failed...", e);
-				}
-				formulaDesignations.put(sub.id, s);
-			}
-		}
+		Distributor.instance().scheduleJob(this);
 	}
 
-	public List<TransmissionQbf> splitQbf() throws IOException {
+	public List<TQbf> splitQbf() throws IOException {
 		logger.debug("Splitting into " + usedCores + " subformulas...");
 		long start = System.currentTimeMillis();
 		Heuristic h = HeuristicFactory.getHeuristic(this.getHeuristic(), formula);
@@ -258,64 +164,70 @@ public class Job extends Observable{
 		long heuristicTime = System.currentTimeMillis();
 		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
 		heuristicTime = System.currentTimeMillis() - heuristicTime;
-		logger.info("Variable order generated. Took " + heuristicTime/1000 + " seconds.");
+		logger.info("Variable order generated. Took " + heuristicTime / 1000 + " seconds.");
 		logger.debug("Heuristic returned variable-assignment order: " + Arrays.toString(order));
-			
+
 		int leafCtr = 1;
 		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
 		decisionRoot = new DTNode(DTNode.DTNodeType.TQBF);
 		leaves.addFirst(decisionRoot);
-		
+
 		// Generate the tree
 		logger.debug("Generating decision tree...");
-		while(leafCtr < usedCores) {
-			DTNode leaf 		= leaves.pollLast();
-			Integer splitVar 	= order[leaf.getDepth()]; 
-			if(formula.aVars.contains(splitVar)) {
+		while (leafCtr < usedCores) {
+			DTNode leaf = leaves.pollLast();
+			Integer splitVar = order[leaf.getDepth()];
+			if (formula.aVars.contains(splitVar)) {
 				leaf.setType(DTNode.DTNodeType.AND);
-			} else if(formula.eVars.contains(splitVar)) {
+			} else if (formula.eVars.contains(splitVar)) {
 				leaf.setType(DTNode.DTNodeType.OR);
 			}
 			DTNode negChild = new DTNode(DTNode.DTNodeType.TQBF);
 			negChild.variablesAssignedFalse.add(splitVar);
+			negChild.variablesAssignedFalse.addAll(leaf.variablesAssignedFalse);
+			negChild.variablesAssignedTrue.addAll(leaf.variablesAssignedTrue);
 			negChild.setParent(leaf);
 			negChild.getDepth();
 			DTNode posChild = new DTNode(DTNode.DTNodeType.TQBF);
 			posChild.variablesAssignedTrue.add(splitVar);
+			posChild.variablesAssignedFalse.addAll(leaf.variablesAssignedFalse);
+			posChild.variablesAssignedTrue.addAll(leaf.variablesAssignedTrue);
 			posChild.setParent(leaf);
 			posChild.getDepth();
-			leaf.addChild(negChild); leaf.addChild(posChild);
-			leaves.addFirst(negChild); leaves.addFirst(posChild);
+			leaf.addChild(negChild);
+			leaf.addChild(posChild);
+			leaves.addFirst(negChild);
+			leaves.addFirst(posChild);
 			leafCtr++;
-		} 
-		
-//logger.info("\n" + decisionRoot.dump());
-		
-		assert(leaves.size() == usedCores);
-		
+		}
+
+		logger.info("\n" + decisionRoot.dump());
+
+		assert (leaves.size() == usedCores);
+
 		logger.debug("Generating TransmissionQbfs...");
-		List<TransmissionQbf> tqbfs = new ArrayList<TransmissionQbf>();
-		
+		List<TQbf> tqbfs = new ArrayList<TQbf>();
+
 		// We only want to serialize the tree once
-		
+
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutputStream out;
 		out = new ObjectOutputStream(bos);
 		out.writeObject(formula.root);
 		out.close();
 		byte[] serializedFormula = bos.toByteArray();
-		
+
 		// Generate ids for leaves and corresponding tqbfs
 		int idCtr = 0;
-		for(DTNode node : leaves) {
+		for (DTNode node : leaves) {
 			String id = this.id + "." + Integer.toString(idCtr++);
 			node.setId(id);
-			TransmissionQbf tqbf = new TransmissionQbf();
-			tqbf.falseVars.addAll(node.variablesAssignedFalse);
-			tqbf.trueVars.addAll(node.variablesAssignedTrue);
+			TQbf tqbf = new TQbf();
+			tqbf.getFalseVars().addAll(node.variablesAssignedFalse);
+			tqbf.getTrueVars().addAll(node.variablesAssignedTrue);
 			tqbf.setRootNode(formula.root);
 			tqbf.serializedFormula = serializedFormula;
-			tqbf.id = id;
+			tqbf.setId(id);
 			tqbf.setEVars(formula.eVars);
 			tqbf.setAVars(formula.aVars);
 			Vector<Integer> tmpVars = new Vector<Integer>();
@@ -324,26 +236,26 @@ public class Job extends Observable{
 			tqbf.setVars(tmpVars);
 			tqbfs.add(tqbf);
 		}
-		assert(tqbfs.size() == usedCores);
+		assert (tqbfs.size() == usedCores);
 		long end = System.currentTimeMillis();
-		logger.debug("Formula splitted. Took " + (end-start)/1000 + " seconds.");
+		logger.debug("Formula splitted. Took " + (end - start) / 1000 + " seconds.");
 		return tqbfs;
 	}
-	
-	public boolean mergeQbf(String tqbfId, boolean result) {
-		if(decisionRoot.hasTruthValue())
+
+	private boolean mergeQbf(String tqbfId, boolean result) {
+		logger.info("Merging tqbf " + tqbfId);
+		if (decisionRoot.hasTruthValue())
 			return true;
-		
+
 		// find the corresponding node in the decisiontree
 		DTNode tmp = decisionRoot.getNode(tqbfId);
-		
-		
-		if(tmp == null) {
+
+		if (tmp == null) {
 			// The node has been cut off from the root by another reduce()
 			// The result is thus irrelevant
 			return decisionRoot.hasTruthValue();
 		}
-					
+
 		// set the nodes truth value
 		tmp.setTruthValue(result);
 
@@ -353,46 +265,17 @@ public class Job extends Observable{
 		// check the root for a truth value and return
 		return decisionRoot.hasTruthValue();
 	}
-	
-	public void abort(String why) {
-		synchronized(this.statusLock) {
-			if(this.status != Status.RUNNING)
-				return;
-			
-			logger.info("Job abort. Reason: " + why);
-			abortComputations();
-			this.status = Status.ERROR;
-			if (tableModel != null)
-			tableModel.fireTableDataChanged();
-			this.freeResources();
-		}
+
+	synchronized public void abort(String why) {
+		if (this.getStatus() != State.RUNNING)
+			return;
+
+		logger.info("Job abort. Reason: " + why);
+		abortComputations();
+		// this.freeResources();
+		this.setState(State.ERROR);
 	}
 
-	private void abortComputations() {
-		if(this.formulaDesignations == null)
-			return;
-		String tqbfId = null;
-		while (this.formulaDesignations.size() > 0) {
-			try {
-				tqbfId = this.acknowledgedComputations.take();
-			} catch (InterruptedException e) {
-			}
-			logger.info("Aborting Formula " + tqbfId + " ...");
-			SlaveRemote designation = this.formulaDesignations.get(tqbfId);
-			if (designation != null) {
-				try {
-					designation.abortFormula(tqbfId);
-				} catch (RemoteException e) {
-					logger.error("RMI fail", e);
-				}
-				this.formulaDesignations.remove(tqbfId);
-				logger.info("Formula " + tqbfId + " aborted.");
-				logger.info("Still running: " + this.formulaDesignations.keySet());
-			}
-		}
-		logger.info("All formulas aborted.");
-	}
-	
 	public void setResult(boolean r) {
 		this.jobResult = r;
 	}
@@ -401,98 +284,128 @@ public class Job extends Observable{
 		return jobResult;
 	}
 
-	private void freeResources() {
-		this.formula = null;
-		this.formulaDesignations = null;
-		this.subformulas = null;
-		System.gc();
-	}
-
 	public long totalMillis() {
-		// if(this.status != Job.COMPLETE)
-		// return -1;
-		return this.getSolvedAt().getTime() - this.getStartedAt().getTime();
-	}
-
-	public long totalSecs() {
-		// if(this.status != Job.COMPLETE)
-		// return -1;
-		return (this.getSolvedAt().getTime() - this.getStartedAt().getTime()) / 1000;
+		if (this.state != State.COMPLETE)
+			throw new IllegalStateException();
+		return this.history.get(State.COMPLETE).getTime() - this.history.get(State.RUNNING).getTime();
 	}
 
 	private String resultText() {
 		String txt;
-		txt = "Job Id: " + this.id + "\n" + "Started at: "
-				+ this.getStartedAt() + "\n" + "Stopped at: "
-				+ this.getSolvedAt() + "\n" + "Total secs: " + totalSecs()
-				+ "\n" + "In millis: " + totalMillis() + "\n" + "Solver: "
-				+ this.getSolver() + "\n" + "Heuristic: " + this.getHeuristic()
-				+ "\n" + "Result: "
-				+ (this.getResult() ? "Solvable" : "Not Solvable") + "\n";
+		txt = "Job Id: " + this.id + "\n" + "State RUNNING at: " + this.history.get(State.RUNNING) + "\n" + "State COMPLETE at: "
+				+ this.history.get(State.COMPLETE) + "\n" + "Total secs: " + totalMillis() / 1000 + "\n" + "In millis: " + totalMillis() + "\n" + "Solver: "
+				+ this.getSolver() + "\n" + "Heuristic: " + this.getHeuristic() + "\n" + "Result: " + (this.getResult() ? "Solvable" : "Not Solvable") + "\n";
 
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
 
-	public void handleResult(Result r) {
-		synchronized(this.statusLock) {
-			if(this.status != Status.RUNNING)
-				return;
-			
-			if(r.type == Result.Type.ERROR) {
-				logger.error("Slave returned error for subformula: " + r.tqbfId, r.exception);
-				this.status = Status.ERROR;
-				this.abortComputations();
-				synchronized(this) { this.notifyAll(); }
-				return;
-			} 
-			
-			resultCtr++;
-			
-			boolean tqbfResult = false;
-			if(r.type == Type.FALSE) {
-				tqbfResult = false;
-			} else if (r.type == Type.TRUE){
-				tqbfResult = true;
-			} else {
-				assert(false);
-			}
-			
-			synchronized(this.solverTimes) {
-				this.solverTimes.add(r.solverTime);
-			}
-			synchronized(this.overheadTimes) {
-				this.overheadTimes.add(r.overheadTime);
-			}
+	synchronized public void handleResult(Result r) {
 
-			
-			boolean solved = mergeQbf(r.tqbfId, tqbfResult);
-			logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + this.id + " (" + r.type + ")");
-			this.formulaDesignations.remove(r.tqbfId);
-			if (solved) {
-				this.setSolvedAt(new Date());
-				fireJobCompleted(decisionRoot.getTruthValue());
-			} else {
-				if (resultCtr == subformulas.size()) {
-					// Received all subformulas but still no result...something is
-					// wrong
-					logger.fatal("Merging broken!");
-					logger.fatal("Dumping decisiontree: \n"
-							+ decisionRoot.dump());
-					System.exit(-1);
+		this.results.add(r);
+		if (this.getStatus() != State.RUNNING)
+			return;
+
+		if (r.type == Result.Type.ERROR) {
+			logger.error("Slave returned error for subformula: " + r.tqbfId, r.exception);
+
+			this.abortComputations();
+			this.setState(State.ERROR);
+			return;
+		}
+
+		// resultCtr++;
+
+		boolean tqbfResult = false;
+		if (r.type == Type.FALSE) {
+			tqbfResult = false;
+		} else if (r.type == Type.TRUE) {
+			tqbfResult = true;
+		} else {
+			assert (false);
+		}
+
+		/*
+		 * If we are in benchmarking mode we wait for all tqbfs, because they
+		 * could start computing at very different timestamps. For benchmarking
+		 * we want to assume they start at the same time, and merge in order of
+		 * completion. In production we don't give a **** and join as soon as
+		 * any results are available.
+		 */
+		boolean solved = false;
+		if (QPar.benchmarkMode) {
+			/*
+			 * If all remaining tqbfs are already computing longer than those
+			 * which are finished, then we can merge the finished ones (in order
+			 * of completion)
+			 */
+			long maxTimeOfFinished = 0;
+			long minTimeOfComputing = Long.MAX_VALUE;
+
+			for (TQbf tqbf : this.subformulas) {
+				if (tqbf.isComputing() && tqbf.getComputationTime() < minTimeOfComputing) {
+					minTimeOfComputing = tqbf.getComputationTime();
+				} else if (tqbf.isTerminated() && tqbf.getComputationTime() > maxTimeOfFinished) {
+					maxTimeOfFinished = tqbf.getComputationTime();
 				}
 			}
-		}	
-		
+			logger.info("maxTimeFinished: " + maxTimeOfFinished + ", minTimeComputing: " + minTimeOfComputing);
+			if (minTimeOfComputing > maxTimeOfFinished) {
+				solved = this.mergeFinishedTqbfsInOrder();
+			}
+
+		} else {
+			solved = mergeQbf(r.tqbfId, tqbfResult);
+		}
+
+		logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + this.id + " (" + r.type + ")");
+		// this.formulaDesignations.remove(r.tqbfId);
+		if (solved) {
+			fireJobCompleted(decisionRoot.getTruthValue());
+		} else {
+			if (results.size() == this.usedCores) {
+				// Received all subformulas but still no result...something is
+				// wrong
+				logger.fatal("Merging broken!");
+				logger.fatal("Dumping decisiontree: \n" + decisionRoot.dump());
+				throw new RuntimeException("Merging broken!");
+			}
+		}
+
 	}
-	
+
+	private boolean mergeFinishedTqbfsInOrder() {
+		boolean solved = false;
+		ArrayList<TQbf> finished = new ArrayList<TQbf>();
+		for (TQbf tqbf : this.subformulas) {
+			if (tqbf.getState() != TQbf.State.TERMINATED)
+				continue;
+			finished.add(tqbf);
+		}
+
+		Collections.sort(finished, new Comparator<TQbf>() {
+			@Override
+			public int compare(final TQbf arg0, final TQbf arg1) {
+				return (int) (arg0.getComputationTime() - arg1.getComputationTime());
+			}
+		});
+
+		if (finished.size() > 1)
+			assert (finished.get(0).getComputationTime() <= finished.get(1).getComputationTime());
+
+		for (TQbf tqbf : finished) {
+			if (mergeQbf(tqbf.getId(), tqbf.getResult().getResult())) {
+				return true;
+			}
+		}
+
+		return solved;
+	}
+
 	private void fireJobCompleted(boolean result) {
-		this.setStatus(Status.COMPLETE);
+		this.setState(State.COMPLETE);
 		this.setResult(result);
-		
-		synchronized(this) { this.notifyAll(); }
-				
-		logger.info("Job complete. Resolved to: " + result
-				+ ". Aborting computations.");
+
+		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
 		this.abortComputations();
 
 		// Write the results to a file
@@ -500,8 +413,7 @@ public class Job extends Observable{
 		// the outputfile is set to null
 		if (this.getOutputFileString() != null) {
 			try {
-				BufferedWriter out = new BufferedWriter(new FileWriter(
-						this.getOutputFileString()));
+				BufferedWriter out = new BufferedWriter(new FileWriter(this.getOutputFileString()));
 				out.write(resultText());
 				out.flush();
 			} catch (IOException e) {
@@ -509,16 +421,27 @@ public class Job extends Observable{
 			}
 		}
 
-		if (Shell.getWaitfor_jobid().equals(this.id)) {
-			synchronized (Master.getShellThread()) {
-				Master.getShellThread().notify();
-			}
-		}
+		// if (Shell.getWaitfor_jobid().equals(this.id)) {
+		// synchronized (Master.getShellThread()) {
+		// Master.getShellThread().notify();
+		// }
+		// }
+
 		if (Job.getTableModel() != null)
 			Job.getTableModel().fireTableDataChanged();
-		this.freeResources();
+				
+		synchronized (this) {
+			notifyAll();
+		}
+
 	}
-	
+
+	private void abortComputations() {
+		for (TQbf tqbf : this.subformulas) {
+			tqbf.abort();
+		}
+	}
+
 	public Qbf getFormula() {
 		return formula;
 	}
@@ -539,16 +462,8 @@ public class Job extends Observable{
 		return solver;
 	}
 
-	public Date getStartedAt() {
-		return startedAt;
-	}
-
-	public Status getStatus() {
-		return status;
-	}
-
-	public Date getSolvedAt() {
-		return solvedAt;
+	public State getStatus() {
+		return state;
 	}
 
 	public void setFormula(Qbf formula) {
@@ -575,12 +490,12 @@ public class Job extends Observable{
 		this.solver = solver;
 	}
 
-	public void setStartedAt(Date startedAt) {
-		this.startedAt = startedAt;
-	}
-
-	public void setStatus(Status status) {
-		this.status = status;
+	public void setState(State state) {
+		logger.info("Job " + this.id + " to change state from " + this.state + " to " + state);
+		this.state = state;
+		this.history.put(state, new Date());
+		setChanged();
+		notifyObservers();
 		if (Job.getTableModel() != null) {
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
@@ -588,12 +503,6 @@ public class Job extends Observable{
 				}
 			});
 		}
-	}
-
-	public void setSolvedAt(Date stoppedAt) {
-		// Only allow this once, in case of an erroneous second call
-		if (this.solvedAt == null)
-			this.solvedAt = stoppedAt;
 	}
 
 	public static AbstractTableModel getTableModel() {
@@ -613,60 +522,84 @@ public class Job extends Observable{
 	}
 
 	public double meanSolverTime() {
+		if (this.getStatus() != State.COMPLETE)
+			throw new IllegalStateException("Job not in state COMPLETE.");
+
 		long added = 0;
-		synchronized (solverTimes) {
-			for (long time : solverTimes) {
-				added += time;
-			}
+		for (TQbf tqbf : this.subformulas) {
+			added += tqbf.getResult().solverTime;
 		}
-		double mean = (double) added / (double) solverTimes.size();
+
+		double mean = (double) added / (double) this.subformulas.size();
 		return mean;
 	}
-	
+
 	public long maxSolverTime() {
+		if (this.getStatus() != State.COMPLETE)
+			throw new IllegalStateException("Job not in state COMPLETE.");
+
 		long maxTime = 0;
-		synchronized(solverTimes) {
-			maxTime = Collections.max(solverTimes);
+		for (TQbf tqbf : this.subformulas) {
+			if (tqbf.getResult().solverTime > maxTime)
+				maxTime = tqbf.getResult().solverTime;
 		}
 		return maxTime;
 	}
-	
+
 	public double meanOverheadTime() {
+		if (this.getStatus() != State.COMPLETE)
+			throw new IllegalStateException("Job not in state COMPLETE.");
+
 		long added = 0;
-		synchronized (overheadTimes) {
-			for (long time : overheadTimes) {
-				added += time;
-			}
+		for (TQbf tqbf : this.subformulas) {
+			added += tqbf.getResult().overheadTime;
 		}
-		double mean = (double) added / (double) overheadTimes.size();
+
+		double mean = (double) added / (double) this.subformulas.size();
 		return mean;
 	}
-	
-	public void notifyComputationStarted(String tqbfId) {
-		try {
-			acknowledgedComputations.put(tqbfId);
-			this.startedComputations++;
-			setChanged();
-	        notifyObservers();
-		} catch (InterruptedException e) {
-			logger.error("", e);
-		}
+
+	@Override
+	public void addObserver(RemoteObserver o) throws RemoteException {
+		WrappedObserver mo = new WrappedObserver(o);
+		addObserver(mo);
 	}
-	
+
 	/**
-	* getter method for solved
-	* @return TRUE if there's a result, FALSE otherwise
-	*/
-//	synchronized public boolean isSolved() {
-//		return decisionRoot.hasTruthValue();
-//	}
-	
-//	/**
-//	* getter method for satisfiable
-//	* @return TRUE the QBF is satisfiable, FALSE if not
-//	*/
-//	synchronized public boolean getResult() {
-//		return decisionRoot.getTruthValue();
-//	}
+	 * Observes its tqbfs
+	 */
+	@Override
+	public void update(Object o, Object o1) throws RemoteException {
+		if (o instanceof TQbf) {
+			TQbf tqbf = (TQbf) o;
+			switch (tqbf.getState()) {
+				case COMPUTING:
+				case ABORTED:
+					break;
+				case TERMINATED:
+					this.handleResult(tqbf.getResult());
+					break;
+				case DONTSTART:
+					break;
+				case TIMEOUT:
+					this.triggerTimeout();
+					break;
+				case NEW:
+				default:
+					assert (false);
+			}
+		}
+//		synchronized(this) {
+//			notifyAll();
+//		}
+	}
+
+	public HashMap<State, Date> getHistory() {
+		return history;
+	}
+
+	public void setHistory(HashMap<State, Date> history) {
+		this.history = history;
+	}
 
 }

@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
 
-import main.java.master.Master;
 import main.java.master.SlaveRegistry;
 import main.java.rmi.SlaveRemote;
 
@@ -16,7 +15,7 @@ import org.apache.log4j.Logger;
 public class SlavesTableModel extends AbstractTableModel {
 
 	private static Logger 	logger = Logger.getLogger(SlavesTableModel.class);
-	private String[] columnNames = { "Hostname", "Cores", "Current Jobs" };
+	private String[] columnNames = { "Hostname", "Cores"};
 
 	@Override
 	public String getColumnName(int col) {
@@ -42,8 +41,6 @@ public class SlavesTableModel extends AbstractTableModel {
 					return slave.getHostName();
 				case 1:
 					return slave.getCores();
-				case 2:
-					return StringUtils.join(slave.getCurrentJobs(), ",");
 				default:
 					return null;
 			}
@@ -67,8 +64,6 @@ public class SlavesTableModel extends AbstractTableModel {
 		case 0:
 			return String.class;
 		case 1:
-			return String.class;
-		case 2:
 			return String.class;
 		default:
 			return null;

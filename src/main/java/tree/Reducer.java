@@ -1,7 +1,8 @@
-package main.java.logic;
+package main.java.tree;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import main.java.logic.parser.Node;
 import main.java.logic.parser.SimpleNode;
@@ -24,7 +25,7 @@ public class Reducer {
 	
 	public void reduce() {
 		while(!reducableNodes.isEmpty()) {
-			//logger.info("Reducable nodes(" + reducableNodes.size() + "): " + reducableNodes);
+			logger.info("Reducable nodes(" + reducableNodes.size() + "): " + reducableNodes);
 			SimpleNode current = reducableNodes.pollFirst();
 			
 			//if we are about to reduce the START node we are done
@@ -50,14 +51,14 @@ public class Reducer {
 		// TODO: possible to eliminate this check?
 		if(!node.checkConnectionToRoot())
 			return null;
-//logger.info("Reducing node " + node +" with children " + Arrays.toString(node.children));
+logger.info("Reducing node " + node +" with children " + Arrays.toString(node.children));
 		SimpleNode newNode = null;
 		if(node.jjtGetNumChildren() == 2)
 			newNode = evaluate(node, (SimpleNode)node.jjtGetChild(0), (SimpleNode)node.jjtGetChild(1));
 		else if(node.jjtGetNumChildren() == 1)
 			newNode = evaluate(node, (SimpleNode)node.jjtGetChild(0), null);
 		else
-			throw new RuntimeException();
+			throw new RuntimeException("Node must have 1 or 2 children. Has: " + node.jjtGetNumChildren());
 		
 		SimpleNode parentNode = (SimpleNode) node.jjtGetParent();
 		
@@ -71,7 +72,7 @@ public class Reducer {
 		}
 		newParentChildren.add(newNode);
 		parentNode.children = newParentChildren.toArray(new SimpleNode[newParentChildren.size()]);
-//logger.info("Reduced to: " + newNode);
+logger.info("Reduced to: " + newNode);
 		
 		// Disconnect ourself from parent node
 		node.jjtSetParent(null);

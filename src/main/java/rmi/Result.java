@@ -26,4 +26,14 @@ public class Result implements Serializable {
 		this.jobId = jobId;
 		this.solverTime = solverTime;
 	}
+	
+	public boolean getResult() {
+		if(this.type == Type.TRUE) {
+			return true;
+		} else if(this.type == Type.FALSE) {
+			return false;
+		} else {
+			throw new IllegalStateException("Result is neither true or false");
+		}
+	}
 }

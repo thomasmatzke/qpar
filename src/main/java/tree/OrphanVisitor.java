@@ -1,8 +1,7 @@
-package main.java.slave.solver;
+package main.java.tree;
 
 import java.util.ArrayList;
 
-import main.java.logic.Visitor;
 import main.java.logic.parser.Node;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
@@ -25,7 +24,7 @@ public class OrphanVisitor implements Visitor {
 		// Remove all variables from quantifiedVars we encounter.
 		// The rest are orpahns
 		if(node.getNodeType() == NodeType.VAR) {
-			quantifiedVars.remove(new Integer(node.getVar()));
+			quantifiedVars.remove(Integer.valueOf(node.getVar()));
 		}
 
 		// Make it recursive

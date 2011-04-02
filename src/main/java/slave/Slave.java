@@ -9,14 +9,19 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import main.java.ArgumentParser;
 import main.java.QPar;
+import main.java.master.TQbf;
+import main.java.master.TQbf.State;
 import main.java.rmi.MasterRemote;
+import main.java.rmi.RemoteObserver;
 import main.java.rmi.SlaveRemote;
+import main.java.rmi.TQbfRemote;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -30,12 +35,10 @@ import sun.misc.Signal;
  * @author thomasm
  *
  */
-public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
-	/**
-	 * 
-	 */
+public final class Slave extends UnicastRemoteObject implements SlaveRemote, RemoteObserver  {
 	private static final long serialVersionUID = -7927545942720427850L;
 	static Logger logger = Logger.getLogger(Slave.class);
+
 	public static ArrayList<String> availableSolvers = new ArrayList<String>();
 	public String masterIp;
 	
@@ -44,17 +47,21 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	
 	public String masterName = null;
 	
-	transient public FormulaListener formulaListener = null;
+//	transient public FormulaListener formulaListener = null;
+	
+	public List<TQbfRemote> tqbfs = new ArrayList<TQbfRemote>();
 	
 	public static String hostname = null;
 	
+	public static ExecutorService globalThreadPool = Executors.newFixedThreadPool(200);
+	
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
 		logger.info("Starting Slave...");
-			
+		
 		if (masterIp == null) {
 			// so no ip was set...listen for the beacon...
 			try {
-				new Thread(new BeaconListener(this)).start();
+				globalThreadPool.execute(new BeaconListener(this));
 				// Wait til we found a signal
 				synchronized(this) { wait(); }
 			} catch (UnknownHostException e) {
@@ -98,15 +105,16 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 		// if already connected clean up mess
 		if(connected) {
 			logger.info("Already connected. Reconnecting...");
-			killAllThreads();
-			this.formulaListener.stop();
+//			killAllThreads();
+//			this.formulaListener.stop();
 			connected = false;		
 		}
 			
 		while(!connected){
 			try {
-				this.formulaListener = new FormulaListener(11111);
-				new Thread(this.formulaListener).start();			
+//				this.formulaListener = new FormulaListener(11111);
+//				new Thread(this.formulaListener).start();
+//				globalThreadPool.execute(this.formulaListener);
 				logger.info("Looking up " + masterName + "...");
 				master = (MasterRemote)Naming.lookup(masterName);
 				logger.info("Registering with Master...");
@@ -124,7 +132,7 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 			} catch (IOException e) {
 				logger.error(e);
 			}
-			this.formulaListener.stop();
+//			this.formulaListener.stop();
 			logger.info("Could not connect. Trying again in 5 seconds...");		
 			try { Thread.sleep(5000); } catch (InterruptedException e) {}
 		}
@@ -175,48 +183,35 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	@Override
 	public void kill(String reason) throws RemoteException {
 		logger.info("Killing slave...");
-		this.killAllThreads();
-		new Thread() {
+//		this.killAllThreads();
+		
+		Runnable r = new Runnable() {
             @Override
 			public void run() {
-                 System.exit(0);
-            }}.start();
+            	System.exit(0);
+            }};
+        globalThreadPool.execute(r);
 	}
 
 	@Override
 	public void shutdown() throws RemoteException {
 		logger.info("Shutting down host...");
-		new Thread() {
+		
+		Runnable r = new Runnable() {
             @Override
 			public void run() {
                  Slave.shutdownHost();
-            }}.start();
+            }};
+        globalThreadPool.execute(r);
 	}
 
-	@Override
-	public void abortFormula(String tqbfId) {
-		ComputationStateMachine computation = ComputationStateMachine.computations.get(tqbfId);
-		if(computation != null)
-			computation.abortComputation();
-	}
 
-	@Override
-	public String[] getCurrentJobs() throws RemoteException {
-		Set<String> jobIds = new HashSet<String>();
-		for(String tqbfId : ComputationStateMachine.computations.keySet()) {
-			String jobPrefix = tqbfId.split("\\.")[0];
-			jobIds.add(jobPrefix);
-		}
-		return jobIds.toArray(new String[jobIds.size()]);
-	}
-	
-	public void killAllThreads() {
-		logger.info("Killing all threads...");
-		for(ComputationStateMachine machine : ComputationStateMachine.computations.values()) {
-			machine.abortComputation();
-			logger.info("Computation " + machine.tqbfId + " aborted.");
-		}
-	}
+//	public void killAllThreads() {
+//		logger.info("Killing all threads...");
+//		for(TQbfRemote tqbf : this.tqbfs) {
+//			tqbf.abort();
+//		}
+//	}
 	
 	public String toString() {
 		try {
@@ -232,10 +227,10 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	}
 
 	@Override
-	public void setMailInfo(String mailServer, String mailUser, String mailPass) {
-		QPar.mailServer = mailServer;
-		QPar.mailUser = mailUser;
-		QPar.mailPass = mailPass;
+	synchronized public void setMailInfo(String mailServer, String mailUser, String mailPass) {
+		QPar.setMailServer(mailServer);
+		QPar.setMailUser(mailUser);
+		QPar.setMailPass(mailPass);
 	}
 
 	@Override
@@ -282,8 +277,41 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 
 	@Override
 	public int freeCores() throws RemoteException {
-		return this.getCores() - ComputationStateMachine.computations.size();
+//		return this.getCores() - ComputationStateMachine.computations.size();
+		int computingcount = 0;
+		for(TQbfRemote tqbf : this.tqbfs) {
+			if(tqbf.isComputing())
+				computingcount++;
+		}
+		return this.getCores() - computingcount;
 	}
 
+	@Override
+	public void computeTqbf(TQbfRemote tqbf) throws RemoteException {
+		this.tqbfs.add(tqbf);
+		tqbf.compute(this);
+	}
+
+//	@Override
+//	public ArrayList<String> getCurrentJobs() throws RemoteException {
+//		ArrayList<String> jobs = new ArrayList<String>();
+//		for(TQbf tqbf : tqbfs) {
+//			if(!jobs.contains(tqbf.getJobId()))
+//				jobs.add(tqbf.getJobId());
+//		}
+//		return jobs;
+//	}
+
+	/**
+	 * Observes tqbfs to remove from computations if terminated
+	 */
+	@Override
+	public void update(Object o, Object arg1) {
+		if(o instanceof TQbf) {
+			TQbf tqbf = (TQbf) o;
+			if(tqbf.getState() != State.COMPUTING)
+				this.tqbfs.remove(o);			
+		}
+	}
 	
 }

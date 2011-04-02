@@ -19,7 +19,7 @@ public class QPar {
 	public static String mailServer = null;
 	public static String mailUser = null;
 	public static String mailPass = null;
-	
+	public static boolean benchmarkMode = false;
 	
 	public static boolean isMailInfoComplete() {
 		return mailServer != null && mailUser != null && mailPass != null;
@@ -32,10 +32,11 @@ public class QPar {
 		} catch (IOException e) {
 			logger.warn("Config file not found.");
 		}
-		QPar.mailPass 	= properties.getProperty("mailPass");
-		QPar.mailUser 	= properties.getProperty("mailUser");
-		QPar.mailServer = properties.getProperty("mailServer");
-		QPar.exceptionNotifierAddress = properties.getProperty("exceptionNotifierAddress");
+		QPar.mailPass 					= properties.getProperty("mailPass");
+		QPar.mailUser 					= properties.getProperty("mailUser");
+		QPar.mailServer 				= properties.getProperty("mailServer");
+		QPar.exceptionNotifierAddress 	= properties.getProperty("exceptionNotifierAddress");
+		QPar.benchmarkMode 				= Boolean.parseBoolean(properties.getProperty("benchmarkMode"));
 	}
 	
 	public static void sendExceptionMail(Throwable t) {
@@ -48,6 +49,30 @@ public class QPar {
 		body += StackTraceUtil.getStackTrace(t);
 		if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
 			Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification", body);
+	}
+
+	public static String getMailServer() {
+		return mailServer;
+	}
+
+	public static void setMailServer(String mailServer) {
+		QPar.mailServer = mailServer;
+	}
+
+	public static String getMailUser() {
+		return mailUser;
+	}
+
+	public static void setMailUser(String mailUser) {
+		QPar.mailUser = mailUser;
+	}
+
+	public static String getMailPass() {
+		return mailPass;
+	}
+
+	public static void setMailPass(String mailPass) {
+		QPar.mailPass = mailPass;
 	}
 	
 }

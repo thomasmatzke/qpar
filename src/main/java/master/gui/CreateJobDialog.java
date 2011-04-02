@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.File;
+import java.rmi.RemoteException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -18,10 +19,13 @@ import javax.swing.JTextField;
 
 import main.java.master.Job;
 
+import org.apache.log4j.Logger;
+
 public class CreateJobDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
-
+	static Logger logger = Logger.getLogger(CreateJobDialog.class);
+	
 	/** Returns an ImageIcon, or null if the path was invalid. */
 	protected static ImageIcon getIcon(String path) {
 		String img_path = Thread.currentThread().getContextClassLoader()
@@ -292,12 +296,16 @@ public class CreateJobDialog extends JDialog {
 					}
 					// TODO: Let set timeout & maxcores via GUI
 					if(new File(formulaTextField.getText()).exists()) {
-						new Job(getFormulaTextField().getText(),
-								getOutputFileTextField().getText(),
-								(String) getSolverComboBox().getSelectedItem(),
-								(String) getHeuristicComboBox().getSelectedItem(),
-								0,
-								0);
+						try {
+							new Job(getFormulaTextField().getText(),
+									getOutputFileTextField().getText(),
+									(String) getSolverComboBox().getSelectedItem(),
+									(String) getHeuristicComboBox().getSelectedItem(),
+									0,
+									0);
+						} catch (RemoteException e1) {
+							logger.error("", e1);
+						}
 						dispose();
 					} else {
 						formulaTextField.setBackground(Color.RED);

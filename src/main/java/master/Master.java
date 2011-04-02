@@ -3,12 +3,15 @@ package main.java.master;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.Serializable;
 import java.net.UnknownHostException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -17,7 +20,6 @@ import main.java.QPar;
 import main.java.master.console.Shell;
 import main.java.master.gui.ProgramWindow;
 import main.java.rmi.MasterRemote;
-import main.java.rmi.Result;
 import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.BasicConfigurator;
@@ -31,11 +33,8 @@ import org.apache.log4j.Logger;
  * @author thomasm
  * 
  */
-public class Master extends UnicastRemoteObject implements MasterRemote {
+public class Master extends UnicastRemoteObject implements MasterRemote, Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -6189223346936131655L;
 
 	private static ArgumentParser ap;
@@ -43,21 +42,22 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 	static Logger logger = Logger.getLogger(Master.class);
 	
 	private static ProgramWindow programWindow;
-	private static Thread shellthread;
-	private static Shell shell;
+	transient private Shell shell;
 	private static boolean startGui = false;
+	private Registry registry = null;
 	
 	public static AbstractTableModel slaveTableModel;
 	
+	public static ExecutorService globalThreadPool = Executors.newFixedThreadPool(200);
 	
-	public Master() throws FileNotFoundException, RemoteException {		
-		Registry registry = null;
+	public Master() throws FileNotFoundException, RemoteException, NotBoundException {		
+		
 		// Start the registry
 		try {
 			registry = LocateRegistry.createRegistry(1099);
-		} catch (RemoteException e1) {
-			logger.fatal(e1);
-			System.exit(-1);
+		} catch (RemoteException e) {
+			logger.fatal(e);
+			throw e;
 		}
 		
 		// Start own interface
@@ -80,30 +80,10 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 				shell = new Shell();
 			}
 
-			shellthread = new Thread(shell);
-			shellthread.start();
+			shell.run();
 		}
+		System.exit(0);
 	}
-	
-	public static void removeSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
-		SlaveRegistry.instance().removeSlave(slave.getHostName());
-		if (slaveTableModel != null) {
-			slaveTableModel.fireTableDataChanged();
-		}
-	}
-	
-	public static void addSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
-		logger.debug("Adding Slave: " + slave + "...");
-		SlaveRegistry.instance().put(slave.getHostName(), slave);
-		if (slaveTableModel != null) {
-			slaveTableModel.fireTableDataChanged();
-		}
-	}
-	
-//	public static HashMap<String, SlaveRemote> getSlaves() {
-//		return slaves;
-//	}
-	
 
 	private static void usage() {
 		System.out
@@ -113,44 +93,49 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 		System.exit(-1);
 	}
 
-	public static Shell getShell() {
-		return shell;
-	}
+//	public static Shell getShell() {
+//		return shell;
+//	}
+//
+//	public static Thread getShellThread() {
+//		return shellthread;
+//	}
 
-	public static Thread getShellThread() {
-		return shellthread;
-	}
-
-	@Override
-	public void unregisterSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
-		logger.info("Unregistering Slave. Hostname: " + slave.getHostName());
-		for(String jobId : slave.getCurrentJobs()) {
-			Job j = Job.getJobs().get(jobId);
-			j.abort("Slave unregistering.");
-		}
-	}
+//	@Override
+//	public void unregisterSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
+//		logger.info("Unregistering Slave. Hostname: " + slave.getHostName());
+//		SlaveRegistry.instance().removeSlave(slave.getHostName());
+//	}
 
 	@Override
-	public void registerSlave(SlaveRemote ref) throws RemoteException, UnknownHostException {
-		logger.info("Registering Slave. Hostname: " + ref.getHostName() + ", Cores: " + ref.getCores() + ", Solvers: " + ref.getSolvers());
+	public void registerSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
+		logger.info("Registering Slave. Hostname: " + slave.getHostName() + ", Cores: " + slave.getCores() + ", Solvers: " + slave.getSolvers());
 		if(QPar.isMailInfoComplete())
-			ref.setMailInfo(QPar.mailServer, QPar.mailUser, QPar.mailPass);
+			slave.setMailInfo(QPar.mailServer, QPar.mailUser, QPar.mailPass);
 		if(QPar.exceptionNotifierAddress != null)
-			ref.setExceptionNotifierAddress(QPar.exceptionNotifierAddress);
-		Master.addSlave(ref);
-		synchronized(Master.getShellThread()) {
-			Master.getShellThread().notify();
-		}
+			slave.setExceptionNotifierAddress(QPar.exceptionNotifierAddress);
+		SlaveRegistry.instance().put(slave.getHostName(), slave);
 	}
 
-	@Override
-	public void returnResult(Result r) throws RemoteException {
-		logger.info("Result returned. Job: " + r.jobId + ", tqbfId: " + r.tqbfId + ", ResultType: " + r.type.toString());
-		Job.getJobs().get(r.jobId).handleResult(r);
-	}
+//	@Override
+//	public void returnResult(Result r) throws RemoteException {
+//		logger.info("Result returned. Job: " + r.jobId + ", tqbfId: " + r.tqbfId + ", ResultType: " + r.type.toString());
+//		TqbfRegistry.instance().registerResult(r);
+//	}
 
 	@Override
 	public void ping() throws RemoteException {}
+	
+//	@Override
+//	public void notifyComputationStarted(String tqbfId) throws RemoteException {
+//		logger.info("Computation started on formula " + tqbfId);
+//		TqbfRegistry.instance().acknowledgeComputationStart(tqbfId);
+//	}
+
+	@Override
+	public void displaySlaveMessage(String slave, String message) throws RemoteException {
+		logger.info("Slave " + slave + " said: " + message);
+	}
 	
 	public static void main(String[] args) throws Throwable {
 		Logger.getRootLogger().setLevel(QPar.logLevel);
@@ -172,8 +157,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 		
 		QPar.loadConfig();
 		
-		new Thread(new MulticastBeacon()).start();
-		
+		Master.globalThreadPool.execute(new MulticastBeacon());
 		try {
 			new Master();
 		} catch (Throwable t) {
@@ -181,20 +165,5 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 			throw t;
 		}
 	}
-
-	@Override
-	public void notifyComputationStarted(String tqbfId) throws RemoteException {
-		logger.info("Computation started on formula " + tqbfId);
-		String jobPrefix = tqbfId.split("\\.")[0];
-		Job job = Job.getJobs().get(jobPrefix);
-		job.notifyComputationStarted(tqbfId);
-	}
-
-	@Override
-	public void displaySlaveMessage(String slave, String message) throws RemoteException {
-		logger.info("Slave " + slave + " said: " + message);
-	}
-
-	
 	
 }

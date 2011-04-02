@@ -1,19 +1,35 @@
-package main.java.logic;
+package main.java.master;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Observable;
 import java.util.Vector;
 
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
-import main.java.slave.solver.OrphanVisitor;
+import main.java.rmi.InterpretationData;
+import main.java.rmi.RemoteObserver;
+import main.java.rmi.Result;
+import main.java.rmi.SlaveRemote;
+import main.java.rmi.TQbfRemote;
+import main.java.rmi.WrappedObserver;
+import main.java.slave.Slave;
+import main.java.slave.solver.ResultHandler;
+import main.java.slave.solver.Solver;
+import main.java.slave.solver.SolverFactory;
+import main.java.tree.OrphanVisitor;
+import main.java.tree.Reducer;
 
 import org.apache.log4j.Logger;
 
@@ -21,28 +37,125 @@ import org.apache.log4j.Logger;
 // all vars/exist-quantified vars/all-quantified vars/vars to assign true and
 // vars to assign false. They are created in the Qbf class and sent to the
 // slaves to be solved there.
-public class TransmissionQbf implements Serializable {
-	/**
-	 * 
-	 */
+public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 	private static final long serialVersionUID = -6627723521432123349L;
+	static Logger logger = Logger.getLogger(TQbf.class);
+	
+	public TQbf() throws RemoteException {
+		super();
+		UnicastRemoteObject.exportObject(this, 0);
+	}
+	
+	public enum State { NEW, COMPUTING, TERMINATED, DONTSTART, ABORTED, TIMEOUT }
+		
 	private transient SimpleNode root = null;
 	public byte[] serializedFormula = null;
 	
-	public String id;
-	public long timeout;
-	public String jobId;
+	private String id;
+	private long timeout;
+	private String jobId;
 	private Vector<Integer> eVars = new Vector<Integer>();
 	private Vector<Integer> aVars = new Vector<Integer>();
 	private Vector<Integer> vars = new Vector<Integer>();
-	public ArrayList<Integer> trueVars = new ArrayList<Integer>();
-	public ArrayList<Integer> falseVars = new ArrayList<Integer>();
-	static Logger logger = Logger.getLogger(TransmissionQbf.class);
+	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
+	private ArrayList<Integer> falseVars = new ArrayList<Integer>();
+	
+	private ArrayDeque<SimpleNode> truthAssignedNodes = null;
 
-	public ArrayDeque<SimpleNode> truthAssignedNodes = null;
+	private String solverId = null;
 
-	public String solverId = null;
-
+	private Result result = null;
+	
+	private Map<State, Date> history = new HashMap<State, Date>();
+	private State state = State.NEW;
+	
+	private SlaveRemote slave;
+	private Solver solver;
+	
+	synchronized public void compute(SlaveRemote slave) {
+		this.setSlave(slave);
+		logger.info("Computing formula " + this.getId() + "...");
+		Solver solver = SolverFactory.getSolver(this.getSolverId(), this, this);
+		this.solver = solver;
+		Slave.globalThreadPool.execute(solver);
+		this.setState(TQbf.State.COMPUTING);
+	}
+	
+	public long getComputationTime() {
+		if(this.isComputing()) {
+			return new Date().getTime() - history.get(State.COMPUTING).getTime();
+		} else if(this.isTerminated()) {
+			return history.get(State.TERMINATED).getTime() - history.get(State.COMPUTING).getTime();
+		} else {
+			throw new IllegalStateException("TQbf was not computing or terminated");
+		}		
+	}
+	
+	synchronized public void abort() {
+		switch(this.getState()) {
+			case NEW:
+				this.setState(State.DONTSTART);
+				break;
+			case COMPUTING:
+				this.solver.kill();
+				this.setState(State.ABORTED);
+				break;
+			case ABORTED:
+			case TERMINATED:
+			case TIMEOUT:
+				break;
+			case DONTSTART:
+			default:
+				assert(false);
+		}				
+	}
+	
+	synchronized public void timeout() {
+		if(!this.getState().equals(State.COMPUTING))
+			throw new IllegalStateException("Tqbf must be computing to change to state TIMEOUT");
+		this.setState(State.TIMEOUT);
+	}
+	
+	@Override
+	synchronized public void handleResult(Result r) {
+		this.setResult(r);		
+	}
+	
+	/**
+	 * Blocks until computation is terminated
+	 */
+	public void waitFor() {
+		synchronized(this) {
+			while(result == null) {
+				try { wait(); } catch (InterruptedException e) {}
+			}
+		}
+	}
+		
+	synchronized public void setResult(Result r) {
+		synchronized(this) {
+			this.result = r;
+			notifyAll();
+		}
+		this.setState(State.TERMINATED);
+	}
+	
+	private void setState(State state) {
+		logger.info("Tqbf " + this.getId() + " to change state from " + this.state + " to " + state);
+		this.state = state;
+		history.put(state, new Date());
+		setChanged();
+        notifyObservers();
+	}
+		
+	synchronized public Result getResult() {
+		return result;
+	}
+	
+	synchronized public State getState() {
+		return state;
+	}
+	
 	public void reduceFast() {
 		ArrayDeque<SimpleNode> reducableNodes = new ArrayDeque<SimpleNode>();
 
@@ -95,7 +208,7 @@ public class TransmissionQbf implements Serializable {
 	 * debug method that logs the content of a transmissionQbf
 	 */
 	public void checkQbf() {
-		logger.debug("checkQBF id: " + this.id);
+		logger.debug("checkQBF id: " + this.getId());
 		// logger.debug("checkQBF root node: " + root.getClass().getName() +
 		// " with " +
 		// root.jjtGetNumChildren() + " children (should be 1. first one: " +
@@ -167,39 +280,39 @@ public class TransmissionQbf implements Serializable {
 	/**
 	 * assigns the transmissionQbf-specific truth values to the tree.
 	 */
-	public void assignTruthValues() {
-		int i;
-		ArrayDeque<SimpleNode> assigned = new ArrayDeque<SimpleNode>();
-		for (i = 0; i < this.trueVars.size(); i++) {
-			assigned.addAll(this.getRootNode().assignTruthValue(this.trueVars.get(i), true));
-		}
-		for (i = 0; i < this.falseVars.size(); i++) {
-			assigned.addAll(this.getRootNode().assignTruthValue(this.falseVars.get(i), false));
-		}
-
-		this.truthAssignedNodes = assigned;
-	}
+//	public void assignTruthValues() {
+//		int i;
+//		ArrayDeque<SimpleNode> assigned = new ArrayDeque<SimpleNode>();
+//		for (i = 0; i < this.trueVars.size(); i++) {
+//			assigned.addAll(this.getRootNode().assignTruthValue(this.trueVars.get(i), true));
+//		}
+//		for (i = 0; i < this.falseVars.size(); i++) {
+//			assigned.addAll(this.getRootNode().assignTruthValue(this.falseVars.get(i), false));
+//		}
+//
+//		this.truthAssignedNodes = assigned;
+//	}
 
 	/**
 	 * calls the reduce() method of the tree as long as there's something to
 	 * reduce
 	 */
-	public void reduceTree() {
-		boolean continueReducing = true;
-
-		while (continueReducing) {
-			continueReducing = this.getRootNode().reduce();
-		}
-	}
+//	public void reduceTree() {
+//		boolean continueReducing = true;
+//
+//		while (continueReducing) {
+//			continueReducing = this.getRootNode().reduce();
+//		}
+//	}
 
 	/**
 	 * calls the traverse() method of the tree.
 	 * 
 	 * @return The formula (without header and footer) in QPro format.
 	 */
-	public String traverseTree() {
-		return this.getRootNode().jjtGetChild(0).traverse();
-	}
+//	public String traverseTree() {
+//		return this.getRootNode().jjtGetChild(0).traverse();
+//	}
 
 	/**
 	 * checks if the first node after the input node has a truth value assigned
@@ -295,19 +408,89 @@ public class TransmissionQbf implements Serializable {
 		this.root = n;
 	}
 
-	public TransmissionQbf deepClone() throws IOException,
-			ClassNotFoundException {
-		TransmissionQbf clonedObj = null;
+	public TQbf deepClone() throws Exception {
+		TQbf clonedObj = null;
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(baos);
 		oos.writeObject(this);
 		oos.close();
-
 		ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
 		ObjectInputStream ois = new ObjectInputStream(bais);
-		clonedObj = (TransmissionQbf) ois.readObject();
+		clonedObj = (TQbf) ois.readObject();
 		ois.close();
 		return clonedObj;
 	}
 
+	@Override
+	public void addObserver(RemoteObserver o) throws RemoteException {
+//		logger.info("Adding observer");
+		WrappedObserver mo = new WrappedObserver(o);
+        addObserver(mo);
+	}
+
+	public void setJobId(String jobId) {
+		this.jobId = jobId;
+	}
+
+	public String getJobId() {
+		return jobId;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setTimeout(long timeout) {
+		this.timeout = timeout;
+	}
+
+	public long getTimeout() {
+		return timeout;
+	}
+
+	public void setSolverId(String solverId) {
+		this.solverId = solverId;
+	}
+
+	public String getSolverId() {
+		return solverId;
+	}
+
+	public boolean isComputing() {
+		return this.state == State.COMPUTING ? true : false;
+	}
+	
+	public boolean isNew() {
+		return this.state == State.NEW ? true : false;
+	}
+	
+	public boolean isTerminated() {
+		return this.state == State.TERMINATED ? true : false;
+	}
+	
+	public boolean isDontstart() {
+		return this.state == State.DONTSTART ? true : false;
+	}
+	
+	public boolean isAborted() {
+		return this.state == State.ABORTED ? true : false;
+	}
+
+	public void setSlave(SlaveRemote slave) {
+		this.slave = slave;
+	}
+
+	public SlaveRemote getSlave() {
+		return slave;
+	}
+
+	@Override
+	public InterpretationData getWorkUnit() throws RemoteException {
+		InterpretationData id = new InterpretationData(this.serializedFormula, this.trueVars, this.falseVars);
+		return id;
+	}
 }

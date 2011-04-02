@@ -1,18 +1,16 @@
 package main.java.slave.solver;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.util.Date;
-import java.util.Random;
 
-import main.java.StreamGobbler;
-import main.java.logic.TransmissionQbf;
-import main.java.slave.Slave;
+import main.java.master.TQbf;
+import main.java.rmi.InterpretationData;
+import main.java.rmi.TQbfRemote;
+import main.java.tree.ReducedInterpretation;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
@@ -49,27 +47,30 @@ public class QProSolver extends Solver {
 	private volatile Object killMutex = new Object();
 	
 	
-	public QProSolver(TransmissionQbf tqbf, ResultHandler handler) {
+	public QProSolver(TQbfRemote tqbf, ResultHandler handler) {
 		super(tqbf, handler);
 	}
 
 	public void run() {
 		this.overheadStartedAt = new Date();
-		this.inputString = toInputString(this.tqbf);
-		this.overheadStoppedAt = new Date();
 		
-		if (inputString.equals("true")) {
-			logger.info("Formula collapsed");
-			returnWithSuccess(tqbfId, jobId, true);
-			return;
-		} else if (inputString.equals("false")) {
-			logger.info("Formula collapsed");
-			returnWithSuccess(tqbfId, jobId, false);
+//		this.inputString = toInputString(this.tqbf);
+		ReducedInterpretation ri;
+		try {
+			ri = new ReducedInterpretation(tqbf.getWorkUnit());
+		} catch (Exception e) {
+			logger.error("Reducer fail", e);
+			this.returnWithError(this.tqbfId, this.jobId, e);
 			return;
 		}
-
-		this.tqbf = null;
-		System.gc();
+			
+		this.overheadStoppedAt = new Date();
+		
+		if(ri.isTruthValue()) {
+			logger.info("Formula collapsed");
+			returnWithSuccess(tqbfId, jobId, ri.getTruthValue());
+			return;
+		}
 
 		Executor executor = new DefaultExecutor();
 
@@ -112,22 +113,23 @@ public class QProSolver extends Solver {
 			returnWithError(tqbfId, jobId, e);
 			return;
 		}
-		
+				
 		while (!resultHandler.hasResult()) {
 			try {
-				resultHandler.waitFor((this.timeout * 1000) + 2000);
-//				resultHandler.waitFor();
+				logger.info("waitsfor " + tqbf.getTimeout() * 1000 + " ms");
+				resultHandler.waitFor(tqbf.getTimeout() * 1000);
 				watchdog.destroyProcess();
 			} catch (InterruptedException e1) {
+			} catch (RemoteException e) {
+				watchdog.destroyProcess();
+				logger.error("", e);
+				return;
 			}
+			
 		}
 		this.qproProcessStoppedAt = new Date();
 		logger.info("qpro process terminated... (" + tqbfId + ")");
-
-		
-		if (killed)
-			return;
-
+				
 		try {
 			handleResult(output.toString("ISO-8859-1"));
 		} catch (UnsupportedEncodingException e) {
@@ -136,7 +138,6 @@ public class QProSolver extends Solver {
 			return;
 		}
 		
-
 	}
 
 	private void handleResult(String readString) {
@@ -144,20 +145,23 @@ public class QProSolver extends Solver {
 			return;
 
 		logger.info("qpro return string: " + readString);
-
-		long solverTime = this.qproProcessStoppedAt.getTime()
-				- this.qproProcessStartedAt.getTime();
-		long overheadTime = this.overheadStoppedAt.getTime()
-				- this.overheadStartedAt.getTime();
-		// If qpro returns 1 the subformula is satisfiable
-		if (readString.startsWith("1")) {
-			returnWithSuccess(tqbfId, jobId, true, solverTime, overheadTime);
-
-			// IF qpro returns 0 the subformula is unsatisfiable
+				
+		if(this.isTimedOut()) {
+			// we timeouted
+			try {
+				this.tqbf.timeout();
+			} catch (RemoteException e) {
+				logger.error("", e);
+			}
+		} if (readString.startsWith("1")) {
+			// If qpro returns 1 the subformula is satisfiable
+			returnWithSuccess(tqbfId, jobId, true, this.getSolvertime(), this.getOverheadtime());
 		} else if (readString.startsWith("0")) {
-			returnWithSuccess(tqbfId, jobId, false, solverTime, overheadTime);
-			// anything else is an error
+			// IF qpro returns 0 the subformula is unsatisfiable
+			returnWithSuccess(tqbfId, jobId, false, this.getSolvertime(), this.getOverheadtime());
+
 		} else {
+			// anything else is an error
 			String errorString = "Unexpected result from solver.\n"
 					+ "	Return String: " + readString + "\n" + "	TQbfId:		 : "
 					+ tqbfId + "\n";
@@ -168,39 +172,36 @@ public class QProSolver extends Solver {
 	/**
 	 * make a formula in qpro format from the transmission QBF
 	 * 
-	 * @param t
+	 * @param tqbf
 	 *            the QBF the slave gets from the master
 	 * @return a string representation of the tree in QPRO format
 	 */
-	private static String toInputString(TransmissionQbf t) {
-		String traversedTree = "";
-		t.assignTruthValues();
-		t.reduceFast();
-
-		if (t.rootIsTruthNode()) {
-			if (t.rootGetTruthValue()) {
-				return "true";
-			}
-			return "false";
-		}
-
-		// check if there are still occurences of all- and exist-quantified vars
-		// left in the tree after reducing. if not, remove them from aVars and
-		// eVars
-		t.eliminateOrphanedVars();
-
-		// traverse the tree to get a string in qpro format
-		traversedTree += "QBF\n" + (t.getMaxVar()) + "\n";
-		traversedTree += t.traverseTree(); // <- actual traversion happens here
-		traversedTree += "QBF\n";
-		logger.debug("traversing finished");
-		return traversedTree;
-	}
-
-	@Override
-	public Thread getThread() {
-		return thread;
-	}
+//	private static String toInputString(InterpretationData data) {
+//		
+//		
+//		String traversedTree = "";
+//		tqbf.assignTruthValues();
+//		tqbf.reduceFast();
+//
+//		if (tqbf.rootIsTruthNode()) {
+//			if (tqbf.rootGetTruthValue()) {
+//				return "true";
+//			}
+//			return "false";
+//		}
+//
+//		// check if there are still occurences of all- and exist-quantified vars
+//		// left in the tree after reducing. if not, remove them from aVars and
+//		// eVars
+//		tqbf.eliminateOrphanedVars();
+//
+//		// traverse the tree to get a string in qpro format
+//		traversedTree += "QBF\n" + (tqbf.getMaxVar()) + "\n";
+//		traversedTree += tqbf.traverseTree(); // <- actual traversion happens here
+//		traversedTree += "QBF\n";
+//		logger.debug("traversing finished");
+//		return traversedTree;
+//	}
 
 	@Override
 	public void kill() {
@@ -211,5 +212,17 @@ public class QProSolver extends Solver {
 				watchdog.destroyProcess();
 			this.killed = true;
 		}
+	}
+	
+	public long getSolvertime() {
+		return this.qproProcessStoppedAt.getTime() - this.qproProcessStartedAt.getTime();
+	}
+	
+	public long getOverheadtime() {
+		return this.overheadStoppedAt.getTime()	- this.overheadStartedAt.getTime();
+	}
+	
+	public boolean isTimedOut() {
+		return this.getSolvertime() > this.timeout;
 	}
 }

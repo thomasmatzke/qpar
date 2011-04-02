@@ -25,26 +25,26 @@ public interface Node {
 	
 	// custom(ized) methods
 	public double getTruthProbability();
-	public ArrayList<SimpleNode>		assignTruthValue(int v, boolean b);
+//	public ArrayList<SimpleNode>		assignTruthValue(int v, boolean b);
 	public boolean	checkConnectionToRoot();
 	public void		deleteChildren();
 	public void		dump(String prefix);
 	// public boolean	findNodes(Vector<Integer> v); // was replaced by findVar(int v)
 	public int		getId();
 //	public String	getOp();
-	public String	getTruthValue();
+//	public String	getTruthValue();
 	public int		getVar();
 	public int		getNodeVariable();
-	public boolean	reduce();
+//	public boolean	reduce();
 	public boolean	replaceChild(Node oldNode, Node newNode);
 //	public void		setOp(String o);
 	public void		setTruthValue(boolean t);
 	public void		setVar(int v);
 	public void		setNodeType(main.java.logic.parser.SimpleNode.NodeType n);
 	public main.java.logic.parser.SimpleNode.NodeType getNodeType();
-	public String	traverse();
+//	public String	traverse();
 //	public boolean	findVar(int v);
-	public String getEnclosedFormula(NodeType op);
+//	public String getEnclosedFormula(NodeType op);
 	public Vector<Integer> getPositiveLiterals(SimpleNode.NodeType op, Vector<Integer> v);
 	public Vector<Integer> getNegativeLiterals(SimpleNode.NodeType op, Vector<Integer> v);
   /** This method is called after the node has been made the current

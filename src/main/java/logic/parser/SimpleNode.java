@@ -2,13 +2,18 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=false,NODE_PREFIX=AST,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package main.java.logic.parser;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Vector;
 
 import main.java.QPar;
-import main.java.logic.Visitor;
 import main.java.logic.heuristic.DependencyNode;
+import main.java.tree.Visitor;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -16,9 +21,6 @@ import org.apache.log4j.Logger;
 // All nodes in the formula tree are derived from SimpleNode.
 public class SimpleNode implements Node, Serializable {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 6618526605222641809L;
 
 	static Logger logger = Logger.getLogger(SimpleNode.class);
@@ -73,37 +75,37 @@ public class SimpleNode implements Node, Serializable {
 	}
 	
 	
-	/**
-	 * assign a truth value to a specific var
-	 * 
-	 * @param v
-	 *            the var to assign a truth value to
-	 * @param b
-	 *            the truth value to assign
-	 */
-	public ArrayList<SimpleNode> assignTruthValue(int v, boolean b) {
-		int numChildren = this.jjtGetNumChildren();
-		
-		ArrayList<SimpleNode> assigned = new ArrayList<SimpleNode>();
-		// not in a leaf node, nothing to set
-		if (nodeType != NodeType.VAR) {
-			for (int i = 0; i < numChildren; i++) {
-				assigned.addAll(jjtGetChild(i).assignTruthValue(v, b));
-			}
-		}
-		// in the right leaf node now
-		else {
-			if ((var == v) && (nodeType == NodeType.VAR)) {
-				assigned.add(this);
-				if (b) {
-					nodeType = NodeType.TRUE;
-				} else {
-					nodeType = NodeType.FALSE;
-				}
-			}
-		}
-		return assigned;
-	}
+//	/**
+//	 * assign a truth value to a specific var
+//	 * 
+//	 * @param v
+//	 *            the var to assign a truth value to
+//	 * @param b
+//	 *            the truth value to assign
+//	 */
+//	public ArrayList<SimpleNode> assignTruthValue(int v, boolean b) {
+//		int numChildren = this.jjtGetNumChildren();
+//		
+//		ArrayList<SimpleNode> assigned = new ArrayList<SimpleNode>();
+//		// not in a leaf node, nothing to set
+//		if (nodeType != NodeType.VAR) {
+//			for (int i = 0; i < numChildren; i++) {
+//				assigned.addAll(jjtGetChild(i).assignTruthValue(v, b));
+//			}
+//		}
+//		// in the right leaf node now
+//		else {
+//			if ((var == v) && (nodeType == NodeType.VAR)) {
+//				assigned.add(this);
+//				if (b) {
+//					nodeType = NodeType.TRUE;
+//				} else {
+//					nodeType = NodeType.FALSE;
+//				}
+//			}
+//		}
+//		return assigned;
+//	}
 
 	/**
 	 * Checks if a node is somehow connected to the root node.
@@ -183,20 +185,20 @@ public class SimpleNode implements Node, Serializable {
 	 * @param op
 	 *            ICH KENN MICH GRAD SELBST NICHT MEHR AUS :)
 	 */
-	public String getEnclosedFormula(NodeType op) {
-		String tmp = "";
-		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
-			if (this.jjtGetChild(i).getNodeType() == op) {
-				tmp += this.jjtGetChild(i).traverse();
-			} else if ((this.jjtGetChild(i).getNodeType() == NodeType.EXISTS) || 
-			           (this.jjtGetChild(i).getNodeType() == NodeType.FORALL)) {
-				tmp += jjtGetChild(i).traverse();
-			} else {
-				tmp += this.jjtGetChild(i).getEnclosedFormula(op);
-			}
-		}
-		return tmp;
-	}
+//	public String getEnclosedFormula(NodeType op) {
+//		String tmp = "";
+//		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
+//			if (this.jjtGetChild(i).getNodeType() == op) {
+//				tmp += this.jjtGetChild(i).traverse();
+//			} else if ((this.jjtGetChild(i).getNodeType() == NodeType.EXISTS) || 
+//			           (this.jjtGetChild(i).getNodeType() == NodeType.FORALL)) {
+//				tmp += jjtGetChild(i).traverse();
+//			} else {
+//				tmp += this.jjtGetChild(i).getEnclosedFormula(op);
+//			}
+//		}
+//		return tmp;
+//	}
 
 	/**
 	 * Returns a dependency Tree
@@ -254,259 +256,254 @@ public class SimpleNode implements Node, Serializable {
 	 * 
 	 * @return A String in qpro format
 	 */
-	public String traverse() {
-//		Node child;
-//		String tmp = "";
-//		String[] tmpList;
-		String traversedTree = "";
-//		String partialTree = "";
-//		String negatedPartialTree = "";
-//		String enclosedPartialTree = "";
-		Vector<Integer> posLiterals = new Vector<Integer>();
-		Vector<Integer> negLiterals = new Vector<Integer>();
-		SimpleNode tmpNode = null;
-		
-		if (nodeType == NodeType.EXISTS) {
-			NodeType nt = jjtGetParent().getNodeType(); 	
-			if (nt != NodeType.FORALL)
-				traversedTree += "q\n";
-			traversedTree += "e ";
-
-			// add the first var
-			traversedTree += var + " ";
-			
-			tmpNode = (SimpleNode)this.jjtGetChild(0);
-
-			while (tmpNode.getNodeType() == NodeType.EXISTS) {
-				traversedTree += tmpNode.getVar() + " ";
-				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
-			}
-			traversedTree += "\n";
-			traversedTree += tmpNode.traverse();
-			if ((nt != NodeType.EXISTS) && (nt != NodeType.FORALL))
-				traversedTree += "/q\n";
-			
-		}	
-			
-		if (nodeType == NodeType.FORALL) {
-			NodeType nt = jjtGetParent().getNodeType(); 	
-			if (nt != NodeType.EXISTS)
-				traversedTree += "q\n";
-			traversedTree += "a ";
-
-			// add the first var
-			traversedTree += var + " ";
-			
-			tmpNode = (SimpleNode)this.jjtGetChild(0);
-
-			while (tmpNode.getNodeType() == NodeType.FORALL) {
-				traversedTree += tmpNode.getVar() + " ";
-				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
-			}
-			traversedTree += "\n";
-			traversedTree += tmpNode.traverse();
-			if ((nt != NodeType.EXISTS) && (nt != NodeType.FORALL))
-				traversedTree += "/q\n";
-		}	
-			
-		if (nodeType == NodeType.AND) {
-			/*
-			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
-			 *    traversedTree += "\n";
-			 */
-			traversedTree += "c\n";
-			posLiterals = (this.getPositiveLiterals(NodeType.AND, posLiterals));
-			negLiterals = (this.getNegativeLiterals(NodeType.AND, negLiterals));
-
-			for (int var : posLiterals)
-				traversedTree += var + " ";
-			traversedTree += "\n";
-
-			for (int var : negLiterals)
-				traversedTree += var + " ";
-			traversedTree += "\n";
-
-			traversedTree += this.getEnclosedFormula(NodeType.OR);
-
-			traversedTree += "/c\n";
-		}
-
-		if (nodeType == NodeType.OR) {
-			/*
-			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
-			 *    traversedTree += "\n";
-			 */
-			traversedTree += "d\n";
-			posLiterals = (this.getPositiveLiterals(NodeType.OR, posLiterals));
-			negLiterals = (this.getNegativeLiterals(NodeType.OR, negLiterals));
-
-			for (int var : posLiterals)
-				traversedTree += var + " ";
-			traversedTree += "\n";
-
-			for (int var : negLiterals)
-				traversedTree += var + " ";
-			traversedTree += "\n";
-
-			traversedTree += this.getEnclosedFormula(NodeType.AND);
-
-			traversedTree += "/d\n";
-		}
-
-		return traversedTree;
-	}
+//	public String traverse() {
+////		Node child;
+////		String tmp = "";
+////		String[] tmpList;
+//		String traversedTree = "";
+////		String partialTree = "";
+////		String negatedPartialTree = "";
+////		String enclosedPartialTree = "";
+//		Vector<Integer> posLiterals = new Vector<Integer>();
+//		Vector<Integer> negLiterals = new Vector<Integer>();
+//		SimpleNode tmpNode = null;
+//		
+//		if (nodeType == NodeType.EXISTS) {
+//			NodeType nt = jjtGetParent().getNodeType(); 	
+//			if (nt != NodeType.FORALL)
+//				traversedTree += "q\n";
+//			traversedTree += "e ";
+//
+//			// add the first var
+//			traversedTree += var + " ";
+//			
+//			tmpNode = (SimpleNode)this.jjtGetChild(0);
+//
+//			while (tmpNode.getNodeType() == NodeType.EXISTS) {
+//				traversedTree += tmpNode.getVar() + " ";
+//				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
+//			}
+//			traversedTree += "\n";
+//			traversedTree += tmpNode.traverse();
+//			if ((nt != NodeType.EXISTS) && (nt != NodeType.FORALL))
+//				traversedTree += "/q\n";
+//			
+//		}	
+//			
+//		if (nodeType == NodeType.FORALL) {
+//			NodeType nt = jjtGetParent().getNodeType(); 	
+//			if (nt != NodeType.EXISTS)
+//				traversedTree += "q\n";
+//			traversedTree += "a ";
+//
+//			// add the first var
+//			traversedTree += var + " ";
+//			
+//			tmpNode = (SimpleNode)this.jjtGetChild(0);
+//
+//			while (tmpNode.getNodeType() == NodeType.FORALL) {
+//				traversedTree += tmpNode.getVar() + " ";
+//				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
+//			}
+//			traversedTree += "\n";
+//			traversedTree += tmpNode.traverse();
+//			if ((nt != NodeType.EXISTS) && (nt != NodeType.FORALL))
+//				traversedTree += "/q\n";
+//		}	
+//			
+//		if (nodeType == NodeType.AND) {
+//			/*
+//			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
+//			 *    traversedTree += "\n";
+//			 */
+//			traversedTree += "c\n";
+//			posLiterals = (this.getPositiveLiterals(NodeType.AND, posLiterals));
+//			negLiterals = (this.getNegativeLiterals(NodeType.AND, negLiterals));
+//
+//			for (int var : posLiterals)
+//				traversedTree += var + " ";
+//			traversedTree += "\n";
+//
+//			for (int var : negLiterals)
+//				traversedTree += var + " ";
+//			traversedTree += "\n";
+//
+//			traversedTree += this.getEnclosedFormula(NodeType.OR);
+//
+//			traversedTree += "/c\n";
+//		}
+//
+//		if (nodeType == NodeType.OR) {
+//			/*
+//			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
+//			 *    traversedTree += "\n";
+//			 */
+//			traversedTree += "d\n";
+//			posLiterals = (this.getPositiveLiterals(NodeType.OR, posLiterals));
+//			negLiterals = (this.getNegativeLiterals(NodeType.OR, negLiterals));
+//
+//			for (int var : posLiterals)
+//				traversedTree += var + " ";
+//			traversedTree += "\n";
+//
+//			for (int var : negLiterals)
+//				traversedTree += var + " ";
+//			traversedTree += "\n";
+//
+//			traversedTree += this.getEnclosedFormula(NodeType.AND);
+//
+//			traversedTree += "/d\n";
+//		}
+//
+//		return traversedTree;
+//	}
 
 	/**
 	 * reduces a tree containing truth-assigned variables to a tree without them
 	 * 
 	 * @return true if tree is still traversable, false if not
 	 */
-	public boolean reduce() {
-		Node parentNode = null;
-		Node grandparentNode = null;
-		Node siblingNode = null;
-		int i = 0;
-		boolean reducable = false;
-		
-		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
-			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just
-																// traverse
-																// through all
-																// it's children
-				if (jjtGetChild(i).checkConnectionToRoot())
-					reducable = jjtGetChild(i).reduce() || reducable;
-			}
-		} else { // we're in a leaf node...
-			parentNode = this.jjtGetParent();
-			if ((nodeType == NodeType.TRUE) || (nodeType == NodeType.FALSE)) {
-				// we're in a truth-assigned leaf node now, let's see what to do
+//	public boolean reduce() {
+//		Node parentNode = null;
+//		Node grandparentNode = null;
+//		Node siblingNode = null;
+//		int i = 0;
+//		boolean reducable = false;
+//		
+//		if (this.jjtGetNumChildren() > 0) { // we're not in a leaf node...
+//			for (i = 0; i < this.jjtGetNumChildren(); i++) { // ... so we just
+//																// traverse
+//																// through all
+//																// it's children
+//				if (jjtGetChild(i).checkConnectionToRoot())
+//					reducable = jjtGetChild(i).reduce() || reducable;
+//			}
+//		} else { // we're in a leaf node...
+//			parentNode = this.jjtGetParent();
+//			if ((nodeType == NodeType.TRUE) || (nodeType == NodeType.FALSE)) {
+//				// we're in a truth-assigned leaf node now, let's see what to do
+//
+//				// if we're in the logical root node, then there's no more
+//				// reducing
+//				// even if it has a truth value assigned, else the tree might be
+//				// even more reducable
+//				if (parentNode.getClass().getName().equals(
+//						"main.java.logic.parser.ASTInput")) {
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("RETURNING FALSE");
+//					return false;
+//				}
+//
+//				if (parentNode.getNodeType() == NodeType.FORALL)
+//					return false;
+//
+//				if (parentNode.getNodeType() == NodeType.EXISTS)
+//					return false;
+//				
+//				reducable = true;
+//
+//				// not x, set the parent to not x
+//				if (parentNode.getNodeType() == NodeType.NOT) {
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("NEGATION occured");
+////					parentNode.setOp("");
+//					if (nodeType == NodeType.FALSE) {
+//						parentNode.setNodeType(NodeType.TRUE);
+//					} else {
+//						parentNode.setNodeType(NodeType.FALSE);
+//					}
+//					parentNode.deleteChildren();
+//					jjtSetParent(null);
+//					return reducable;
+//				}
+//
+//				// false & x = false, so set parent to false and make it a leaf
+//				// node
+//				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.FALSE)) {
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("AND FALSE occured");
+//					parentNode.setTruthValue(false);
+//					parentNode.deleteChildren();
+//					jjtSetParent(null);
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("AND FALSE occured end");
+//					return reducable;
+//				}
+//
+//				// true & x = x, so delete this node, replace the parent node
+//				// with
+//				// the sibling
+//				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.TRUE)) {
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("AND TRUE occured");
+//					// get grandparent
+//					grandparentNode = parentNode.jjtGetParent();
+//					// find sibling
+//					for (i = 0; i < parentNode.jjtGetNumChildren(); i++) {
+//						if (parentNode.jjtGetChild(i) != this) {
+//							siblingNode = parentNode.jjtGetChild(i);
+//						}
+//					}
+//					// make sibling grandparents child
+//					grandparentNode.replaceChild(parentNode, siblingNode);
+//					// make grandparent siblings parent
+//					siblingNode.jjtSetParent(grandparentNode);
+//					// remove old parents children and parent
+//					parentNode.deleteChildren();
+//					parentNode.jjtSetParent(null);
+//					// remove current nodes parent
+//					jjtSetParent(null);
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("AND TRUE occured end");
+//					return reducable;
+//				}
+//
+//				// false | x = x, so delete this node, replace the parent node
+//				// with
+//				// the sibling
+//				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.FALSE)) {
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("OR FALSE occured");
+//					// get grandparent
+//					grandparentNode = parentNode.jjtGetParent();
+//					// find sibling
+//					for (i = 0; i < parentNode.jjtGetNumChildren(); i++) {
+//						if (parentNode.jjtGetChild(i) != this) {
+//							siblingNode = parentNode.jjtGetChild(i);
+//						}
+//					}
+//					// make sibling grandparents child
+//					grandparentNode.replaceChild(parentNode, siblingNode);
+//					// make grandparent siblings parent
+//					siblingNode.jjtSetParent(grandparentNode);
+//					// remove old parents children and parent
+//					parentNode.deleteChildren();
+//					parentNode.jjtSetParent(null);
+//					// remove current nodes parent
+//					jjtSetParent(null);
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("OR FALSE occured end");
+//					return reducable;
+//				}
+//
+//				// true | x = true, so set the parent node to true and make it a
+//				// leaf
+//				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.TRUE)) {
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("OR TRUE occured");
+////					parentNode.setOp("");
+//					parentNode.setTruthValue(true);
+//					parentNode.deleteChildren();
+//					jjtSetParent(null);
+//					if(QPar.logLevel == Level.DEBUG)
+//						logger.debug("OR TRUE occured end");
+//					return reducable;
+//				}
+//			}
+//		}
+//		return reducable;
+//	}
 
-				// if we're in the logical root node, then there's no more
-				// reducing
-				// even if it has a truth value assigned, else the tree might be
-				// even more reducable
-				if (parentNode.getClass().getName().equals(
-						"main.java.logic.parser.ASTInput")) {
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("RETURNING FALSE");
-					return false;
-				}
-
-				if (parentNode.getNodeType() == NodeType.FORALL)
-					return false;
-
-				if (parentNode.getNodeType() == NodeType.EXISTS)
-					return false;
-				
-				reducable = true;
-
-				// not x, set the parent to not x
-				if (parentNode.getNodeType() == NodeType.NOT) {
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("NEGATION occured");
-//					parentNode.setOp("");
-					if (nodeType == NodeType.FALSE) {
-						parentNode.setNodeType(NodeType.TRUE);
-					} else {
-						parentNode.setNodeType(NodeType.FALSE);
-					}
-					parentNode.deleteChildren();
-					jjtSetParent(null);
-					return reducable;
-				}
-
-				// false & x = false, so set parent to false and make it a leaf
-				// node
-				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.FALSE)) {
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("AND FALSE occured");
-					parentNode.setTruthValue(false);
-					parentNode.deleteChildren();
-					jjtSetParent(null);
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("AND FALSE occured end");
-					return reducable;
-				}
-
-				// true & x = x, so delete this node, replace the parent node
-				// with
-				// the sibling
-				if ((parentNode.getNodeType() == NodeType.AND) && (nodeType == NodeType.TRUE)) {
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("AND TRUE occured");
-					// get grandparent
-					grandparentNode = parentNode.jjtGetParent();
-					// find sibling
-					for (i = 0; i < parentNode.jjtGetNumChildren(); i++) {
-						if (parentNode.jjtGetChild(i) != this) {
-							siblingNode = parentNode.jjtGetChild(i);
-						}
-					}
-					// make sibling grandparents child
-					grandparentNode.replaceChild(parentNode, siblingNode);
-					// make grandparent siblings parent
-					siblingNode.jjtSetParent(grandparentNode);
-					// remove old parents children and parent
-					parentNode.deleteChildren();
-					parentNode.jjtSetParent(null);
-					// remove current nodes parent
-					jjtSetParent(null);
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("AND TRUE occured end");
-					return reducable;
-				}
-
-				// false | x = x, so delete this node, replace the parent node
-				// with
-				// the sibling
-				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.FALSE)) {
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("OR FALSE occured");
-					// get grandparent
-					grandparentNode = parentNode.jjtGetParent();
-					// find sibling
-					for (i = 0; i < parentNode.jjtGetNumChildren(); i++) {
-						if (parentNode.jjtGetChild(i) != this) {
-							siblingNode = parentNode.jjtGetChild(i);
-						}
-					}
-					// make sibling grandparents child
-					grandparentNode.replaceChild(parentNode, siblingNode);
-					// make grandparent siblings parent
-					siblingNode.jjtSetParent(grandparentNode);
-					// remove old parents children and parent
-					parentNode.deleteChildren();
-					parentNode.jjtSetParent(null);
-					// remove current nodes parent
-					jjtSetParent(null);
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("OR FALSE occured end");
-					return reducable;
-				}
-
-				// true | x = true, so set the parent node to true and make it a
-				// leaf
-				if ((parentNode.getNodeType() == NodeType.OR) && (nodeType == NodeType.TRUE)) {
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("OR TRUE occured");
-//					parentNode.setOp("");
-					parentNode.setTruthValue(true);
-					parentNode.deleteChildren();
-					jjtSetParent(null);
-					if(QPar.logLevel == Level.DEBUG)
-						logger.debug("OR TRUE occured end");
-					return reducable;
-				}
-			}
-		}
-		return reducable;
-	}
-
-	public boolean isTruthNode() {
-		return this.nodeType == NodeType.FALSE || this.nodeType == NodeType.TRUE;
-	}
-		
-	
 	
 	/**
 	 * removes all children of a node by setting the childrens parent to null
@@ -590,21 +587,20 @@ public class SimpleNode implements Node, Serializable {
 		} else if (this.getNodeType() == NodeType.FALSE){
 			return false;
 		} else {
-			assert(false);
-			throw new RuntimeException();
+			throw new IllegalStateException("Node wasnt true or false");
 		}
 	}
 	
-	public String getTruthValue() {
-		if (this.getNodeType() == NodeType.TRUE) {
-			return "TRUE";
-		} else if (this.getNodeType() == NodeType.FALSE){
-			return "FALSE";
-		} else {
-			assert(false);
-			throw new RuntimeException();
-		}
-	}
+//	public String getTruthValue() {
+//		if (this.getNodeType() == NodeType.TRUE) {
+//			return "TRUE";
+//		} else if (this.getNodeType() == NodeType.FALSE){
+//			return "FALSE";
+//		} else {
+//			assert(false);
+//			throw new RuntimeException();
+//		}
+//	}
 	
 	public void setVar(int v) {
 		assert((nodeType == NodeType.VAR) || (nodeType == NodeType.FORALL) || (nodeType == NodeType.EXISTS));
@@ -744,6 +740,50 @@ public class SimpleNode implements Node, Serializable {
 		}
 		// We are a leaf(variable) node. So our P(T) = 0.5
 		return 0.5;
+	}
+	
+	public SimpleNode deepCopy() throws Exception {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutputStream out;
+		out = new ObjectOutputStream(bos);
+		out.writeObject(this);
+		out.close();
+		ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
+		return (SimpleNode) in.readObject();
+	}
+		
+	public boolean isStartNode() {
+		return (this.getNodeType().equals(NodeType.START) ? true : false); 
+	}
+	public boolean isVarNode() {
+		return (this.getNodeType().equals(NodeType.VAR) ? true : false); 
+	}
+	public boolean isForallNode() {
+		return (this.getNodeType().equals(NodeType.FORALL) ? true : false); 
+	}
+	public boolean isExistsNode() {
+		return (this.getNodeType().equals(NodeType.EXISTS) ? true : false); 
+	}
+	public boolean isAndNode() {
+		return (this.getNodeType().equals(NodeType.AND) ? true : false); 
+	}
+	public boolean isOrNode() {
+		return (this.getNodeType().equals(NodeType.OR) ? true : false); 
+	}
+	public boolean isNotNode() {
+		return (this.getNodeType().equals(NodeType.NOT) ? true : false); 
+	}
+	public boolean isTrueNode() {
+		return (this.getNodeType().equals(NodeType.TRUE) ? true : false); 
+	}
+	public boolean isFalseNode() {
+		return (this.getNodeType().equals(NodeType.FALSE) ? true : false); 
+	}
+	public boolean isTruthNode() {
+		return this.nodeType == NodeType.FALSE || this.nodeType == NodeType.TRUE;
+	}
+	public boolean isQuantifierNode() {
+		return this.nodeType == NodeType.FORALL || this.nodeType == NodeType.EXISTS;
 	}
 }
 

@@ -40,7 +40,7 @@ public class DTNode {
 	}
 	
 	public String toString() {
-		return type.toString() + "(" + this.leftChild + ", " + this.rightChild + ")";
+		return type.toString() + "(" + variablesAssignedTrue + ", " + variablesAssignedFalse + ")";
 	}
 	
 	public int getDepth() {

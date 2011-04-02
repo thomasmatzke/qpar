@@ -11,78 +11,36 @@ import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.StringTokenizer;
 
 import main.java.QPar;
-import main.java.evaluation.EvaluationSuite;
-import main.java.evaluation.LogarithmicEvaluationSuite;
-import main.java.evaluation.ParLogEvalSuite;
-import main.java.evaluation.SerialEvaluation;
-import main.java.logic.heuristic.HeuristicFactory;
+import main.java.evaluation.Evaluation;
 import main.java.master.Job;
 import main.java.master.Mailer;
-import main.java.master.Master;
 import main.java.master.SlaveRegistry;
 import main.java.rmi.SlaveRemote;
-import main.java.slave.solver.SolverFactory;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
-public class Shell implements Runnable{
+public class Shell implements Runnable, Observer{
 
 	private static Logger 	logger = Logger.getLogger(Shell.class);	
 	private String 			prompt 			= ">";
 	private BufferedReader 	in;
 	private boolean 		run				= true;
-	private static int 		waitfor_count 	= 0; 		// Is increased by Slave if a Slave has the right solver
-	private static int 		waitfor_cores;				// We want that many cores before proceeding
-	private static String 	waitfor_solver 	= null; 	// We are waiting for Slaves with this kind of solver
-	private static String 	waitfor_jobid 	= "";
 		
 	public Shell() {
-		logger.setLevel(QPar.logLevel);
 		in 	= new BufferedReader(new InputStreamReader(System.in));
 	}
 	
 	public Shell(BufferedReader in) {
 		this.in = in;
 		prompt = "";
-	}
-		
-	public static int getWaitfor_cores() {
-		return waitfor_cores;
-	}
-
-	public static void setWaitfor_cores(int waitfor_cores) {
-		Shell.waitfor_cores = waitfor_cores;
-	}
-	
-	public static void setWaitfor_jobid(String waitfor_jobid) {
-		Shell.waitfor_jobid = waitfor_jobid;
-	}
-	
-	public static String getWaitfor_jobid() {
-		return waitfor_jobid;
-	}
-
-	public static int getWaitfor_count() {
-		return waitfor_count;
-	}
-
-	public static void setWaitfor_count(int waitfor_count) {
-		Shell.waitfor_count = waitfor_count;
-	}
-
-	public static String getWaitfor_solver() {
-		return waitfor_solver;
-	}
-
-	public static void setWaitfor_solver(String waitfor_solver) {
-		Shell.waitfor_solver = waitfor_solver;
 	}
 
 	public void run() {	
@@ -99,8 +57,7 @@ public class Shell implements Runnable{
 				if(line.startsWith("#")) continue;
 				parseLine(line);
 			} catch(Throwable t) {
-				logger.fatal(t);
-				t.printStackTrace();
+				logger.error("", t);
 				QPar.sendExceptionMail(t);
 			}	
 		}
@@ -111,20 +68,14 @@ public class Shell implements Runnable{
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase()))
 		{
-			case LOGEVAL:
-				logeval(token);
-				break;
-			case PARLOGEVAL:
-				parlogeval(token);
+			case EVALUATE:
+				evaluate(token);
 				break;
 			case MAIL_EVALUATION_REPORT:
 				set_report_address(token);
 				break;
 			case MAIL:
 				mail(token);
-				break;
-			case EVALUATE:
-				evaluate(token);
 				break;
 			case NEWJOB:
 				newjob(token);
@@ -146,9 +97,6 @@ public class Shell implements Runnable{
 				break;
 			case SOURCE:
 				source(token);
-				break;
-			case WAITFORRESULT:
-				waitforresult(token);
 				break;
 			case KILLALLSLAVES:
 				killallslaves();
@@ -174,7 +122,7 @@ public class Shell implements Runnable{
 		
 	}
 	
-	private void parlogeval(StringTokenizer token) {
+	private void evaluate(StringTokenizer token) {
 		String	directory				= null;
 		String	solver					= null;
 		int 	cores_min				= 1;
@@ -197,7 +145,7 @@ public class Shell implements Runnable{
 		heuristics.add("litcount");
 		heuristics.add("probnet");
 		
-		EvaluationSuite eval = new ParLogEvalSuite(new File(directory), cores_min, cores_max, solver, heuristics, timeout);
+		Evaluation eval = new Evaluation(new File(directory), cores_min, cores_max, solver, heuristics, timeout);
 		eval.evaluate();
 		
 		String report = eval.getReport();
@@ -212,32 +160,6 @@ public class Shell implements Runnable{
 		
 		if(Mailer.email != null && Mailer.server != null && Mailer.user != null && Mailer.pass != null)
 			Mailer.send_mail(Mailer.email, Mailer.server, Mailer.user, Mailer.pass, "ParLogEval Report", report);
-	}
-
-	private void logeval(StringTokenizer token) {
-		String	directory				= null;
-		int 	cores_min				= 1;
-		int 	cores_max				= 1;
-		long 	timeout					= 60000;
-		String 	solverId				= "qpro";
-		
-		try {
-			directory 			= token.nextToken();
-			cores_min			= Integer.parseInt(token.nextToken());
-			cores_max			= Integer.parseInt(token.nextToken());
-			solverId			= token.nextToken();
-			timeout				= Integer.parseInt(token.nextToken());
-		} catch(NoSuchElementException e) {
-			puts("Syntax: LOGEVAL directory_path_to_formulas coresMin coresMax solverId timeout");
-			return;
-		}
-		
-		LogarithmicEvaluationSuite eval = new LogarithmicEvaluationSuite(directory, cores_min, cores_max, timeout, solverId);
-		try {
-			eval.run();
-		} catch (FileNotFoundException e) {
-			logger.error("Directory not found: ", e);
-		}
 	}
 
 	/**
@@ -298,115 +220,7 @@ public class Shell implements Runnable{
 		Mailer.send_mail(email, server, user, pass, subject, message);
 		
 	}
-	
-	
-
-	/**
-	 * Syntax: EVALUATE directory_path_to_formulas cores_min cores_max solverId timeout
-	 */
-	private void evaluate(StringTokenizer token) {
-		File	directory			= null;
-		int 	cores_min			= 1;
-		int 	cores_max			= 1;
-		long 	timeout				= 60000;
-		String 	solverId			= "qpro";
-		ArrayList<String>	heuristics	= HeuristicFactory.getAvailableHeuristics();
-		boolean correctness			= true;
 		
-		try {
-			directory 			= new File(token.nextToken());
-			cores_min			= Integer.parseInt(token.nextToken());
-			cores_max			= Integer.parseInt(token.nextToken());
-			solverId			= token.nextToken();
-			timeout				= Integer.parseInt(token.nextToken());
-		} catch(NoSuchElementException e) {
-			puts("Syntax: EVALUATE directory_path_to_formulas coresMin coresMax solverId timeout");
-			return;
-		}
-		String report = "Evaluation Report\n" +
-						"Started: " + new Date() + 
-						"Solver: \t" + solverId + "\n" +
-						"Timeout: \t" + timeout + "\n" +
-						"Cores Min: \t" + cores_min + "\n" +
-						"Cores Max: \t" + cores_max + "\n" +
-						"Directory: \t" + directory + "\n\n" +
-						"cores\t";
-	
-		for(String h : HeuristicFactory.getAvailableHeuristics()) {
-			report += String.format("%s_total\t%s_timeouts\t%s_errors\t", h, h, h);
-		}
-		report = report.trim() + "\n";
-				
-		SerialEvaluation[][]	result	= new SerialEvaluation[cores_max-cores_min+1][heuristics.size()];
-		
-		// Wait for #cores
-		waitforslaves(cores_max, solverId);
-
-		for(int c = cores_min; c <= cores_max; c++) {
-			String line = "" + c + "\t";
-			for(String h : HeuristicFactory.getAvailableHeuristics()) {
-				SerialEvaluation e = new SerialEvaluation(directory, h, solverId, timeout, c);
-				result[c-cores_min][heuristics.indexOf(h)] = e;
-				e.evaluate();
-				line += e.toString() + "\t";
-			}
-			line = line.trim();
-			line += "\n";
-			report += line;
-		}
-		
-		// Check correctness
-		String correctnessReport = "\n\nDetailed results:\n";
-		for(File f : directory.listFiles()) {
-			if(f.getName().equals("evaluation.txt"))
-				continue;
-			correctnessReport += "File: " + f.getName() + "\n";
-			Boolean compare = null;
-			for(String h : HeuristicFactory.getAvailableHeuristics()) {
-				correctnessReport += "Heuristic: " + h + "\n";
-				for(int c = 0; c <= cores_max-cores_min; c++) {
-					Boolean current = result[c][heuristics.indexOf(h)].getResults().get(f);
-					if(current == null) {
-						correctnessReport += "x";
-					} else if(current == true) {
-						correctnessReport += "t";
-					} else if(current == false) {
-						correctnessReport += "f";
-					} else { assert(false);}
-					
-					if(compare == null && current != null) {
-						compare = current;
-					} else if(compare != null && current != null && !compare.equals(current)) {
-						logger.warn("Correctness error detected: File: " + f + ", Cores: " + cores_min + c + ", Heuristic: " + h);
-						correctness = false;
-					}
-				}
-				correctnessReport += "\n";
-			}
-			correctnessReport += "\n";
-		}
-		
-		
-		String evalPath = directory.getAbsolutePath() + File.separator + "evaluation.txt";
-		if(correctness)
-			report = report + correctnessReport;
-		else
-			report = report + "WARNING: INCONSISTENT RESULTS DETECTED! PROGRAM NOT CORRECT!\n\n" + correctnessReport;
-		report = report.replaceAll("\n", System.getProperty("line.separator"));
-		
-		if(Mailer.email != null && Mailer.server != null && Mailer.user != null && Mailer.pass != null)
-			Mailer.send_mail(Mailer.email, Mailer.server, Mailer.user, Mailer.pass, "Evaluation Report", report);
-		
-		try {
-			BufferedWriter out = new BufferedWriter(new FileWriter(evalPath));
-			out.write(report);
-			out.flush();
-		} catch (IOException e) {
-			logger.error(e);
-		}
-		
-	}
-	
 	/**
 	 * Syntax: KILLALLSLAVES
 	 */
@@ -423,33 +237,36 @@ public class Shell implements Runnable{
 		} catch (InterruptedException e) {}
 	}
 
-	/**
-	 * Syntax: WAITFORRESULT jobid
-	 * @param token
-	 */
-	private void waitforresult(StringTokenizer token) {
-		
-		try{
-			waitfor_jobid = token.nextToken();
-			if(Job.getJobs().get(waitfor_jobid) == null) {
-				logger.warn("No job with id " + waitfor_jobid);
-				return;
-			}
-			if(Job.getJobs().get(waitfor_jobid).getStatus() == Job.Status.ERROR)
-				return;
-			
-		} catch(NoSuchElementException e) {
-			puts("Syntax: WAITFORRESULT jobid");
-			return;
-		}
-		
-		try {
-			synchronized(Master.getShellThread()) {
-				Master.getShellThread().wait();
-			}
-		} catch (InterruptedException e) {}
-		
-	}
+//	/**
+//	 * Syntax: WAITFORRESULT jobid
+//	 * @param token
+//	 */
+//	private void waitforresult(StringTokenizer token) {
+//		
+//		Job job = Job.getJobs().get(waitfor_jobid);
+//		
+//		try{
+//			waitfor_jobid = token.nextToken();
+//			
+//			if(job == null) {
+//				logger.warn("No job with id " + waitfor_jobid);
+//				return;
+//			}
+//			if(job.getStatus() == Job.Status.ERROR)
+//				return;
+//			
+//		} catch(NoSuchElementException e) {
+//			puts("Syntax: WAITFORRESULT jobid");
+//			return;
+//		}
+//		
+//		while(job.getStatus() == Job.Status.RUNNING) {
+//			synchronized(this) {
+//				try {wait();} catch (InterruptedException e) {}
+//			}
+//		}
+//		
+//	}
 
 	/**
 	 * Syntax: WAITFORSLAVE number_of_cores solverid
@@ -457,41 +274,16 @@ public class Shell implements Runnable{
 	 */
 	private void waitforslave(StringTokenizer token) {
 		try{
-			waitforslaves(	Integer.parseInt(token.nextToken()),
-							token.nextToken());
+			int cores 		= Integer.parseInt(token.nextToken());
+			String solver 	= token.nextToken();
+						
+			SlaveRegistry.instance().waitForCoresWithSolver(cores, solver);
 		} catch(NoSuchElementException e) {
 			puts("Syntax: WAITFORSALVE number_of_cores solverid");
 			return;
 		}
 	}
 	
-	/**
-	 * Procedure to be used internally to wait for slaves (without the
-	 * shell-parsing part)
-	 * @param cores
-	 * @param solverId
-	 */
-	public static void waitforslaves(int cores, String solverId) {
-		setWaitfor_solver(solverId);
-		setWaitfor_cores(cores);
-		
-		while(true) {
-			try {
-				if(waitfor_cores <= SlaveRegistry.instance().getCoresWithSolver(solverId)) {
-					return;
-				}
-			} catch (RemoteException e) {
-				logger.error("RMI fail", e);
-			}
-				
-			try {
-				synchronized(Master.getShellThread()) {
-					Master.getShellThread().wait();
-				}
-			} catch (InterruptedException e) {}
-		}
-	}
-
 	/**
 	 * Syntax: SOURCE path
 	 * @param token
@@ -543,7 +335,7 @@ public class Shell implements Runnable{
 	private void viewjobs() {
 		puts("JOBID\tSTARTED\tFINISHED\tSTATUS");
 		for(Job j : Job.getJobs().values()) {
-			puts(j.id + "\t" + j.getStartedAt() + "\t" + j.getSolvedAt() + "\t" + j.getStatus());
+			puts(j.id + "\t" + j.getHistory().get(Job.State.RUNNING) + "\t" + j.getHistory().get(Job.State.COMPLETE) + "\t" + j.getStatus());
 		}
 	}
 	
@@ -551,10 +343,10 @@ public class Shell implements Runnable{
 	 * Syntax: VIEWSLAVES
 	 */
 	private void viewslaves() {
-		puts("HOSTNAME\tCORES\tCURRENT_JOBS");
+		puts("HOSTNAME\tCORES");
 		for(SlaveRemote s : SlaveRegistry.instance().getSlaves().values()) {
 			try {
-				puts(s.getHostName() + "\t" + s.getCores() + "\t" + StringUtils.join(s.getCurrentJobs(), ","));
+				puts(s.getHostName() + "\t" + s.getCores());
 			} catch (RemoteException e) {
 				logger.error("RMI fail", e);
 			} catch (UnknownHostException e) {
@@ -582,7 +374,7 @@ public class Shell implements Runnable{
 	private void startjob(StringTokenizer token) {
 		if(token.hasMoreTokens()) {
 			Job j = Job.getJobs().get(token.nextToken());
-			j.start();
+			j.startBlocking();
 		} else {
 			puts("Syntax: STARTJOB jobid");
 		}			
@@ -603,12 +395,13 @@ public class Shell implements Runnable{
 			
 		} catch(NoSuchElementException e) {
 			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic max_cores");
+		} catch (RemoteException e) {
+			logger.error("", e);
 		}
 	}
 
 	private void quit() {
 		this.run = false;
-		System.exit(0);
 	}
 	
 	private void put(String s) {
@@ -627,6 +420,13 @@ public class Shell implements Runnable{
 			e.printStackTrace();
 		}
 		return line;
+	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		synchronized(this) {
+			notifyAll();
+		}
 	}
 	
 }

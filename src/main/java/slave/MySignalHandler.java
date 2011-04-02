@@ -20,11 +20,11 @@ public class MySignalHandler implements sun.misc.SignalHandler {
 	public void handle(Signal sig) {
 		logger.info("Cought Signal " + sig.getName());
 		logger.info("Killing workerthreads...");
-		synchronized(ComputationStateMachine.computations) {
-			for(ComputationStateMachine machine : ComputationStateMachine.computations.values()) {
-				machine.abortComputation();
-			}
-		}
+//		synchronized(ComputationStateMachine.computations) {
+//			for(ComputationStateMachine machine : ComputationStateMachine.computations.values()) {
+//				machine.abortComputation();
+//			}
+//		}
 		
 //		synchronized(slaveDaemon.threads) {
 //			for(Entry<String, Solver> entry : slaveDaemon.threads.entrySet()) {

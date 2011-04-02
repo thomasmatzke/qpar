@@ -1,4 +1,4 @@
-package main.java.logic;
+package main.java.tree;
 
 import main.java.logic.parser.SimpleNode;
 
