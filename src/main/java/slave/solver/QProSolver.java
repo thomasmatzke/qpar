@@ -10,6 +10,7 @@ import java.util.Date;
 import main.java.master.TQbf;
 import main.java.rmi.InterpretationData;
 import main.java.rmi.TQbfRemote;
+import main.java.tree.QproRepresentation;
 import main.java.tree.ReducedInterpretation;
 
 import org.apache.commons.exec.CommandLine;
@@ -34,8 +35,6 @@ public class QProSolver extends Solver {
 
 	public static final String toolId = "qpro";
 
-	private String inputString = null;
-
 	private Date qproProcessStartedAt = null;
 	private Date qproProcessStoppedAt = null;
 	
@@ -46,6 +45,7 @@ public class QProSolver extends Solver {
 
 	private volatile Object killMutex = new Object();
 	
+	String input = null;
 	
 	public QProSolver(TQbfRemote tqbf, ResultHandler handler) {
 		super(tqbf, handler);
@@ -67,7 +67,7 @@ public class QProSolver extends Solver {
 		this.overheadStoppedAt = new Date();
 		
 		if(ri.isTruthValue()) {
-			logger.info("Formula collapsed");
+//			logger.info("Formula collapsed");
 			returnWithSuccess(tqbfId, jobId, ri.getTruthValue());
 			return;
 		}
@@ -83,9 +83,11 @@ public class QProSolver extends Solver {
 		CommandLine command = new CommandLine("qpro");
 		DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
 
+		QproRepresentation qproInput = new QproRepresentation(ri); 
+		this.input = qproInput.getQproRepresentation();
 		ByteArrayInputStream input;
 		try {
-			input = new ByteArrayInputStream(inputString.getBytes("ISO-8859-1"));
+			input = new ByteArrayInputStream(this.input.getBytes("ISO-8859-1"));
 		} catch (UnsupportedEncodingException e1) {
 			logger.error("", e1);
 			returnWithError(tqbfId, jobId, e1);
@@ -113,10 +115,18 @@ public class QProSolver extends Solver {
 			returnWithError(tqbfId, jobId, e);
 			return;
 		}
-				
+		
+//		Slowdown for testing purposes	
+//		try {
+//			Thread.sleep(5000);
+//		} catch (InterruptedException e2) {
+//			// TODO Auto-generated catch block
+//			e2.printStackTrace();
+//		}
+		
 		while (!resultHandler.hasResult()) {
 			try {
-				logger.info("waitsfor " + tqbf.getTimeout() * 1000 + " ms");
+//				logger.info("waitsfor " + tqbf.getTimeout() * 1000 + " ms");
 				resultHandler.waitFor(tqbf.getTimeout() * 1000);
 				watchdog.destroyProcess();
 			} catch (InterruptedException e1) {
@@ -161,6 +171,7 @@ public class QProSolver extends Solver {
 			returnWithSuccess(tqbfId, jobId, false, this.getSolvertime(), this.getOverheadtime());
 
 		} else {
+			logger.error("Qpro Input of tqbf " + this.tqbfId + ": \n" + this.input);
 			// anything else is an error
 			String errorString = "Unexpected result from solver.\n"
 					+ "	Return String: " + readString + "\n" + "	TQbfId:		 : "
@@ -223,6 +234,7 @@ public class QProSolver extends Solver {
 	}
 	
 	public boolean isTimedOut() {
-		return this.getSolvertime() > this.timeout;
+//		logger.info("SOLVERTIME: " + this.getSolvertime() + ", " + "TIMEOUT: " + this.timeout);
+		return this.getSolvertime() > this.timeout * 1000;
 	}
 }

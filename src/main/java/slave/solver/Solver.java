@@ -50,7 +50,7 @@ public abstract class Solver implements Runnable {
 
 	protected void returnWithError(String tqbfId, String jobId, Exception e) {
 		Result r = new Result(tqbfId, jobId);
-		logger.error("Cant complete tqbf computation", e);
+//		logger.error("Cant complete tqbf computation", e);
 		r.type = Result.Type.ERROR;
 		r.exception = e;
 		this.handler.handleResult(r);

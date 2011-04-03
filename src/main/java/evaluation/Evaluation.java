@@ -73,6 +73,7 @@ public class Evaluation implements Observer {
 								getNeededRuns(coresStart, coresEnd).get(c));
 						results[f][c][h] = j;
 						jobsTodo.add(j);
+						j.addObserver(this);
 					} catch (RemoteException e) {
 						logger.error("", e);
 					}
@@ -393,11 +394,28 @@ public class Evaluation implements Observer {
 	 * Gets notified about job status changes
 	 */
 	@Override
-	public void update(Observable arg0, Object arg1) {
+	synchronized public void update(Observable arg0, Object arg1) {
 		Job j = (Job) arg0;
-		synchronized (this) {
-			notifyAll();
+		notifyAll();
+		int running = 0;
+		int error = 0;
+		int complete = 0;
+		for (Job jo : this.jobsTodo) {
+			switch(jo.getStatus()) {
+				case RUNNING:
+					running++;
+					break;
+				case ERROR:
+					error++;
+					break;
+				case COMPLETE:
+					complete++;
+					break;
+				default:
+					break;
+			}
 		}
+		logger.info("Jobs RUNNING: " + running + ", ERROR: " + error + ", COMPLETE: " + complete);
 	}
 
 	private boolean allJobsTerminated() {

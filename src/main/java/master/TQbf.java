@@ -40,23 +40,18 @@ import org.apache.log4j.Logger;
 public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 	private static final long serialVersionUID = -6627723521432123349L;
 	static Logger logger = Logger.getLogger(TQbf.class);
-	
-	public TQbf() throws RemoteException {
-		super();
-		UnicastRemoteObject.exportObject(this, 0);
-	}
-	
+		
 	public enum State { NEW, COMPUTING, TERMINATED, DONTSTART, ABORTED, TIMEOUT }
 		
-	private transient SimpleNode root = null;
+//	private transient SimpleNode root = null;
 	public byte[] serializedFormula = null;
 	
 	private String id;
 	private long timeout;
 	private String jobId;
-	private Vector<Integer> eVars = new Vector<Integer>();
-	private Vector<Integer> aVars = new Vector<Integer>();
-	private Vector<Integer> vars = new Vector<Integer>();
+//	private Vector<Integer> eVars = new Vector<Integer>();
+//	private Vector<Integer> aVars = new Vector<Integer>();
+//	private Vector<Integer> vars = new Vector<Integer>();
 	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
 	private ArrayList<Integer> falseVars = new ArrayList<Integer>();
 	
@@ -71,6 +66,19 @@ public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 	
 	private SlaveRemote slave;
 	private Solver solver;
+	
+	public TQbf(String tqbfId, String jobId, String solverId, ArrayList<Integer> trueVars, ArrayList<Integer> falseVars, long timeout, byte[] serializedFormula) throws RemoteException {
+		super();
+		this.id = tqbfId;
+		this.jobId = jobId;
+		this.solverId = solverId;
+		this.trueVars = trueVars;
+		this.falseVars = falseVars;
+		this.timeout = timeout;
+		this.serializedFormula = serializedFormula;
+		
+		UnicastRemoteObject.exportObject(this, 0);
+	}
 	
 	synchronized public void compute(SlaveRemote slave) {
 		this.setSlave(slave);
@@ -149,6 +157,8 @@ public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 	}
 		
 	synchronized public Result getResult() {
+		if(this.result == null)
+			throw new IllegalStateException("No result available. Tqbf State: " + this.getState());
 		return result;
 	}
 	
@@ -176,9 +186,9 @@ public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 	 * @param s
 	 *            optional string to prefix the tree
 	 */
-	public void dump(String s) {
-		this.getRootNode().dump(s);
-	}
+//	public void dump(String s) {
+//		this.getRootNode().dump(s);
+//	}
 
 	/**
 	 * getter for the trueVars ArrayList
@@ -198,11 +208,11 @@ public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 		return falseVars;
 	}
 
-	public Integer getMaxVar() {
-		ArrayList<Integer> vars = new ArrayList<Integer>(this.getAVars());
-		vars.addAll(this.getEVars());
-		return Collections.max(vars);
-	}
+//	public Integer getMaxVar() {
+//		ArrayList<Integer> vars = new ArrayList<Integer>(this.getAVars());
+//		vars.addAll(this.getEVars());
+//		return Collections.max(vars);
+//	}
 
 	/**
 	 * debug method that logs the content of a transmissionQbf
@@ -213,9 +223,9 @@ public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 		// " with " +
 		// root.jjtGetNumChildren() + " children (should be 1. first one: " +
 		// root.jjtGetChild(0).getClass().getName() + ")");
-		logger.debug("checkQBF vars: " + this.vars);
-		logger.debug("checkQBF eVars: " + this.eVars);
-		logger.debug("checkQBF aVars: " + this.aVars);
+//		logger.debug("checkQBF vars: " + this.vars);
+//		logger.debug("checkQBF eVars: " + this.eVars);
+//		logger.debug("checkQBF aVars: " + this.aVars);
 		logger.debug("checkQBF trueVars: " + this.trueVars);
 		logger.debug("checkQBF falseVars: " + this.falseVars);
 	}
@@ -225,57 +235,57 @@ public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 	 * 
 	 * @return the Vector of exist-quantified vars
 	 */
-	public Vector<Integer> getEVars() {
-		return this.eVars;
-	}
-
-	/**
-	 * getter for the aVars Vector
-	 * 
-	 * @return the Vector of all-quantified vars
-	 */
-	public Vector<Integer> getAVars() {
-		return this.aVars;
-	}
-
-	/**
-	 * getter for the vars Vector
-	 * 
-	 * @return the Vector of all variables that appear in a formula
-	 */
-	public Vector<Integer> getVars() {
-		return this.vars;
-	}
-
-	/**
-	 * setter for the exist-quantified vars
-	 * 
-	 * @param v
-	 *            vector of exist-quantified vars
-	 */
-	public void setEVars(Vector<Integer> v) {
-		this.eVars = v;
-	}
-
-	/**
-	 * setter for the all-quantified vars
-	 * 
-	 * @param v
-	 *            vector of all-quantified vars
-	 */
-	public void setAVars(Vector<Integer> v) {
-		this.aVars = v;
-	}
-
-	/**
-	 * setter for the vars
-	 * 
-	 * @param v
-	 *            vector of all vars
-	 */
-	public void setVars(Vector<Integer> v) {
-		this.vars = v;
-	}
+//	public Vector<Integer> getEVars() {
+//		return this.eVars;
+//	}
+//
+//	/**
+//	 * getter for the aVars Vector
+//	 * 
+//	 * @return the Vector of all-quantified vars
+//	 */
+//	public Vector<Integer> getAVars() {
+//		return this.aVars;
+//	}
+//
+//	/**
+//	 * getter for the vars Vector
+//	 * 
+//	 * @return the Vector of all variables that appear in a formula
+//	 */
+//	public Vector<Integer> getVars() {
+//		return this.vars;
+//	}
+//
+//	/**
+//	 * setter for the exist-quantified vars
+//	 * 
+//	 * @param v
+//	 *            vector of exist-quantified vars
+//	 */
+//	public void setEVars(Vector<Integer> v) {
+//		this.eVars = v;
+//	}
+//
+//	/**
+//	 * setter for the all-quantified vars
+//	 * 
+//	 * @param v
+//	 *            vector of all-quantified vars
+//	 */
+//	public void setAVars(Vector<Integer> v) {
+//		this.aVars = v;
+//	}
+//
+//	/**
+//	 * setter for the vars
+//	 * 
+//	 * @param v
+//	 *            vector of all vars
+//	 */
+//	public void setVars(Vector<Integer> v) {
+//		this.vars = v;
+//	}
 
 	/**
 	 * assigns the transmissionQbf-specific truth values to the tree.
@@ -320,31 +330,31 @@ public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 	 * @return true if the first node after input has a truth value, false
 	 *         otherwise
 	 */
-	public boolean rootIsTruthNode() {
-
-		SimpleNode start = (SimpleNode) this.getRootNode().jjtGetChild(0);
-		return start.isTruthNode();
-		//
-		// while ((start.getNodeType() == NodeType.FORALL) ||
-		// (start.getNodeType() == NodeType.EXISTS)) {
-		// start = (SimpleNode)start.jjtGetChild(0);
-		// }
-		//
-		// if (start.getTruthValue().equals(""))
-		// return false;
-		// return true;
-	}
+//	public boolean rootIsTruthNode() {
+//
+//		SimpleNode start = (SimpleNode) this.getRootNode().jjtGetChild(0);
+//		return start.isTruthNode();
+//		//
+//		// while ((start.getNodeType() == NodeType.FORALL) ||
+//		// (start.getNodeType() == NodeType.EXISTS)) {
+//		// start = (SimpleNode)start.jjtGetChild(0);
+//		// }
+//		//
+//		// if (start.getTruthValue().equals(""))
+//		// return false;
+//		// return true;
+//	}
 
 	/**
 	 * returns the truth value of the formulas root node
 	 * 
 	 * @return a truth value
 	 */
-	public boolean rootGetTruthValue() {
-		if (this.getRootNode().jjtGetChild(0).getNodeType() == NodeType.TRUE)
-			return true;
-		return false;
-	}
+//	public boolean rootGetTruthValue() {
+//		if (this.getRootNode().jjtGetChild(0).getNodeType() == NodeType.TRUE)
+//			return true;
+//		return false;
+//	}
 
 	/**
 	 * returns a vector of vars from aVars & eVars that don't appear in the tree
@@ -366,47 +376,47 @@ public class TQbf extends Observable implements ResultHandler, TQbfRemote {
 	// return orphanedVars;
 	// }
 
-	public void eliminateOrphanedVars() {
-		ArrayList<Integer> quantifiedVars = new ArrayList<Integer>(aVars);
-		quantifiedVars.addAll(eVars);
+//	public void eliminateOrphanedVars() {
+//		ArrayList<Integer> quantifiedVars = new ArrayList<Integer>(aVars);
+//		quantifiedVars.addAll(eVars);
+//
+//		OrphanVisitor v = new OrphanVisitor(quantifiedVars);
+//		v.visit(this.getRootNode());
+//		ArrayList<Integer> orphans = v.getOrpahns();
+//		// logger.info("Eliminating vars(" + orphans.size() + "): " + orphans);
+//		aVars.removeAll(orphans);
+//		eVars.removeAll(orphans);
+//	}
 
-		OrphanVisitor v = new OrphanVisitor(quantifiedVars);
-		v.visit(this.getRootNode());
-		ArrayList<Integer> orphans = v.getOrpahns();
-		// logger.info("Eliminating vars(" + orphans.size() + "): " + orphans);
-		aVars.removeAll(orphans);
-		eVars.removeAll(orphans);
-	}
-
-	public SimpleNode getRootNode() {
-		if(this.root == null) {
-			if(this.serializedFormula == null) {
-				// This is weird...
-				logger.error("TransmissionQbf didnt contain a formula tree or a serialized formula-tree");
-				assert(false);
-				return null;
-			} else {
-				// This means the root was nullified by transient while serialization
-				// deserialize and write to root-variable
-				try {
-					ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(this.serializedFormula));
-					this.root = (SimpleNode) in.readObject();
-					in.close();
-					return root;
-				} catch (Exception e) {
-					// this sucks...
-					logger.error("Problem while deserializing formula", e);
-					return null;
-				}
-			}
-		} else {
-			return this.root;
-		}
-	}
-
-	public void setRootNode(SimpleNode n) {
-		this.root = n;
-	}
+//	public SimpleNode getRootNode() {
+//		if(this.root == null) {
+//			if(this.serializedFormula == null) {
+//				// This is weird...
+//				logger.error("TransmissionQbf didnt contain a formula tree or a serialized formula-tree");
+//				assert(false);
+//				return null;
+//			} else {
+//				// This means the root was nullified by transient while serialization
+//				// deserialize and write to root-variable
+//				try {
+//					ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(this.serializedFormula));
+//					this.root = (SimpleNode) in.readObject();
+//					in.close();
+//					return root;
+//				} catch (Exception e) {
+//					// this sucks...
+//					logger.error("Problem while deserializing formula", e);
+//					return null;
+//				}
+//			}
+//		} else {
+//			return this.root;
+//		}
+//	}
+//
+//	public void setRootNode(SimpleNode n) {
+//		this.root = n;
+//	}
 
 	public TQbf deepClone() throws Exception {
 		TQbf clonedObj = null;

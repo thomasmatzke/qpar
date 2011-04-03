@@ -35,31 +35,29 @@ public class TruthAssigner {
 	 * @return
 	 */
 	public ArrayDeque<SimpleNode> assign() {
-		logger.info("Assigning " + Arrays.toString(trueVars.toArray()) + ", " + Arrays.toString(falseVars.toArray()));
+//		logger.info("Assigning " + Arrays.toString(trueVars.toArray()) + ", " + Arrays.toString(falseVars.toArray()));
 		ArrayDeque<SimpleNode> assigned = assignNode(root);
-		logger.info("Assigned " + assigned.size() + " nodes.");
+//		logger.info("Assigned " + assigned.size() + " nodes.");
 		return assigned;
 	}
 		
 	private ArrayDeque<SimpleNode> assignNode(SimpleNode node) {
 		ArrayDeque<SimpleNode> ret = new ArrayDeque<SimpleNode>();
-		if (node.nodeType == NodeType.VAR) {
-			conditionalAssign(node);
-			ret.add(node);
+		if (node.nodeType.equals(NodeType.VAR)) {
+			if(trueVars.contains(node.getVar())) {
+				node.setNodeType(NodeType.TRUE);
+				ret.add(node);
+			} else if(falseVars.contains(node.getVar())) {
+				node.setNodeType(NodeType.FALSE);
+				ret.add(node);
+			}
+			
 		} else {
 			for(Node n : node.children) {
 				ret.addAll(assignNode((SimpleNode) n));
 			}
 		}
 		return ret;
-	}
-
-	private void conditionalAssign(SimpleNode node) {
-		if(trueVars.contains(node.getVar())) {
-			node.setNodeType(NodeType.TRUE);
-		} else if(falseVars.contains(node.getVar())) {
-			node.setNodeType(NodeType.FALSE);
-		}
 	}
 	
 }

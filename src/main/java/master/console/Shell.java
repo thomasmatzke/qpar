@@ -381,7 +381,7 @@ public class Shell implements Runnable, Observer{
 	}
 
 	/**
-	 * Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic timeout
+	 * Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic cores timeout
 	 * @param token
 	 */
 	private void newjob(StringTokenizer token) {
@@ -391,7 +391,8 @@ public class Shell implements Runnable, Observer{
 			String 	solverid 	= token.nextToken();
 			String 	heuristic 	= token.nextToken();
 			int		maxCores	= Integer.parseInt(token.nextToken());
-			new Job(input_path, output_path, solverid, heuristic, 0, maxCores);
+			long	timeout		= Long.parseLong(token.nextToken());
+			new Job(input_path, output_path, solverid, heuristic, timeout, maxCores);
 			
 		} catch(NoSuchElementException e) {
 			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic max_cores");

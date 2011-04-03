@@ -48,7 +48,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	
 	public static AbstractTableModel slaveTableModel;
 	
-	public static ExecutorService globalThreadPool = Executors.newFixedThreadPool(200);
+	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
 	
 	public Master() throws FileNotFoundException, RemoteException, NotBoundException {		
 		

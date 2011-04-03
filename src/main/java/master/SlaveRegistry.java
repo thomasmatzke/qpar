@@ -111,10 +111,10 @@ public class SlaveRegistry extends Observable implements Observer {
 		List<SlaveRemote> slaves = new ArrayList<SlaveRemote>();
 
 		for (SlaveRemote s : this.slaves.values()) {
-			try {
-				logger.info("slave: " + s.getHostName() + ", freecores: " + s.freeCores());
-			} catch (Exception e1) {
-			}
+//			try {
+//				logger.info("slave: " + s.getHostName() + ", freecores: " + s.freeCores());
+//			} catch (Exception e1) {
+//			}
 			try {
 				if (s.freeCores() > 0)
 					slaves.add(s);

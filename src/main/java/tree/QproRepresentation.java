@@ -4,11 +4,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Vector;
 
+import org.apache.log4j.Logger;
+
 import main.java.logic.parser.Node;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
 
 public class QproRepresentation {
+	static Logger logger = Logger.getLogger(QproRepresentation.class);
 
 	SimpleNode root;
 	
@@ -21,10 +24,10 @@ public class QproRepresentation {
 		
 		buf.append("QBF\n" + (Collections.max(getVariableSet(root))) + "\n");
 				
-		if(root.getNodeType().equals(NodeType.START)) {
-			buf.append(root.children[0]);
+		if(root.isStartNode()) {
+			buf.append(traverse((SimpleNode)root.children[0]));
 		} else {
-			buf.append(root);
+			buf.append(traverse((SimpleNode)root));
 		}
 				
 		buf.append("QBF\n");
@@ -32,6 +35,11 @@ public class QproRepresentation {
 	}
 	
 	
+	/**
+	 * Get unique set of all variables in the tree
+	 * @param n A rootnode of a subtree
+	 * @return Set of variables used in the formula
+	 */
 	private HashSet<Integer> getVariableSet(SimpleNode n) {
 		HashSet<Integer> vars = new HashSet<Integer>();
 		for(Node child : n.children) {
@@ -45,113 +53,118 @@ public class QproRepresentation {
 	}
 	
 	public String traverse(SimpleNode n) {
-		String traversedTree = "";
+//		logger.info("Traversing visited: " + n.toString());
+		StringBuffer traversedTree = new StringBuffer();
 		Vector<Integer> posLiterals = new Vector<Integer>();
 		Vector<Integer> negLiterals = new Vector<Integer>();
 		SimpleNode tmpNode = null;
 		
-		if (n.nodeType == NodeType.EXISTS) {
-			NodeType nt = n.jjtGetParent().getNodeType(); 	
-			if (nt != NodeType.FORALL)
-				traversedTree += "q\n";
-			traversedTree += "e ";
+		SimpleNode parent = (SimpleNode) n.jjtGetParent();
+		
+		if (n.isExistsNode()) {
+			
+			if(!parent.isForallNode())
+				traversedTree.append("q\n");
+			traversedTree.append("e ");
 
 			// add the first var
-			traversedTree += n.var + " ";
+			traversedTree.append(n.var + " ");
 			
 			tmpNode = (SimpleNode)n.jjtGetChild(0);
 
-			while (tmpNode.getNodeType() == NodeType.EXISTS) {
-				traversedTree += tmpNode.getVar() + " ";
+			while (tmpNode.isExistsNode()) {
+				traversedTree.append(tmpNode.getVar() + " ");
 				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
 			}
-			traversedTree += "\n";
-			traversedTree += traverse(tmpNode);
-			if ((nt != NodeType.EXISTS) && (nt != NodeType.FORALL))
-				traversedTree += "/q\n";
+			traversedTree.append("\n");
+			traversedTree.append(traverse(tmpNode));
+			if (!((SimpleNode)n.jjtGetParent()).isQuantifierNode())
+				traversedTree.append("/q\n");
 			
 		}	
 			
-		if (n.nodeType == NodeType.FORALL) {
-			NodeType nt = n.jjtGetParent().getNodeType(); 	
-			if (nt != NodeType.EXISTS)
-				traversedTree += "q\n";
-			traversedTree += "a ";
+		if (n.isForallNode()) {	
+			if(!parent.isExistsNode())
+				traversedTree.append("q\n");
+			traversedTree.append("a ");
 
 			// add the first var
-			traversedTree += n.var + " ";
+			traversedTree.append(n.var + " ");
 			
 			tmpNode = (SimpleNode)n.jjtGetChild(0);
 
 			while (tmpNode.getNodeType() == NodeType.FORALL) {
-				traversedTree += tmpNode.getVar() + " ";
+				traversedTree.append(tmpNode.getVar() + " ");
 				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
 			}
-			traversedTree += "\n";
-			traversedTree += traverse(tmpNode);
-			if ((nt != NodeType.EXISTS) && (nt != NodeType.FORALL))
-				traversedTree += "/q\n";
+			traversedTree.append("\n");
+			traversedTree.append(traverse(tmpNode));
+			if(!parent.isQuantifierNode())
+				traversedTree.append("/q\n");
 		}	
 			
-		if (n.nodeType == NodeType.AND) {
+		if (n.isAndNode()) {
 			/*
 			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
 			 *    traversedTree += "\n";
 			 */
-			traversedTree += "c\n";
+			traversedTree.append("c\n");
 			posLiterals = (n.getPositiveLiterals(NodeType.AND, posLiterals));
 			negLiterals = (n.getNegativeLiterals(NodeType.AND, negLiterals));
 
 			for (int var : posLiterals)
-				traversedTree += var + " ";
-			traversedTree += "\n";
+				traversedTree.append(var + " ");
+			traversedTree.append("\n");
 
 			for (int var : negLiterals)
-				traversedTree += var + " ";
-			traversedTree += "\n";
+				traversedTree.append(var + " ");
+			traversedTree.append("\n");
 
-			traversedTree += getEnclosedFormula((SimpleNode)n, NodeType.OR);
+			traversedTree.append(getEnclosedFormula((SimpleNode)n, NodeType.OR));
 
-			traversedTree += "/c\n";
+			traversedTree.append("/c\n");
 		}
 
-		if (n.nodeType == NodeType.OR) {
+		if (n.isOrNode()) {
 			/*
 			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
 			 *    traversedTree += "\n";
 			 */
-			traversedTree += "d\n";
+			traversedTree.append("d\n");
 			posLiterals = (n.getPositiveLiterals(NodeType.OR, posLiterals));
 			negLiterals = (n.getNegativeLiterals(NodeType.OR, negLiterals));
 
 			for (int var : posLiterals)
-				traversedTree += var + " ";
-			traversedTree += "\n";
+				traversedTree.append(var + " ");
+			traversedTree.append("\n");
 
 			for (int var : negLiterals)
-				traversedTree += var + " ";
-			traversedTree += "\n";
+				traversedTree.append(var + " ");
+			traversedTree.append("\n");
 
-			traversedTree += getEnclosedFormula((SimpleNode)n, NodeType.AND);
+			traversedTree.append(getEnclosedFormula((SimpleNode)n, NodeType.AND));
 
-			traversedTree += "/d\n";
+			traversedTree.append("/d\n");
 		}
 
-		return traversedTree;
+		return traversedTree.toString();
 	}
 	
 	public String getEnclosedFormula(SimpleNode n, NodeType op) {
+		if(n.jjtGetNumChildren() == 0)
+			return "";
+		
 		StringBuffer tmp = new StringBuffer();
-		for (int i = 0; i < n.jjtGetNumChildren(); i++) {
-			if (n.jjtGetChild(i).getNodeType() == op) {
-				tmp.append(traverse((SimpleNode)n.jjtGetChild(i)));
-			} else if ((n.jjtGetChild(i).getNodeType() == NodeType.EXISTS) || 
-			           (n.jjtGetChild(i).getNodeType() == NodeType.FORALL)) {
-				tmp.append(traverse((SimpleNode) n.jjtGetChild(i)));
+		for(Node node : n.children) {
+			assert(node !=  null);
+			SimpleNode child = (SimpleNode) node;
+			if (child.getNodeType().equals(op) || child.isQuantifierNode()) {
+				tmp.append(traverse(child));
 			} else {
-				tmp.append(getEnclosedFormula((SimpleNode)n.jjtGetChild(i), op));
+				tmp.append(getEnclosedFormula(child, op));
 			}
 		}
+
 		return tmp.toString();
 	}
 }

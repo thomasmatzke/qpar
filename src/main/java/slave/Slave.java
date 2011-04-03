@@ -53,7 +53,7 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 	
 	public static String hostname = null;
 	
-	public static ExecutorService globalThreadPool = Executors.newFixedThreadPool(200);
+	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
 	
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
 		logger.info("Starting Slave...");
@@ -276,7 +276,7 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 	}
 
 	@Override
-	public int freeCores() throws RemoteException {
+	synchronized public int freeCores() throws RemoteException {
 //		return this.getCores() - ComputationStateMachine.computations.size();
 		int computingcount = 0;
 		for(TQbfRemote tqbf : this.tqbfs) {
@@ -287,7 +287,7 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 	}
 
 	@Override
-	public void computeTqbf(TQbfRemote tqbf) throws RemoteException {
+	synchronized public void computeTqbf(TQbfRemote tqbf) throws RemoteException {
 		this.tqbfs.add(tqbf);
 		tqbf.compute(this);
 	}

@@ -49,21 +49,27 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	static Logger logger = Logger.getLogger(Job.class);
 
 	private boolean jobResult;
-	private long timeout = 0;
+	private long timeout = 0, setupTime = 0;
+	
+	public int usedCores = 0;
+	
 	private Qbf formula;
 	public DTNode decisionRoot = null;
 	public byte[] serializedFormula;
-
 	public List<TQbf> subformulas;
 
-	public String heuristic, id, inputFileString, outputFileString, solver;
-	public int usedCores = 0;
+	private TQbf completingTqbf = null;
+	
+	public String heuristic, id, inputFileString, outputFileString, solverId;
 
 	private HashMap<State, Date> history = new HashMap<State, Date>();
 
 	private List<Result> results = new ArrayList<Result>();
 
 	public Job(String inputFile, String outputFile, String solverId, String heuristicId, long timeout, int maxCores) throws RemoteException {
+		this.setSetupTime(new Date().getTime());
+		addJob(this);
+		
 		this.usedCores = maxCores;
 		this.setTimeout(timeout);
 		this.setId(allocateJobId());
@@ -72,10 +78,10 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		this.setSolver(solverId);
 		this.setHeuristic(heuristicId);
 		this.setState(State.READY);
-		addJob(this);
+		
 		logger.info("Job created. \n" + "	JobId:        " + this.id + "\n" + "	HeuristicId:  " + this.getHeuristic() + "\n" + "	SolverId:     "
 				+ this.getSolver() + "\n" + "	#Cores:       " + this.usedCores + "\n" + "	Inputfile:    " + this.getInputFileString() + "\n"
-				+ "	Outputfile:   " + this.getOutputFileString() + "\n");
+				+ "	Outputfile:   " + this.getOutputFileString() + "\n" + "	Timeout:  " + this.timeout + "\n");
 
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
@@ -97,10 +103,11 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 		for (TQbf tqbf : subformulas) {
 			tqbf.addObserver(this);
-			tqbf.setSolverId(this.solver);
-			tqbf.setJobId(this.id);
-			tqbf.setTimeout(this.timeout);
+//			tqbf.setSolverId(this.solverId);
+//			tqbf.setJobId(this.id);
+//			tqbf.setTimeout(this.timeout);
 		}
+		this.setSetupTime(new Date().getTime() - this.getSetupTime());
 	}
 
 	private static void addJob(Job job) {
@@ -201,7 +208,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			leafCtr++;
 		}
 
-		logger.info("\n" + decisionRoot.dump());
+//		logger.info("\n" + decisionRoot.dump());
 
 		assert (leaves.size() == usedCores);
 
@@ -220,20 +227,20 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		// Generate ids for leaves and corresponding tqbfs
 		int idCtr = 0;
 		for (DTNode node : leaves) {
-			String id = this.id + "." + Integer.toString(idCtr++);
-			node.setId(id);
-			TQbf tqbf = new TQbf();
-			tqbf.getFalseVars().addAll(node.variablesAssignedFalse);
-			tqbf.getTrueVars().addAll(node.variablesAssignedTrue);
-			tqbf.setRootNode(formula.root);
-			tqbf.serializedFormula = serializedFormula;
-			tqbf.setId(id);
-			tqbf.setEVars(formula.eVars);
-			tqbf.setAVars(formula.aVars);
-			Vector<Integer> tmpVars = new Vector<Integer>();
-			tmpVars.addAll(formula.aVars);
-			tmpVars.addAll(formula.eVars);
-			tqbf.setVars(tmpVars);
+			String tqbfId = this.id + "." + Integer.toString(idCtr++);
+			node.setId(tqbfId);
+			TQbf tqbf = new TQbf(tqbfId, this.id, this.solverId, node.variablesAssignedTrue, node.variablesAssignedFalse, this.timeout, serializedFormula);
+//			tqbf.getFalseVars().addAll(node.variablesAssignedFalse);
+//			tqbf.getTrueVars().addAll(node.variablesAssignedTrue);
+//			tqbf.setRootNode(formula.root);
+//			tqbf.serializedFormula = serializedFormula;
+//			tqbf.setId(tqbfId);
+//			tqbf.setEVars(formula.eVars);
+//			tqbf.setAVars(formula.aVars);
+//			Vector<Integer> tmpVars = new Vector<Integer>();
+//			tmpVars.addAll(formula.aVars);
+//			tmpVars.addAll(formula.eVars);
+//			tqbf.setVars(tmpVars);
 			tqbfs.add(tqbf);
 		}
 		assert (tqbfs.size() == usedCores);
@@ -287,7 +294,15 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	public long totalMillis() {
 		if (this.state != State.COMPLETE)
 			throw new IllegalStateException();
-		return this.history.get(State.COMPLETE).getTime() - this.history.get(State.RUNNING).getTime();
+		
+		if(QPar.benchmarkMode) {
+			long total = 0;
+			total += this.getSetupTime();
+			total += this.completingTqbf.getComputationTime();
+			return total;
+		} else {
+			return this.history.get(State.COMPLETE).getTime() - this.history.get(State.RUNNING).getTime();	
+		}		
 	}
 
 	private String resultText() {
@@ -299,6 +314,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
 
+	
+	// TODO: move this crap to TQbf
 	synchronized public void handleResult(Result r) {
 
 		this.results.add(r);
@@ -311,17 +328,6 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			this.abortComputations();
 			this.setState(State.ERROR);
 			return;
-		}
-
-		// resultCtr++;
-
-		boolean tqbfResult = false;
-		if (r.type == Type.FALSE) {
-			tqbfResult = false;
-		} else if (r.type == Type.TRUE) {
-			tqbfResult = true;
-		} else {
-			assert (false);
 		}
 
 		/*
@@ -354,7 +360,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			}
 
 		} else {
-			solved = mergeQbf(r.tqbfId, tqbfResult);
+			solved = mergeQbf(r.tqbfId, r.getResult());
 		}
 
 		logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + this.id + " (" + r.type + ")");
@@ -394,6 +400,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 		for (TQbf tqbf : finished) {
 			if (mergeQbf(tqbf.getId(), tqbf.getResult().getResult())) {
+				this.completingTqbf = tqbf;
 				return true;
 			}
 		}
@@ -459,7 +466,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	public String getSolver() {
-		return solver;
+		return solverId;
 	}
 
 	public State getStatus() {
@@ -487,7 +494,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	public void setSolver(String solver) {
-		this.solver = solver;
+		this.solverId = solver;
 	}
 
 	public void setState(State state) {
@@ -525,12 +532,16 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		if (this.getStatus() != State.COMPLETE)
 			throw new IllegalStateException("Job not in state COMPLETE.");
 
+		int terminatedCount = 0;
 		long added = 0;
 		for (TQbf tqbf : this.subformulas) {
-			added += tqbf.getResult().solverTime;
+			if(tqbf.isTerminated()) {
+				added += tqbf.getResult().solverTime;
+				terminatedCount++;
+			}				
 		}
 
-		double mean = (double) added / (double) this.subformulas.size();
+		double mean = (double) added / (double) terminatedCount;
 		return mean;
 	}
 
@@ -540,7 +551,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 		long maxTime = 0;
 		for (TQbf tqbf : this.subformulas) {
-			if (tqbf.getResult().solverTime > maxTime)
+			if(tqbf.isTerminated() && tqbf.getResult().solverTime > maxTime)
 				maxTime = tqbf.getResult().solverTime;
 		}
 		return maxTime;
@@ -550,12 +561,16 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		if (this.getStatus() != State.COMPLETE)
 			throw new IllegalStateException("Job not in state COMPLETE.");
 
+		int terminated = 0;
 		long added = 0;
 		for (TQbf tqbf : this.subformulas) {
-			added += tqbf.getResult().overheadTime;
+			if(tqbf.isTerminated()) {
+				added += tqbf.getResult().overheadTime;
+				terminated++;
+			}				
 		}
 
-		double mean = (double) added / (double) this.subformulas.size();
+		double mean = (double) added / (double) terminated;
 		return mean;
 	}
 
@@ -600,6 +615,14 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 	public void setHistory(HashMap<State, Date> history) {
 		this.history = history;
+	}
+
+	public long getSetupTime() {
+		return setupTime;
+	}
+
+	public void setSetupTime(long setupTime) {
+		this.setupTime = setupTime;
 	}
 
 }

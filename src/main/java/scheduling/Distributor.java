@@ -67,10 +67,10 @@ public class Distributor implements Runnable, RemoteObserver, Serializable {
 				while(slaves.size() < 1){
 					try { wait(500); } catch (InterruptedException e) {}
 					slaves = SlaveRegistry.instance().freeCoreSlaves();
-					logger.info("Distributor found " + slaves.size() + " free slaves.");
+//					logger.info("Distributor found " + slaves.size() + " free slaves.");
 				}
 			}
-			logger.info("freecoreslaves: " + slaves.size());
+//			logger.info("freecoreslaves: " + slaves.size());
 			SlaveRemote s = slaves.get(0);
 			try {
 				tqbf.addObserver(this);

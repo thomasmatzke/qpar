@@ -15,6 +15,7 @@ public class QPar {
 	static Logger logger = Logger.getLogger(QPar.class);
 	
 	public static Level logLevel = Level.INFO;
+	public static boolean enableExceptionNotifications = false;
 	public static String exceptionNotifierAddress = null;
 	public static String mailServer = null;
 	public static String mailUser = null;
@@ -32,14 +33,17 @@ public class QPar {
 		} catch (IOException e) {
 			logger.warn("Config file not found.");
 		}
-		QPar.mailPass 					= properties.getProperty("mailPass");
-		QPar.mailUser 					= properties.getProperty("mailUser");
-		QPar.mailServer 				= properties.getProperty("mailServer");
-		QPar.exceptionNotifierAddress 	= properties.getProperty("exceptionNotifierAddress");
-		QPar.benchmarkMode 				= Boolean.parseBoolean(properties.getProperty("benchmarkMode"));
+		QPar.mailPass 						= properties.getProperty("mailPass");
+		QPar.mailUser 						= properties.getProperty("mailUser");
+		QPar.mailServer 					= properties.getProperty("mailServer");
+		QPar.exceptionNotifierAddress 		= properties.getProperty("exceptionNotifierAddress");
+		QPar.enableExceptionNotifications 	= Boolean.parseBoolean(properties.getProperty("enableExceptionNotifications"));
+		QPar.benchmarkMode 					= Boolean.parseBoolean(properties.getProperty("benchmarkMode"));
 	}
 	
 	public static void sendExceptionMail(Throwable t) {
+		if(!QPar.enableExceptionNotifications)
+			return;
 		String body = "";
 		try {
 			body += "Host: " + InetAddress.getLocalHost().getHostName() + "\n";

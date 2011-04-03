@@ -1,9 +1,9 @@
 MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
 
-newjob testing\boole\counter5_4-bin.qbf testing\boole\counter5_4-bin.qbf.txt qpro simple 4
-startjob 1
+#newjob testing\boole\counter5_4-bin.qbf testing\counter5_4-bin.qbf.txt qpro simple 16 60
+#startjob 1
 
-#evaluate testing/boole 1 1 qpro 60
+evaluate testing/boole 1 16 qpro 60
 #PARLOGEVAL testing/semaphore_small 1 4 qpro 60
 #PARLOGEVAL testing/ring_medium 1 4 qpro 60
 #PARLOGEVAL testing/semaphore_medium 1 4 qpro 60
