@@ -4,11 +4,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
-
 import main.java.logic.parser.Node;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
+
+import org.apache.log4j.Logger;
 
 public class QproRepresentation {
 	static Logger logger = Logger.getLogger(QproRepresentation.class);

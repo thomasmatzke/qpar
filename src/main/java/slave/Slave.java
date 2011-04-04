@@ -22,6 +22,8 @@ import main.java.rmi.MasterRemote;
 import main.java.rmi.RemoteObserver;
 import main.java.rmi.SlaveRemote;
 import main.java.rmi.TQbfRemote;
+import main.java.slave.solver.Solver;
+import main.java.slave.solver.SolverFactory;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -36,25 +38,96 @@ import sun.misc.Signal;
  *
  */
 public final class Slave extends UnicastRemoteObject implements SlaveRemote, RemoteObserver  {
-	private static final long serialVersionUID = -7927545942720427850L;
-	static Logger logger = Logger.getLogger(Slave.class);
-
 	public static ArrayList<String> availableSolvers = new ArrayList<String>();
-	public String masterIp;
+	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
+
+	public static String hostname = null;
+	static Logger logger = Logger.getLogger(Slave.class);
 	
-	public boolean connected = false;
-	public static MasterRemote master = null;
+	private static MasterRemote master = null;
+	private static final long serialVersionUID = -7927545942720427850L;
+	
+	public static MasterRemote getMaster() {
+		return master;
+	}
+		
+	/**
+	 * Program execution entry point
+	 * @param args
+	 * @throws InterruptedException 
+	 */
+	public static void main(String[] args) throws InterruptedException, RemoteException {
+		ArgumentParser ap = new ArgumentParser(args);
+		// Basic console logging
+		BasicConfigurator.configure();
+		if(ap.hasOption("log")) {
+			String lvl = ap.getOption("log");
+			if(lvl.equals("debug"))
+				QPar.logLevel = Level.DEBUG;
+			else if(lvl.equals("info"))
+				QPar.logLevel = Level.INFO;
+			else
+				usage();
+		}
+		Logger.getRootLogger().setLevel(QPar.logLevel);
+				
+		String solversString = ap.getOption("solvers");
+		if(solversString != null) {
+			Scanner s = new Scanner(solversString).useDelimiter(",");
+			while(s.hasNext()) {
+				String cur = s.next();
+				availableSolvers.add(cur);
+			}
+		} else {
+			availableSolvers.add("qpro");
+			availableSolvers.add("simple");
+		}
+		
+		new Slave(ap.nextParam());
+					
+	}
+	
+	synchronized public static void setMaster(MasterRemote master) {
+		Slave.master = master;
+	}
+	
+	public static void shutdownHost() {
+	    String shutdownCommand = "";
+	    String osName = System.getProperty("os.name");        
+	    
+	    if (osName.startsWith("Win")) {
+	      shutdownCommand = "shutdown.exe -s -t 0";
+	    } else if (osName.startsWith("Linux") || osName.startsWith("Mac")) {
+	      shutdownCommand = "shutdown -h now";
+	    } else {
+	      logger.error("Shutdown unsupported operating system ...");
+	      System.exit(0);
+	    }
+
+	    try {
+			Runtime.getRuntime().exec(shutdownCommand);
+		} catch (IOException e) {
+			logger.error(e);
+		}
+	    System.exit(0);
+	}
+	
+	public static void usage() {
+		System.err.println("Usage: java main.java.Slave MASTERIP (ex. 192.168.1.10");
+		System.exit(-1);
+	}
+		
+	
+
+	public boolean connected = false;	
+		
+	public String masterIp;
 	
 	public String masterName = null;
 	
-//	transient public FormulaListener formulaListener = null;
-	
 	public List<TQbfRemote> tqbfs = new ArrayList<TQbfRemote>();
-	
-	public static String hostname = null;
-	
-	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
-	
+
+
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
 		logger.info("Starting Slave...");
 		
@@ -98,27 +171,34 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 		synchronized(this) { wait(); }
 		System.exit(0);
 	}
-		
-	
+
+	@Override
+	public void computeFormula(TQbfRemote tqbf) throws RemoteException {
+		Solver solver = SolverFactory.getSolver(tqbf);
+		Slave.globalThreadPool.execute(solver);
+	}
+
+	@Override
+	synchronized public void computeTqbf(TQbfRemote tqbf) throws RemoteException {
+		this.tqbfs.add(tqbf);
+		tqbf.compute(this);
+	}
 
 	public void connect() {
 		// if already connected clean up mess
 		if(connected) {
 			logger.info("Already connected. Reconnecting...");
-//			killAllThreads();
+			killAllThreads();
 //			this.formulaListener.stop();
 			connected = false;		
 		}
 			
 		while(!connected){
 			try {
-//				this.formulaListener = new FormulaListener(11111);
-//				new Thread(this.formulaListener).start();
-//				globalThreadPool.execute(this.formulaListener);
 				logger.info("Looking up " + masterName + "...");
-				master = (MasterRemote)Naming.lookup(masterName);
+				setMaster((MasterRemote)Naming.lookup(masterName));
 				logger.info("Registering with Master...");
-				master.registerSlave(this);
+				getMaster().registerSlave(this);
 				connected = true;
 				break;
 			} catch (MalformedURLException e) {
@@ -129,39 +209,22 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 				logger.error("Something is not bound :P", e);
 			} catch (UnknownHostException e) {
 				logger.fatal("Wrong address?", e);
-			} catch (IOException e) {
-				logger.error(e);
 			}
-//			this.formulaListener.stop();
 			logger.info("Could not connect. Trying again in 5 seconds...");		
 			try { Thread.sleep(5000); } catch (InterruptedException e) {}
 		}
-	}	
-		
-	public static void shutdownHost() {
-	    String shutdownCommand = "";
-	    String osName = System.getProperty("os.name");        
-	    
-	    if (osName.startsWith("Win")) {
-	      shutdownCommand = "shutdown.exe -s -t 0";
-	    } else if (osName.startsWith("Linux") || osName.startsWith("Mac")) {
-	      shutdownCommand = "shutdown -h now";
-	    } else {
-	      logger.error("Shutdown unsupported operating system ...");
-	      System.exit(0);
-	    }
-
-	    try {
-			Runtime.getRuntime().exec(shutdownCommand);
-		} catch (IOException e) {
-			logger.error(e);
-		}
-	    System.exit(0);
 	}
-	
-	public static void usage() {
-		System.err.println("Usage: java main.java.Slave MASTERIP (ex. 192.168.1.10");
-		System.exit(-1);
+
+
+	@Override
+	synchronized public int freeCores() throws RemoteException {
+//		return this.getCores() - ComputationStateMachine.computations.size();
+		int computingcount = 0;
+		for(TQbfRemote tqbf : this.tqbfs) {
+			if(tqbf.isComputing())
+				computingcount++;
+		}
+		return this.getCores() - computingcount;
 	}
 	
 	@Override
@@ -169,21 +232,20 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 		return Runtime.getRuntime().availableProcessors();
 	}
 
-
 	@Override
 	public String getHostName() throws RemoteException, UnknownHostException {
-		return this.hostname;
+		return hostname;
 	}
 
 	@Override
 	public ArrayList<String> getSolvers() throws RemoteException {
 		return availableSolvers;
 	}
-
+	
 	@Override
 	public void kill(String reason) throws RemoteException {
 		logger.info("Killing slave...");
-//		this.killAllThreads();
+		this.killAllThreads();
 		
 		Runnable r = new Runnable() {
             @Override
@@ -191,6 +253,26 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
             	System.exit(0);
             }};
         globalThreadPool.execute(r);
+	}
+
+	public void killAllThreads() {
+		logger.info("Killing all threads...");
+		for(Solver s : Solver.solvers.values()) {
+			s.kill();
+		}
+	}
+
+	@Override
+	public void setExceptionNotifierAddress(String address)
+			throws RemoteException {
+		QPar.setExceptionNotifierAddress(address);
+	}
+
+	@Override
+	synchronized public void setMailInfo(String mailServer, String mailUser, String mailPass) {
+		QPar.setMailServer(mailServer);
+		QPar.setMailUser(mailUser);
+		QPar.setMailPass(mailPass);
 	}
 
 	@Override
@@ -205,14 +287,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
         globalThreadPool.execute(r);
 	}
 
-
-//	public void killAllThreads() {
-//		logger.info("Killing all threads...");
-//		for(TQbfRemote tqbf : this.tqbfs) {
-//			tqbf.abort();
-//		}
-//	}
-	
 	public String toString() {
 		try {
 			return "Slave -- Hostname: " + this.getHostName() + ", Solvers: "
@@ -225,83 +299,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 			return "";
 		}
 	}
-
-	@Override
-	synchronized public void setMailInfo(String mailServer, String mailUser, String mailPass) {
-		QPar.setMailServer(mailServer);
-		QPar.setMailUser(mailUser);
-		QPar.setMailPass(mailPass);
-	}
-
-	@Override
-	public void setExceptionNotifierAddress(String address)
-			throws RemoteException {
-		QPar.exceptionNotifierAddress = address;
-	}
-	
-	/**
-	 * Program execution entry point
-	 * @param args
-	 * @throws InterruptedException 
-	 */
-	public static void main(String[] args) throws InterruptedException, RemoteException {
-		ArgumentParser ap = new ArgumentParser(args);
-		// Basic console logging
-		BasicConfigurator.configure();
-		if(ap.hasOption("log")) {
-			String lvl = ap.getOption("log");
-			if(lvl.equals("debug"))
-				QPar.logLevel = Level.DEBUG;
-			else if(lvl.equals("info"))
-				QPar.logLevel = Level.INFO;
-			else
-				usage();
-		}
-		Logger.getRootLogger().setLevel(QPar.logLevel);
-				
-		String solversString = ap.getOption("solvers");
-		if(solversString != null) {
-			Scanner s = new Scanner(solversString).useDelimiter(",");
-			while(s.hasNext()) {
-				String cur = s.next();
-				availableSolvers.add(cur);
-			}
-		} else {
-			availableSolvers.add("qpro");
-			availableSolvers.add("simple");
-		}
-		
-		new Slave(ap.nextParam());
-					
-	}
-
-	@Override
-	synchronized public int freeCores() throws RemoteException {
-//		return this.getCores() - ComputationStateMachine.computations.size();
-		int computingcount = 0;
-		for(TQbfRemote tqbf : this.tqbfs) {
-			if(tqbf.isComputing())
-				computingcount++;
-		}
-		return this.getCores() - computingcount;
-	}
-
-	@Override
-	synchronized public void computeTqbf(TQbfRemote tqbf) throws RemoteException {
-		this.tqbfs.add(tqbf);
-		tqbf.compute(this);
-	}
-
-//	@Override
-//	public ArrayList<String> getCurrentJobs() throws RemoteException {
-//		ArrayList<String> jobs = new ArrayList<String>();
-//		for(TQbf tqbf : tqbfs) {
-//			if(!jobs.contains(tqbf.getJobId()))
-//				jobs.add(tqbf.getJobId());
-//		}
-//		return jobs;
-//	}
-
 	/**
 	 * Observes tqbfs to remove from computations if terminated
 	 */
@@ -312,6 +309,11 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 			if(tqbf.getState() != State.COMPUTING)
 				this.tqbfs.remove(o);			
 		}
+	}
+
+	@Override
+	public void abortFormula(String tqbfId) throws RemoteException {
+		Solver.solvers.get(tqbfId).kill();
 	}
 	
 }

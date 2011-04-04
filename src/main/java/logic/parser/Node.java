@@ -6,10 +6,7 @@ package main.java.logic.parser;
    machinery for constructing the parent and child relationships
    between nodes. */
 
-import java.util.ArrayList;
 import java.util.Vector;
-
-import main.java.logic.parser.SimpleNode.NodeType;
 
 public interface Node {
 //	public String 	op = "";

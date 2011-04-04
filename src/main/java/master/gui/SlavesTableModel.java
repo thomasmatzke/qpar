@@ -9,7 +9,6 @@ import javax.swing.table.AbstractTableModel;
 import main.java.master.SlaveRegistry;
 import main.java.rmi.SlaveRemote;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 public class SlavesTableModel extends AbstractTableModel {

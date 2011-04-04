@@ -1,8 +1,9 @@
 package main.java.slave.solver;
 
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-import main.java.master.TQbf;
 import main.java.rmi.Result;
 import main.java.rmi.TQbfRemote;
 
@@ -16,11 +17,11 @@ import org.apache.log4j.Logger;
  * 
  */
 public abstract class Solver implements Runnable {
-
 	static Logger logger = Logger.getLogger(QProSolver.class);
+	
+	public static HashMap<String, Solver> solvers = new HashMap<String, Solver>();
+		
 	protected TQbfRemote tqbf;
-//	public Thread thread;
-	protected ResultHandler handler = null;
 	protected String tqbfId = null;
 	protected String jobId = null;
 	protected long timeout;
@@ -28,13 +29,13 @@ public abstract class Solver implements Runnable {
 	volatile protected boolean killed = false;
 	protected boolean run = true;
 		
-	public Solver(TQbfRemote tqbf2, ResultHandler handler) {
-		this.handler = handler;
+	public Solver(TQbfRemote tqbf) {
 		try {
-			this.tqbf = tqbf2;
-			this.tqbfId = tqbf2.getId();
-			this.jobId = tqbf2.getJobId();
-			this.timeout = tqbf2.getTimeout();
+			this.tqbf = tqbf;
+			this.tqbfId = tqbf.getId();
+			this.jobId = tqbf.getJobId();
+			this.timeout = tqbf.getTimeout();
+			solvers.put(tqbfId,this);
 		} catch (RemoteException e) {
 			logger.error("", e);
 		}
@@ -44,16 +45,16 @@ public abstract class Solver implements Runnable {
 
 	public abstract void run();
 
-//	public TQbf getTransmissionQbf() {
-//		return this.tqbf;
-//	}
-
 	protected void returnWithError(String tqbfId, String jobId, Exception e) {
 		Result r = new Result(tqbfId, jobId);
 //		logger.error("Cant complete tqbf computation", e);
 		r.type = Result.Type.ERROR;
 		r.exception = e;
-		this.handler.handleResult(r);
+		try {
+			this.tqbf.handleResult(r);
+		} catch (RemoteException e1) {
+			logger.error("", e);
+		}
 	}
 
 	protected void returnWithSuccess(String tqbfId, String jobId,
@@ -71,7 +72,11 @@ public abstract class Solver implements Runnable {
 		r.overheadTime = overheadTime;
 		
 		logger.info("Returning result for formula " + tqbfId + ": " + r.type);
-		this.handler.handleResult(r);
+		try {
+			this.tqbf.handleResult(r);
+		} catch (RemoteException e) {
+			logger.error("", e);
+		}
 
 	}
 	

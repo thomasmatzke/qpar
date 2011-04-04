@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
-import java.util.Vector;
 
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
@@ -29,7 +28,6 @@ import main.java.logic.heuristic.HeuristicFactory;
 import main.java.rmi.RemoteObservable;
 import main.java.rmi.RemoteObserver;
 import main.java.rmi.Result;
-import main.java.rmi.Result.Type;
 import main.java.rmi.WrappedObserver;
 import main.java.scheduling.Distributor;
 
@@ -131,8 +129,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	synchronized public void triggerTimeout() {
-
-		if (this.getStatus() == State.COMPLETE || this.getStatus() == State.ERROR) {
+		if (this.isComplete() || this.isError()) {
 			return;
 		}
 		logger.info("Timeout reached. Job: " + this.id + ", Timeout: " + this.timeout);
@@ -292,17 +289,17 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	public long totalMillis() {
-		if (this.state != State.COMPLETE)
+		if(!this.isTimeout() && !this.isComplete())
 			throw new IllegalStateException();
 		
-		if(QPar.benchmarkMode) {
-			long total = 0;
-			total += this.getSetupTime();
+		long total = 0;
+		total += this.getSetupTime();
+		if(this.isTimeout())
+			total += this.timeout * 1000;
+		else
 			total += this.completingTqbf.getComputationTime();
-			return total;
-		} else {
-			return this.history.get(State.COMPLETE).getTime() - this.history.get(State.RUNNING).getTime();	
-		}		
+		
+		return total;
 	}
 
 	private String resultText() {
@@ -529,8 +526,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	public double meanSolverTime() {
-		if (this.getStatus() != State.COMPLETE)
-			throw new IllegalStateException("Job not in state COMPLETE.");
+		if(!this.isComplete() && !this.isTimeout())
+			throw new IllegalStateException("Job not in state COMPLETE or TIMEOUT.");
 
 		int terminatedCount = 0;
 		long added = 0;
@@ -546,8 +543,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	public long maxSolverTime() {
-		if (this.getStatus() != State.COMPLETE)
-			throw new IllegalStateException("Job not in state COMPLETE.");
+		if (!this.isComplete() && !this.isTimeout())
+			throw new IllegalStateException("Job not in state COMPLETE or TIMEOUT.");
 
 		long maxTime = 0;
 		for (TQbf tqbf : this.subformulas) {
@@ -558,8 +555,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	public double meanOverheadTime() {
-		if (this.getStatus() != State.COMPLETE)
-			throw new IllegalStateException("Job not in state COMPLETE.");
+		if (!this.isComplete() && !this.isTimeout())
+			throw new IllegalStateException("Job not in state COMPLETE or TIMEOUT.");
 
 		int terminated = 0;
 		long added = 0;
@@ -623,6 +620,22 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 	public void setSetupTime(long setupTime) {
 		this.setupTime = setupTime;
+	}
+		
+	public boolean isReady() {
+		return (this.getStatus().equals(State.READY) ? true : false);
+	}
+	public boolean isRunning() {
+		return (this.getStatus().equals(State.RUNNING) ? true : false);
+	}
+	public boolean isComplete() {
+		return (this.getStatus().equals(State.COMPLETE) ? true : false);
+	}
+	public boolean isError() {
+		return (this.getStatus().equals(State.ERROR) ? true : false);
+	}
+	public boolean isTimeout() {
+		return (this.getStatus().equals(State.TIMEOUT) ? true : false);
 	}
 
 }

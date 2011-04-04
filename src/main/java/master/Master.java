@@ -112,8 +112,8 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 		logger.info("Registering Slave. Hostname: " + slave.getHostName() + ", Cores: " + slave.getCores() + ", Solvers: " + slave.getSolvers());
 		if(QPar.isMailInfoComplete())
 			slave.setMailInfo(QPar.mailServer, QPar.mailUser, QPar.mailPass);
-		if(QPar.exceptionNotifierAddress != null)
-			slave.setExceptionNotifierAddress(QPar.exceptionNotifierAddress);
+		if(QPar.getExceptionNotifierAddress() != null)
+			slave.setExceptionNotifierAddress(QPar.getExceptionNotifierAddress());
 		SlaveRegistry.instance().put(slave.getHostName(), slave);
 	}
 

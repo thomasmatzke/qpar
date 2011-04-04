@@ -11,8 +11,8 @@ import main.java.master.Job;
 import main.java.master.Master;
 import main.java.master.SlaveRegistry;
 import main.java.master.TQbf;
-import main.java.master.TransportThread;
 import main.java.master.TQbf.State;
+import main.java.master.TransportThread;
 import main.java.rmi.RemoteObserver;
 import main.java.rmi.SlaveRemote;
 

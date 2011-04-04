@@ -1,8 +1,11 @@
 package main.java.slave.solver;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 
-import main.java.master.TQbf;
+import main.java.rmi.TQbfRemote;
+
+import org.apache.log4j.Logger;
 
 /**
  * A solver-factory
@@ -11,6 +14,8 @@ import main.java.master.TQbf;
  * 
  */
 public class SolverFactory {
+	static Logger logger = Logger.getLogger(SolverFactory.class);
+	
 	private static ArrayList<String> solvers;
 
 	/**
@@ -32,9 +37,16 @@ public class SolverFactory {
 	 * @param id
 	 * @return
 	 */
-	public static Solver getSolver(String id, ResultHandler handler, TQbf tqbf) {
-		if (id.equals("qpro")) {
-			Solver q = new QProSolver(tqbf,handler);
+	public static Solver getSolver(TQbfRemote tqbf) {
+		String solverId;
+		try {
+			solverId = tqbf.getSolverId();
+		} catch (RemoteException e) {
+			logger.error("", e);
+			return null;
+		}
+		if (solverId.equals("qpro")) {
+			Solver q = new QProSolver(tqbf);
 			return q;
 		}
 		return null;

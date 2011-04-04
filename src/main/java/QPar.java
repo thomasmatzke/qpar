@@ -16,7 +16,7 @@ public class QPar {
 	
 	public static Level logLevel = Level.INFO;
 	public static boolean enableExceptionNotifications = false;
-	public static String exceptionNotifierAddress = null;
+	private static String exceptionNotifierAddress = null;
 	public static String mailServer = null;
 	public static String mailUser = null;
 	public static String mailPass = null;
@@ -36,7 +36,7 @@ public class QPar {
 		QPar.mailPass 						= properties.getProperty("mailPass");
 		QPar.mailUser 						= properties.getProperty("mailUser");
 		QPar.mailServer 					= properties.getProperty("mailServer");
-		QPar.exceptionNotifierAddress 		= properties.getProperty("exceptionNotifierAddress");
+		QPar.setExceptionNotifierAddress(properties.getProperty("exceptionNotifierAddress"));
 		QPar.enableExceptionNotifications 	= Boolean.parseBoolean(properties.getProperty("enableExceptionNotifications"));
 		QPar.benchmarkMode 					= Boolean.parseBoolean(properties.getProperty("benchmarkMode"));
 	}
@@ -51,8 +51,8 @@ public class QPar {
 			body += "Host: UNKNOWN (Exception ocurred)\n";
 		}
 		body += StackTraceUtil.getStackTrace(t);
-		if(QPar.isMailInfoComplete() && QPar.exceptionNotifierAddress != null)
-			Mailer.send_mail(QPar.exceptionNotifierAddress, QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification", body);
+		if(QPar.isMailInfoComplete() && QPar.getExceptionNotifierAddress() != null)
+			Mailer.send_mail(QPar.getExceptionNotifierAddress(), QPar.mailServer, QPar.mailUser, QPar.mailPass, "Exception Notification", body);
 	}
 
 	public static String getMailServer() {
@@ -77,6 +77,14 @@ public class QPar {
 
 	public static void setMailPass(String mailPass) {
 		QPar.mailPass = mailPass;
+	}
+
+	public static void setExceptionNotifierAddress(String exceptionNotifierAddress) {
+		QPar.exceptionNotifierAddress = exceptionNotifierAddress;
+	}
+
+	public static String getExceptionNotifierAddress() {
+		return exceptionNotifierAddress;
 	}
 	
 }

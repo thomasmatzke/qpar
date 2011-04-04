@@ -2,14 +2,12 @@ package main.java.tree;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Stack;
-
-import org.apache.log4j.Logger;
 
 import main.java.logic.parser.Node;
 import main.java.logic.parser.SimpleNode;
 import main.java.logic.parser.SimpleNode.NodeType;
+
+import org.apache.log4j.Logger;
 
 /**
  * Takes a SimpleNode and assigns truth values to variables in the subtree

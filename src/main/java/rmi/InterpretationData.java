@@ -4,12 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Vector;
-
-import org.apache.log4j.Logger;
 
 import main.java.logic.parser.SimpleNode;
-import main.java.master.Master;
+
+import org.apache.log4j.Logger;
 
 /**
  * Data needed for the slave to compute a interpretation

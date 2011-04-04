@@ -3,19 +3,19 @@ MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblabla
 #newjob testing\boole\counter5_4-bin.qbf testing\counter5_4-bin.qbf.txt qpro simple 16 60
 #startjob 1
 
-evaluate testing/boole 1 16 qpro 60
-#PARLOGEVAL testing/semaphore_small 1 4 qpro 60
-#PARLOGEVAL testing/ring_medium 1 4 qpro 60
-#PARLOGEVAL testing/semaphore_medium 1 4 qpro 60
+#evaluate testing/boole 1 16 qpro 60
+evaluate testing/semaphore_small 1 16 qpro 60
+evaluate testing/ring_medium 1 16 qpro 60
+evaluate testing/semaphore_medium 1 16 qpro 60
 
-#PARLOGEVAL testing/semaphore_small 1 4 qpro 4
-#LOGEVAL testing/semaphore_small 1 4 qpro 60
-#LOGEVAL testing/semaphore_medium 1 4 qpro 60
-#LOGEVAL testing/semaphore_big 1 4 qpro 60
+#PARLOGEVAL testing/semaphore_small 1 16 qpro 4
+evaluate testing/semaphore_small 1 16 qpro 60
+evaluate testing/semaphore_medium 1 16 qpro 60
+evaluate testing/semaphore_big 1 16 qpro 60
 
-#LOGEVAL testing/ring_small 4 4 qpro 1
-#LOGEVAL testing/ring_medium 1 4 qpro 60
-#evaluate testing/ring_big 1 4 qpro 1
+evaluate testing/ring_small 1 16 qpro 60
+evaluate testing/ring_medium 1 16 qpro 60
+evaluate testing/ring_big 1 16 qpro 60
 
 #logeval testing/boole 1 4 qpro 60
 #LOGEVAL testing/counter_small 1 4 qpro 60

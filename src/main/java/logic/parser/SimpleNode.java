@@ -4,18 +4,15 @@ package main.java.logic.parser;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Vector;
 
-import main.java.QPar;
 import main.java.logic.heuristic.DependencyNode;
 import main.java.tree.Visitor;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 // All nodes in the formula tree are derived from SimpleNode.

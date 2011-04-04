@@ -3,10 +3,10 @@ package main.java.tree;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
-
 import main.java.logic.parser.SimpleNode;
 import main.java.rmi.InterpretationData;
+
+import org.apache.log4j.Logger;
 
 public class ReducedInterpretation {
 

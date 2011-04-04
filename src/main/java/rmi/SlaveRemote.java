@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public interface SlaveRemote extends Remote {
 		
-	//public void computeFormula(String formulaId, String solverId) throws RemoteException;
+	public void computeFormula(TQbfRemote tqbf) throws RemoteException;
 	
 	public void shutdown() throws RemoteException;
 	
@@ -19,7 +19,7 @@ public interface SlaveRemote extends Remote {
 
 	public String getHostName() throws RemoteException, UnknownHostException;
 	
-//	public void abortFormula(String tqbfId) throws RemoteException;
+	public void abortFormula(String tqbfId) throws RemoteException;
 	
 //	public Hashtable<String, Solver> getThreads() throws RemoteException;
 	

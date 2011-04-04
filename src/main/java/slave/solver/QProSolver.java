@@ -7,8 +7,6 @@ import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.util.Date;
 
-import main.java.master.TQbf;
-import main.java.rmi.InterpretationData;
 import main.java.rmi.TQbfRemote;
 import main.java.tree.QproRepresentation;
 import main.java.tree.ReducedInterpretation;
@@ -47,8 +45,8 @@ public class QProSolver extends Solver {
 	
 	String input = null;
 	
-	public QProSolver(TQbfRemote tqbf, ResultHandler handler) {
-		super(tqbf, handler);
+	public QProSolver(TQbfRemote tqbf) {
+		super(tqbf);
 	}
 
 	public void run() {
@@ -129,6 +127,7 @@ public class QProSolver extends Solver {
 //				logger.info("waitsfor " + tqbf.getTimeout() * 1000 + " ms");
 				resultHandler.waitFor(tqbf.getTimeout() * 1000);
 				watchdog.destroyProcess();
+				solvers.remove(this);
 			} catch (InterruptedException e1) {
 			} catch (RemoteException e) {
 				watchdog.destroyProcess();
@@ -171,7 +170,7 @@ public class QProSolver extends Solver {
 			returnWithSuccess(tqbfId, jobId, false, this.getSolvertime(), this.getOverheadtime());
 
 		} else {
-			logger.error("Qpro Input of tqbf " + this.tqbfId + ": \n" + this.input);
+//			logger.error("Qpro Input of tqbf " + this.tqbfId + ": \n" + this.input);
 			// anything else is an error
 			String errorString = "Unexpected result from solver.\n"
 					+ "	Return String: " + readString + "\n" + "	TQbfId:		 : "
@@ -179,40 +178,6 @@ public class QProSolver extends Solver {
 			returnWithError(tqbfId, jobId, new Exception(errorString));
 		}
 	}
-
-	/**
-	 * make a formula in qpro format from the transmission QBF
-	 * 
-	 * @param tqbf
-	 *            the QBF the slave gets from the master
-	 * @return a string representation of the tree in QPRO format
-	 */
-//	private static String toInputString(InterpretationData data) {
-//		
-//		
-//		String traversedTree = "";
-//		tqbf.assignTruthValues();
-//		tqbf.reduceFast();
-//
-//		if (tqbf.rootIsTruthNode()) {
-//			if (tqbf.rootGetTruthValue()) {
-//				return "true";
-//			}
-//			return "false";
-//		}
-//
-//		// check if there are still occurences of all- and exist-quantified vars
-//		// left in the tree after reducing. if not, remove them from aVars and
-//		// eVars
-//		tqbf.eliminateOrphanedVars();
-//
-//		// traverse the tree to get a string in qpro format
-//		traversedTree += "QBF\n" + (tqbf.getMaxVar()) + "\n";
-//		traversedTree += tqbf.traverseTree(); // <- actual traversion happens here
-//		traversedTree += "QBF\n";
-//		logger.debug("traversing finished");
-//		return traversedTree;
-//	}
 
 	@Override
 	public void kill() {
