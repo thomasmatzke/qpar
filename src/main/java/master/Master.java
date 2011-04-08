@@ -17,10 +17,10 @@ import javax.swing.table.AbstractTableModel;
 
 import main.java.ArgumentParser;
 import main.java.QPar;
+import main.java.common.rmi.MasterRemote;
+import main.java.common.rmi.SlaveRemote;
 import main.java.master.console.Shell;
 import main.java.master.gui.ProgramWindow;
-import main.java.rmi.MasterRemote;
-import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
@@ -88,8 +88,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	private static void usage() {
 		System.out
 				.println("Arguments: \"-gui\"               toggles graphical user interface"
-						+ "           \"-i=INPUTFILE\"       specifies a batch-file"
-						+ "           \"-log=(debug|info)\"  specifies log-lvl");
+						+ "           \"-i=INPUTFILE\"       specifies a batch-file");
 		System.exit(-1);
 	}
 
@@ -138,23 +137,13 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	}
 	
 	public static void main(String[] args) throws Throwable {
-		Logger.getRootLogger().setLevel(QPar.logLevel);
 			
 		// Basic console logging
-		BasicConfigurator.configure();
+//		BasicConfigurator.configure();
 
 		ap = new ArgumentParser(args);
 		Master.startGui = ap.hasOption("gui");
-		if (ap.hasOption("log")) {
-		 	String lvl = ap.getOption("log");
-			if (lvl.equals("debug"))
-				QPar.logLevel = Level.DEBUG;
-			else if (lvl.equals("info"))
-				QPar.logLevel = Level.INFO;
-			else
-				usage();
-		}
-		
+				
 		QPar.loadConfig();
 		
 		Master.globalThreadPool.execute(new MulticastBeacon());

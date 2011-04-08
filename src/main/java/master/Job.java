@@ -21,15 +21,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
-import main.java.logic.DTNode;
-import main.java.logic.Qbf;
-import main.java.logic.heuristic.Heuristic;
-import main.java.logic.heuristic.HeuristicFactory;
-import main.java.rmi.RemoteObservable;
-import main.java.rmi.RemoteObserver;
-import main.java.rmi.Result;
-import main.java.rmi.WrappedObserver;
-import main.java.scheduling.Distributor;
+import main.java.common.rmi.RemoteObservable;
+import main.java.common.rmi.RemoteObserver;
+import main.java.common.rmi.Result;
+import main.java.common.rmi.WrappedObserver;
+import main.java.master.logic.DTNode;
+import main.java.master.logic.Qbf;
+import main.java.master.logic.heuristic.Heuristic;
+import main.java.master.logic.heuristic.HeuristicFactory;
 
 import org.apache.log4j.Logger;
 
@@ -66,11 +65,10 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 	public Job(String inputFile, String outputFile, String solverId, String heuristicId, long timeout, int maxCores) throws RemoteException {
 		this.setSetupTime(new Date().getTime());
-		addJob(this);
-		
 		this.usedCores = maxCores;
 		this.setTimeout(timeout);
 		this.setId(allocateJobId());
+		addJob(this);
 		this.setInputFileString(inputFile);
 		this.setOutputFileString(outputFile);
 		this.setSolver(solverId);
@@ -169,7 +167,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
 		heuristicTime = System.currentTimeMillis() - heuristicTime;
 		logger.info("Variable order generated. Took " + heuristicTime / 1000 + " seconds.");
-		logger.debug("Heuristic returned variable-assignment order: " + Arrays.toString(order));
+		logger.info("Heuristic returned variable-assignment order: " + Arrays.toString(order));
 
 		int leafCtr = 1;
 		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
@@ -205,7 +203,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			leafCtr++;
 		}
 
-//		logger.info("\n" + decisionRoot.dump());
+		
 
 		assert (leaves.size() == usedCores);
 
@@ -227,22 +225,12 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			String tqbfId = this.id + "." + Integer.toString(idCtr++);
 			node.setId(tqbfId);
 			TQbf tqbf = new TQbf(tqbfId, this.id, this.solverId, node.variablesAssignedTrue, node.variablesAssignedFalse, this.timeout, serializedFormula);
-//			tqbf.getFalseVars().addAll(node.variablesAssignedFalse);
-//			tqbf.getTrueVars().addAll(node.variablesAssignedTrue);
-//			tqbf.setRootNode(formula.root);
-//			tqbf.serializedFormula = serializedFormula;
-//			tqbf.setId(tqbfId);
-//			tqbf.setEVars(formula.eVars);
-//			tqbf.setAVars(formula.aVars);
-//			Vector<Integer> tmpVars = new Vector<Integer>();
-//			tmpVars.addAll(formula.aVars);
-//			tmpVars.addAll(formula.eVars);
-//			tqbf.setVars(tmpVars);
 			tqbfs.add(tqbf);
 		}
 		assert (tqbfs.size() == usedCores);
 		long end = System.currentTimeMillis();
 		logger.debug("Formula splitted. Took " + (end - start) / 1000 + " seconds.");
+		logger.info("\n" + decisionRoot.dump());
 		return tqbfs;
 	}
 

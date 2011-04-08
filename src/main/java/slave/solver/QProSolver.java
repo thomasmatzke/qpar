@@ -7,9 +7,9 @@ import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.util.Date;
 
-import main.java.rmi.TQbfRemote;
-import main.java.tree.QproRepresentation;
-import main.java.tree.ReducedInterpretation;
+import main.java.common.rmi.TQbfRemote;
+import main.java.slave.tree.QproRepresentation;
+import main.java.slave.tree.ReducedInterpretation;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
@@ -65,7 +65,7 @@ public class QProSolver extends Solver {
 		this.overheadStoppedAt = new Date();
 		
 		if(ri.isTruthValue()) {
-//			logger.info("Formula collapsed");
+			logger.info("Formula " + this.tqbfId + " collapsed");
 			returnWithSuccess(tqbfId, jobId, ri.getTruthValue());
 			return;
 		}
@@ -83,6 +83,7 @@ public class QProSolver extends Solver {
 
 		QproRepresentation qproInput = new QproRepresentation(ri); 
 		this.input = qproInput.getQproRepresentation();
+logger.info("qpro input for tqbf(" + this.tqbfId +")" + this.input);
 		ByteArrayInputStream input;
 		try {
 			input = new ByteArrayInputStream(this.input.getBytes("ISO-8859-1"));

@@ -9,7 +9,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
-import main.java.rmi.SlaveRemote;
+import main.java.common.rmi.SlaveRemote;
 
 import org.apache.log4j.Logger;
 

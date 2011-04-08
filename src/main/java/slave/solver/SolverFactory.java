@@ -3,7 +3,7 @@ package main.java.slave.solver;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 
-import main.java.rmi.TQbfRemote;
+import main.java.common.rmi.TQbfRemote;
 
 import org.apache.log4j.Logger;
 

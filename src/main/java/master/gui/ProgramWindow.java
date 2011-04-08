@@ -21,11 +21,11 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
-import main.java.logic.heuristic.HeuristicFactory;
+import main.java.common.rmi.SlaveRemote;
 import main.java.master.Job;
 import main.java.master.Master;
 import main.java.master.SlaveRegistry;
-import main.java.rmi.SlaveRemote;
+import main.java.master.logic.heuristic.HeuristicFactory;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;

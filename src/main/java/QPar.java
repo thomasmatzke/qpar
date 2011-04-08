@@ -14,7 +14,6 @@ import org.apache.log4j.Logger;
 public class QPar {
 	static Logger logger = Logger.getLogger(QPar.class);
 	
-	public static Level logLevel = Level.INFO;
 	public static boolean enableExceptionNotifications = false;
 	private static String exceptionNotifierAddress = null;
 	public static String mailServer = null;

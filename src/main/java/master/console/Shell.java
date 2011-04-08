@@ -18,11 +18,11 @@ import java.util.Observer;
 import java.util.StringTokenizer;
 
 import main.java.QPar;
-import main.java.evaluation.Evaluation;
+import main.java.common.rmi.SlaveRemote;
+import main.java.master.Evaluation;
 import main.java.master.Job;
 import main.java.master.Mailer;
 import main.java.master.SlaveRegistry;
-import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.Logger;
 

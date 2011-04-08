@@ -6,8 +6,8 @@ import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
 
+import main.java.common.rmi.SlaveRemote;
 import main.java.master.SlaveRegistry;
-import main.java.rmi.SlaveRemote;
 
 import org.apache.log4j.Logger;
 

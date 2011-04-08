@@ -4,8 +4,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import main.java.rmi.Result;
-import main.java.rmi.TQbfRemote;
+import main.java.common.rmi.Result;
+import main.java.common.rmi.TQbfRemote;
 
 import org.apache.log4j.Logger;
 

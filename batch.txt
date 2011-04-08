@@ -1,44 +1,41 @@
 MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
 
-#newjob testing\boole\counter5_4-bin.qbf testing\counter5_4-bin.qbf.txt qpro simple 16 60
+#newjob testing/counter_small/counter6_2-bin.qbf testing/counter6_2-bin.qbf.txt qpro litcount 1 60
 #startjob 1
 
-#evaluate testing/boole 1 16 qpro 60
-evaluate testing/semaphore_small 1 16 qpro 60
-evaluate testing/ring_medium 1 16 qpro 60
-evaluate testing/semaphore_medium 1 16 qpro 60
+newjob testing/simple1.qbf testing/simple1.qbf.txt qpro litcount 2 60
+startjob 1
 
-#PARLOGEVAL testing/semaphore_small 1 16 qpro 4
-evaluate testing/semaphore_small 1 16 qpro 60
-evaluate testing/semaphore_medium 1 16 qpro 60
-evaluate testing/semaphore_big 1 16 qpro 60
+#evaluate testing/boole 1 32 qpro 60
+#evaluate testing/semaphore_small 1 32 qpro 60
+#evaluate testing/semaphore_medium 1 64 qpro 60
+#evaluate testing/semaphore_big 1 32 qpro 60
 
-evaluate testing/ring_small 1 16 qpro 60
-evaluate testing/ring_medium 1 16 qpro 60
-evaluate testing/ring_big 1 16 qpro 60
+#evaluate testing/ring_small 1 16 qpro 60
+#evaluate testing/ring_medium 1 16 qpro 60
+#evaluate testing/ring_big 1 16 qpro 60
 
-#logeval testing/boole 1 4 qpro 60
-#LOGEVAL testing/counter_small 1 4 qpro 60
-#LOGEVAL testing/counter_medium 1 4 qpro 60
-#LOGEVAL testing/counter_big 2 4 qpro 60
-#LOGEVAL testing/counter_biggest 4 4 qpro 60
+#evaluate testing/counter_small 1 32 qpro 60
+#evaluate testing/counter_medium 1 32 qpro 60
+#evaluate testing/counter_big 1 32 qpro 60
+#evaluate testing/counter_biggest 1 32 qpro 60
 
-#LOGEVAL testing/ncf_small 1 4 qpro 60
-#LOGEVAL testing/ncf_medium 1 4 qpro 60
-#LOGEVAL testing/ncf_big 1 4 qpro 30
+#evaluate testing/ncf_small 1 32 qpro 60
+#evaluate testing/ncf_medium 1 32 qpro 60
+#evaluate testing/ncf_big 1 32 qpro 30
 
-#LOGEVAL testing/consistency_big 4 4 qpro 60
-#LOGEVAL testing/consistency_bigger 1 4 qpro 60
+#evaluate testing/consistency_big 4 4 qpro 60
+#evaluate testing/consistency_bigger 1 32 qpro 60
 
-#LOGEVAL testing/dme_big 1 4 qpro 60
-#LOGEVAL testing/dme_small 1 4 qpro 60
+#evaluate testing/dme_big 1 32 qpro 60
+#evaluate testing/dme_small 1 32 qpro 60
 
-#LOGEVAL testing/possibility_big 1 64 qpro 60
-#LOGEVAL testing/possibility_bigger 1 64 qpro 60
+#evaluate testing/possibility_big 1 64 qpro 60
+#evaluate testing/possibility_bigger 1 64 qpro 60
 
-#LOGEVAL testing/assertion_small 4 4 qpro 60
-#LOGEVAL testing/assertion_medium 1 64 qpro 60
-#LOGEVAL testing/assertion_big 1 64 qpro 60
+#evaluate testing/assertion_small 4 4 qpro 60
+#evaluate testing/assertion_medium 1 64 qpro 60
+#evaluate testing/assertion_big 1 64 qpro 60
 
 killallslaves
 quit

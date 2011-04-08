@@ -13,15 +13,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 
-import main.java.logic.parser.SimpleNode;
-import main.java.rmi.InterpretationData;
-import main.java.rmi.RemoteObserver;
-import main.java.rmi.Result;
-import main.java.rmi.SlaveRemote;
-import main.java.rmi.TQbfRemote;
-import main.java.rmi.WrappedObserver;
+import main.java.common.rmi.InterpretationData;
+import main.java.common.rmi.RemoteObserver;
+import main.java.common.rmi.Result;
+import main.java.common.rmi.SlaveRemote;
+import main.java.common.rmi.TQbfRemote;
+import main.java.common.rmi.WrappedObserver;
+import main.java.master.logic.parser.SimpleNode;
 import main.java.slave.solver.Solver;
-import main.java.tree.Reducer;
+import main.java.slave.tree.Reducer;
 
 import org.apache.log4j.Logger;
 

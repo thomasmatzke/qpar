@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 
-import main.java.rmi.SlaveRemote;
+import main.java.common.rmi.SlaveRemote;
 
 import org.apache.log4j.Logger;
 

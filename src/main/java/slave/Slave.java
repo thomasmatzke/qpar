@@ -16,12 +16,12 @@ import java.util.concurrent.Executors;
 
 import main.java.ArgumentParser;
 import main.java.QPar;
+import main.java.common.rmi.MasterRemote;
+import main.java.common.rmi.RemoteObserver;
+import main.java.common.rmi.SlaveRemote;
+import main.java.common.rmi.TQbfRemote;
 import main.java.master.TQbf;
 import main.java.master.TQbf.State;
-import main.java.rmi.MasterRemote;
-import main.java.rmi.RemoteObserver;
-import main.java.rmi.SlaveRemote;
-import main.java.rmi.TQbfRemote;
 import main.java.slave.solver.Solver;
 import main.java.slave.solver.SolverFactory;
 
@@ -59,18 +59,8 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 	public static void main(String[] args) throws InterruptedException, RemoteException {
 		ArgumentParser ap = new ArgumentParser(args);
 		// Basic console logging
-		BasicConfigurator.configure();
-		if(ap.hasOption("log")) {
-			String lvl = ap.getOption("log");
-			if(lvl.equals("debug"))
-				QPar.logLevel = Level.DEBUG;
-			else if(lvl.equals("info"))
-				QPar.logLevel = Level.INFO;
-			else
-				usage();
-		}
-		Logger.getRootLogger().setLevel(QPar.logLevel);
-				
+//		BasicConfigurator.configure();
+						
 		String solversString = ap.getOption("solvers");
 		if(solversString != null) {
 			Scanner s = new Scanner(solversString).useDelimiter(",");

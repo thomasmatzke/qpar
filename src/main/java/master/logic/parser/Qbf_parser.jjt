@@ -1,0 +1,314 @@
+/* Qbf_parser.jj
+ * Parses a quantified boolean formula in QBF Format 1.0
+ * as specified at http://www.qbflib.org/boole.html
+ *
+ *	<input>		::= <exp> EOF
+ *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
+ *				| <LP> <exp> <RP> | <VAR>
+ *	<q_set> 	::= <quant> <LSP> <var_list> <RSP>
+ *	<quant> 	::= <EXISTS> | <FORALL>
+ *	<var_list> 	::= <VAR> <var_list> | <VAR>
+ *	<op>		::= <OR> | <AND>
+ *	<NOT>		::= "!"
+ *	<LP>		::= "("
+ *	<RP>		::= ")"
+ *	<LSP>		::= "["
+ *	<RSP>		::= "]"
+ *	<OR>		::= "|"
+ *	<AND>		::= "&"
+ *	<EXISTS> 	::= "exists"
+ *	<FORALL> 	::= "forall"
+ *	<VAR>		::= {A sequence of non-special ASCII characters} 
+ */
+
+options {
+	MULTI = true;
+	NODE_DEFAULT_VOID = true;
+	STATIC = false;
+}
+
+PARSER_BEGIN(Qbf_parser)
+
+package main.java.logic.parser;
+import java.util.Vector;
+import java.util.HashMap;
+import java.util.regex.Pattern;
+import java.io.*;
+import main.java.logic.parser.SimpleNode.NodeType;
+
+public class Qbf_parser implements Serializable {
+
+	private Vector<Integer> eVars = new Vector<Integer>();
+	private Vector<Integer> aVars = new Vector<Integer>();
+	private Vector<Integer> vars  = new Vector<Integer>();
+	private Vector<SimpleNode> nodesToExpand = new Vector<SimpleNode>();
+	private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
+	private HashMap<String, Integer> varNames = new HashMap<String, Integer>();
+	private int nextVarInt = 2;
+	private SimpleNode root;
+
+	public Qbf_parser() {
+		jjtree.reset();
+	}
+	
+	public HashMap<Integer, Integer> getLiteralCount() {
+		return this.literalCount;
+	}
+
+	public Vector<Integer> getEVars() {
+		return this.eVars;
+	}
+
+	public Vector<Integer> getAVars() {
+		return this.aVars;
+	}
+
+	public Vector<Integer> getVars() {
+		return this.vars;
+	}
+
+	public SimpleNode getRootNode() {
+		return (SimpleNode)this.jjtree.rootNode();
+	}
+
+	// this expands quantifier nodes with more than one variable, e.g.:
+	//
+	// 	forall [v1 v2 v3] ... (in boole format)
+	//
+	// so that instead of one single FORALL node containing v1, v2, v3
+	// we have three connected nodes for them in our tree representation
+	// of the formula.
+	//
+	// this may be changed or left empty for other input formats.
+        public void doPostprocessing() {
+
+                for (SimpleNode n: nodesToExpand) {
+
+                        SimpleNode currentParent = (SimpleNode) n;
+			// save the node that we need to connect at the end
+                        SimpleNode lastChild = (SimpleNode) n.jjtGetChild(0);
+			n.deleteChildren();
+
+                        for (int var: n.getVarList()) {                                
+				SimpleNode currentChild = new SimpleNode();
+				currentChild.setNodeType(n.getNodeType());
+				currentChild.setNodeVariable(var);
+				
+				currentParent.jjtAddChild((SimpleNode) currentChild, 0);
+				currentChild.jjtSetParent((SimpleNode) currentParent);
+
+				currentParent = currentChild;
+                        }
+
+			currentParent.jjtAddChild((SimpleNode) lastChild, 0);
+			lastChild.jjtSetParent((SimpleNode) currentParent);
+			
+			n.setVarList(null);
+                }
+        }
+
+}
+
+PARSER_END(Qbf_parser)
+
+SKIP : {" "}
+SKIP : {"\n" | "\r" | "\r\n" | "\t"}
+
+// terminals
+TOKEN : { < AND		: "&" > }
+TOKEN : { < OR		: "|" > }
+TOKEN : { < NOT		: "!" > }
+
+TOKEN : { < LP		: "(" > }
+TOKEN : { < RP		: ")" > }
+TOKEN : { < LSP		: "[" > }
+TOKEN : { < RSP		: "]" > }
+
+TOKEN : { < EXISTS	: "exists" > }
+TOKEN : { < FORALL	: "forall" > }
+
+TOKEN : { < VAR		:(["a"-"z"])(["0"-"9"])+ > }
+
+// non-terminals
+// *	<input>		::= <exp> EOF
+void Input() #Input:	// Node with one child (Exp())
+{}
+{
+	{ jjtThis.nodeType = NodeType.START; }
+	Exp()
+	<EOF>
+}
+
+void And() #And:	// Node with two children (Exp(), Exp())
+{}
+{       
+	<AND> 
+}
+
+void Or() #Or:	// Node with two children (Exp(), Exp())
+{}
+{
+	<OR> 
+}
+
+void Not():	// Node with one child (Exp())
+{}
+{
+ 	<NOT>
+}
+void Exists() #void:
+{}
+{
+	<EXISTS> //{ jjtThis.op = "e"; }
+}
+
+void Forall() #void:
+{}
+{
+	<FORALL> //{ jjtThis.op = "f";}
+}
+
+void Var() #Var:
+{
+	Token t;
+}
+{
+	t = <VAR>
+	{
+		int varNumber = 0;
+		
+		if (varNames.containsKey(t.image)) {
+			jjtThis.var = varNames.get(t.image);
+		}
+		else {
+			varNames.put(t.image,nextVarInt);
+			jjtThis.var = nextVarInt;
+			nextVarInt++;
+		}
+		
+		jjtThis.nodeType = NodeType.VAR;
+		varNumber = jjtThis.var;
+
+		if (literalCount.get(varNumber) != null) {
+			literalCount.put(varNumber, literalCount.get(varNumber) + 1);
+		}
+		else {
+			literalCount.put(varNumber, 1);			
+		}	
+		if (!vars.contains(varNumber)) {
+			vars.add(varNumber);
+		}
+	}
+}
+
+Vector VarList(Vector varList, String s) #void:
+{
+	Token t;
+}
+{
+	t = <VAR>
+	{
+		if (!varNames.containsKey(t.image)) {
+			varNames.put(t.image,nextVarInt);
+			nextVarInt++;
+		}
+
+		if (s == "e") {
+			if (!vars.contains(varNames.get(t.image))) {
+				eVars.add(varNames.get(t.image));
+			}
+		}
+
+		if (s == "f") {
+			if (!vars.contains(varNames.get(t.image))) {
+				aVars.add(varNames.get(t.image));
+			}
+		} 	
+
+		varList.add(varNames.get(t.image));
+	}
+	(VarList(varList, s))?
+	
+	{
+		return varList;
+	}
+}
+
+// *	<exp>		::= <NOT> <exp> | <q_set> <exp> | <LP> <exp> <op> <exp> <RP>
+// *				| <LP> <exp> <RP> | <VAR>
+void Exp() #void:
+{
+	String s = "";
+	String op = "";
+	Vector<Integer> varList;
+	Token t;
+}
+{
+	(
+		Not() { jjtThis.nodeType = NodeType.NOT; }
+		Exp()
+	) #Logical(1)
+	|
+	(
+		(
+			s = Quant()
+			<LSP>
+			//t = <VAR>
+			{ varList = new Vector<Integer>(); }
+			varList = VarList(varList, s)
+			(
+				{
+					jjtThis.var = varList.get(0);
+					varList.remove(0);					
+
+					if (varList.size() > 0) {
+						jjtThis.setVarList(varList);
+						nodesToExpand.add(jjtThis);
+					}
+
+					if (s == "e")
+						jjtThis.nodeType = NodeType.EXISTS;
+					if (s == "f")
+						jjtThis.nodeType = NodeType.FORALL;	
+				}
+			)
+			<RSP>
+		)
+		Exp()
+	) #Quantifier(1)
+	|
+	<LP>
+	(
+		Exp()
+		(
+			(
+				"|" { jjtThis.nodeType = NodeType.OR; }
+				|
+				"&" { jjtThis.nodeType = NodeType.AND; }
+			)
+			Exp()
+		)?
+	) #Logical(>1)  
+	<RP>
+	|
+	Var()
+}
+
+// *	<quant> 	::= <EXISTS> | <FORALL>
+String Quant() #void:
+{}
+{
+	Exists() { return "e"; }
+	|
+	Forall() { return "f"; }
+}
+
+// *	<op>		::= <OR> | <AND>
+void Op() #void:
+{}
+{
+	Or()
+	|
+	And()
+}
+
