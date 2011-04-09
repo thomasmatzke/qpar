@@ -164,15 +164,17 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 
 	@Override
 	public void computeFormula(TQbfRemote tqbf) throws RemoteException {
+		this.tqbfs.add(tqbf);
+		assert(tqbfs.size() <= this.getCores());
 		Solver solver = SolverFactory.getSolver(tqbf);
 		Slave.globalThreadPool.execute(solver);
 	}
 
-	@Override
-	synchronized public void computeTqbf(TQbfRemote tqbf) throws RemoteException {
-		this.tqbfs.add(tqbf);
-		tqbf.compute(this);
-	}
+//	@Override
+//	synchronized public void computeTqbf(TQbfRemote tqbf) throws RemoteException {
+//		this.tqbfs.add(tqbf);
+//		tqbf.compute(this);
+//	}
 
 	public void connect() {
 		// if already connected clean up mess

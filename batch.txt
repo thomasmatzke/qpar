@@ -1,12 +1,12 @@
 MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
 
-#newjob testing/counter_small/counter6_2-bin.qbf testing/counter6_2-bin.qbf.txt qpro litcount 1 60
+#newjob testing/counter_small/counter6_2-bin.qbf testing/counter6_2-bin.qbf.txt qpro litcount 20 60
 #startjob 1
 
-newjob testing/simple1.qbf testing/simple1.qbf.txt qpro litcount 2 60
-startjob 1
+#newjob testing/simple3.qbf testing/simple3.qbf.txt qpro litcount 1 60
+#startjob 1
 
-#evaluate testing/boole 1 32 qpro 60
+evaluate testing/boole 1 16 qpro 60
 #evaluate testing/semaphore_small 1 32 qpro 60
 #evaluate testing/semaphore_medium 1 64 qpro 60
 #evaluate testing/semaphore_big 1 32 qpro 60

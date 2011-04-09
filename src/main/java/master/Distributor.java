@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -13,7 +15,7 @@ import main.java.master.TQbf.State;
 
 import org.apache.log4j.Logger;
 
-public class Distributor implements Runnable, RemoteObserver, Serializable {
+public class Distributor implements Runnable, RemoteObserver, Serializable, Observer  {
 
 	private static final long serialVersionUID = -6606810196441096609L;
 
@@ -25,7 +27,9 @@ public class Distributor implements Runnable, RemoteObserver, Serializable {
 	
 	private boolean run = true;
 	
-	private Distributor() throws RemoteException {} 
+	private Distributor() throws RemoteException {
+		SlaveRegistry.instance().addObserver(this);
+	} 
 	
 	synchronized public static Distributor instance() {
 		if(instance == null) {
@@ -56,11 +60,15 @@ public class Distributor implements Runnable, RemoteObserver, Serializable {
 			try {
 				tqbf = queue.take();
 			} catch (InterruptedException e) {continue;}
+			
+			if(tqbf.isDontstart())
+				continue;
+			
 			List<SlaveRemote> slaves = SlaveRegistry.instance().freeCoreSlaves();
 			
 			synchronized(this) {
 				while(slaves.size() < 1){
-					try { wait(500); } catch (InterruptedException e) {}
+					try { wait(); } catch (InterruptedException e) {}
 					slaves = SlaveRegistry.instance().freeCoreSlaves();
 //					logger.info("Distributor found " + slaves.size() + " free slaves.");
 				}
@@ -68,9 +76,10 @@ public class Distributor implements Runnable, RemoteObserver, Serializable {
 //			logger.info("freecoreslaves: " + slaves.size());
 			SlaveRemote s = slaves.get(0);
 			try {
-				tqbf.addObserver(this);
+				tqbf.addObserver((RemoteObserver)this);
 			} catch (RemoteException e1) {logger.error("", e1);}
-			sendTqbf(tqbf, s);
+			tqbf.compute(s);
+//			sendTqbf(tqbf, s);
 			
 			// We have to wait til the formula is started to get accurate measurement
 			// of free cores
@@ -83,17 +92,17 @@ public class Distributor implements Runnable, RemoteObserver, Serializable {
 		}
 	}
 	
-	private void sendTqbf(TQbf tqbf, SlaveRemote slave) {
-		try {
-			synchronized(tqbf) {
-				if(tqbf.getState() == State.NEW)
-					Master.globalThreadPool.execute(new TransportThread(slave, tqbf, tqbf.getSolverId()));
-			}
-		} catch (Exception e) {
-			logger.error("", e);
-			tqbf.abort();
-		}
-	}
+//	private void sendTqbf(TQbf tqbf, SlaveRemote slave) {
+//		try {
+//			synchronized(tqbf) {
+//				if(tqbf.getState() == State.NEW)
+//					Master.globalThreadPool.execute(new TransportThread(slave, tqbf, tqbf.getSolverId()));
+//			}
+//		} catch (Exception e) {
+//			logger.error("", e);
+//			tqbf.abort();
+//		}
+//	}
 		
 	public void stop() {
 		this.run = false;
@@ -105,5 +114,13 @@ public class Distributor implements Runnable, RemoteObserver, Serializable {
 			notifyAll();
 		}
 	}
+
+	@Override
+	public void update(Observable o, Object arg) {
+		synchronized(this) {
+			notifyAll();
+		}
+	}
+
 
 }

@@ -29,7 +29,7 @@ public class TQbf extends Observable implements TQbfRemote {
 	private static final long serialVersionUID = -6627723521432123349L;
 	static Logger logger = Logger.getLogger(TQbf.class);
 		
-	public enum State { NEW, COMPUTING, TERMINATED, DONTSTART, ABORTED, TIMEOUT, ERROR }
+	public enum State { NEW, COMPUTING, TERMINATED, DONTSTART, ABORTED, TIMEOUT, ERROR, MERGED }
 	public byte[] serializedFormula = null;
 	
 	private String id;
@@ -78,11 +78,17 @@ public class TQbf extends Observable implements TQbfRemote {
 	public long getComputationTime() {
 		if(this.isComputing()) {
 			return new Date().getTime() - history.get(State.COMPUTING).getTime();
-		} else if(this.isTerminated()) {
+		} else if(this.isTerminated() || this.isMerged()) {
 			return history.get(State.TERMINATED).getTime() - history.get(State.COMPUTING).getTime();
 		} else {
-			throw new IllegalStateException("TQbf was not computing or terminated");
+			throw new IllegalStateException("TQbf was not computing or terminated/merged");
 		}		
+	}
+	
+	synchronized public void setMerged() {
+		if(!this.getState().equals(State.TERMINATED))
+			throw new IllegalStateException("Cant merge a non TERMINATED tqbf. State was: " + this.getState());
+		this.setState(State.MERGED);
 	}
 	
 	synchronized public void abort() {
@@ -101,6 +107,7 @@ public class TQbf extends Observable implements TQbfRemote {
 			case ABORTED:
 			case TERMINATED:
 			case TIMEOUT:
+			case MERGED:
 				break;
 			case DONTSTART:
 			default:
@@ -139,7 +146,7 @@ public class TQbf extends Observable implements TQbfRemote {
 	}
 	
 	private void setState(State state) {
-		if(this.isAborted() || this.isTerminated() || this.isError() || this.isTimeout())
+		if(this.isAborted() || this.isMerged() || this.isError() || this.isTimeout())
 			throw new IllegalStateException();
 		logger.info("Tqbf " + this.getId() + " to change state from " + this.state + " to " + state);
 		this.state = state;
@@ -268,6 +275,10 @@ public class TQbf extends Observable implements TQbfRemote {
 	
 	public boolean isTimeout() {
 		return this.state == State.TIMEOUT ? true : false;
+	}
+	
+	public boolean isMerged() {
+		return this.state == State.MERGED ? true : false;
 	}
 
 	public void setSlave(SlaveRemote slave) {

@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import main.java.master.logic.heuristic.DependencyNode;
@@ -161,10 +162,10 @@ public class SimpleNode implements Node, Serializable {
 	 * @param v
 	 *            A vector of all already collected negative literals
 	 */
-	public Vector<Integer> getPositiveLiterals(NodeType op, Vector<Integer> v) {
-		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
+	public Set<Integer> getPositiveLiterals(NodeType op, Set<Integer> v) {
+		for(int i = 0; i < this.jjtGetNumChildren(); i++) {
 			// if the child is a var node, just add the var number
-			if ((this.jjtGetChild(i)).getNodeType() == NodeType.VAR) {
+			if (((SimpleNode)this.jjtGetChild(i)).isVarNode()) {
 				v.add(this.jjtGetChild(i).getNodeVariable());
 			}
 
@@ -187,7 +188,7 @@ public class SimpleNode implements Node, Serializable {
 	 * @param v
 	 *            A vector of all already collected positive literals
 	 */
-	public Vector<Integer> getNegativeLiterals(NodeType op, Vector<Integer> v) {
+	public Set<Integer> getNegativeLiterals(NodeType op, Set<Integer> v) {
 		for (int i = 0; i < this.jjtGetNumChildren(); i++) {
 			// if the child is a var node, just add the var number
 			if (this.jjtGetChild(i).getNodeType() == NodeType.NOT) {
@@ -203,13 +204,7 @@ public class SimpleNode implements Node, Serializable {
 		return v;
 	}
 
-	/**
-	 * This gets enclosed formulas
-	 * 
-	 * @return A qpro formatted subformula
-	 * @param op
-	 *            ICH KENN MICH GRAD SELBST NICHT MEHR AUS :)
-	 */
+
 //	public String getEnclosedFormula(NodeType op) {
 //		String tmp = "";
 //		for (int i = 0; i < this.jjtGetNumChildren(); i++) {

@@ -36,9 +36,9 @@ public class TruthAssigner {
 	 */
 	public ArrayDeque<SimpleNode> assign() {
 		TreeStatistic preStat = new TreeStatistic(this.root);
-		logger.info("Assigning " + Arrays.toString(trueVars.toArray()) + ", " + Arrays.toString(falseVars.toArray()));
+		logger.debug("Assigning " + Arrays.toString(trueVars.toArray()) + ", " + Arrays.toString(falseVars.toArray()));
 		ArrayDeque<SimpleNode> assigned = assignNode(root);
-		logger.info("Assigned " + assigned.size() + " nodes.");
+		logger.debug("Assigned " + assigned.size() + " nodes.");
 		TreeStatistic postStat = new TreeStatistic(this.root);
 		
 		int deltaAnd = postStat.getNumAnd() - preStat.getNumAnd();

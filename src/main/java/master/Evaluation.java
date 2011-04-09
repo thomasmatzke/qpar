@@ -111,6 +111,7 @@ public class Evaluation implements Observer {
 		}
 
 		this.stoppedAt = new Date();
+		logger.info(this.getReport());
 	}
 
 	public boolean isCorrect() {

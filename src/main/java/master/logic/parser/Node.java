@@ -6,6 +6,7 @@ package main.java.master.logic.parser;
    machinery for constructing the parent and child relationships
    between nodes. */
 
+import java.util.Set;
 import java.util.Vector;
 
 public interface Node {
@@ -42,8 +43,8 @@ public interface Node {
 //	public String	traverse();
 //	public boolean	findVar(int v);
 //	public String getEnclosedFormula(NodeType op);
-	public Vector<Integer> getPositiveLiterals(SimpleNode.NodeType op, Vector<Integer> v);
-	public Vector<Integer> getNegativeLiterals(SimpleNode.NodeType op, Vector<Integer> v);
+	public Set<Integer> getPositiveLiterals(SimpleNode.NodeType op, Set<Integer> v);
+	public Set<Integer> getNegativeLiterals(SimpleNode.NodeType op, Set<Integer> v);
   /** This method is called after the node has been made the current
     node, it indicates that child nodes can now be added to it. */
   public void jjtOpen();

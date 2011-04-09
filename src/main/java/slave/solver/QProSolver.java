@@ -80,10 +80,10 @@ public class QProSolver extends Solver {
 
 		CommandLine command = new CommandLine("qpro");
 		DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
-
+//ri.getInterpretation().dump(this.tqbfId);
 		QproRepresentation qproInput = new QproRepresentation(ri); 
 		this.input = qproInput.getQproRepresentation();
-logger.info("qpro input for tqbf(" + this.tqbfId +")" + this.input);
+//logger.info("qpro input for tqbf(" + this.tqbfId +")" + this.input);
 		ByteArrayInputStream input;
 		try {
 			input = new ByteArrayInputStream(this.input.getBytes("ISO-8859-1"));

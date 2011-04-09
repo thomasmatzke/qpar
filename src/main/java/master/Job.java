@@ -162,12 +162,12 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		logger.debug("Splitting into " + usedCores + " subformulas...");
 		long start = System.currentTimeMillis();
 		Heuristic h = HeuristicFactory.getHeuristic(this.getHeuristic(), formula);
-		logger.info("Generating variable order...");
+		logger.debug("Generating variable order...");
 		long heuristicTime = System.currentTimeMillis();
 		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
 		heuristicTime = System.currentTimeMillis() - heuristicTime;
-		logger.info("Variable order generated. Took " + heuristicTime / 1000 + " seconds.");
-		logger.info("Heuristic returned variable-assignment order: " + Arrays.toString(order));
+		logger.debug("Variable order generated. Took " + heuristicTime / 1000 + " seconds.");
+		logger.debug("Heuristic returned variable-assignment order: " + Arrays.toString(order));
 
 		int leafCtr = 1;
 		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
@@ -230,7 +230,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		assert (tqbfs.size() == usedCores);
 		long end = System.currentTimeMillis();
 		logger.debug("Formula splitted. Took " + (end - start) / 1000 + " seconds.");
-		logger.info("\n" + decisionRoot.dump());
+		logger.debug("\n" + decisionRoot.dump());
 		return tqbfs;
 	}
 
@@ -368,9 +368,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		boolean solved = false;
 		ArrayList<TQbf> finished = new ArrayList<TQbf>();
 		for (TQbf tqbf : this.subformulas) {
-			if (tqbf.getState() != TQbf.State.TERMINATED)
-				continue;
-			finished.add(tqbf);
+			if(tqbf.isTerminated())
+				finished.add(tqbf);
 		}
 
 		Collections.sort(finished, new Comparator<TQbf>() {
@@ -384,7 +383,9 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			assert (finished.get(0).getComputationTime() <= finished.get(1).getComputationTime());
 
 		for (TQbf tqbf : finished) {
-			if (mergeQbf(tqbf.getId(), tqbf.getResult().getResult())) {
+			boolean isCompleted = mergeQbf(tqbf.getId(), tqbf.getResult().getResult());
+			tqbf.setMerged();
+			if (isCompleted) {
 				this.completingTqbf = tqbf;
 				return true;
 			}
@@ -483,7 +484,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	public void setState(State state) {
-		logger.info("Job " + this.id + " to change state from " + this.state + " to " + state);
+		logger.debug("Job " + this.id + " to change state from " + this.state + " to " + state);
 		this.state = state;
 		this.history.put(state, new Date());
 		setChanged();
@@ -575,6 +576,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			switch (tqbf.getState()) {
 				case COMPUTING:
 				case ABORTED:
+				case MERGED:
 					break;
 				case TERMINATED:
 					this.handleResult(tqbf.getResult());
@@ -584,7 +586,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 				case TIMEOUT:
 					this.triggerTimeout();
 					break;
-				case NEW:
+				case NEW:				
 				default:
 					assert (false);
 			}

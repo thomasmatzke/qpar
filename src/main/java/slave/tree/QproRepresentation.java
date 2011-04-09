@@ -2,6 +2,7 @@ package main.java.slave.tree;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import main.java.master.logic.parser.Node;
@@ -37,8 +38,8 @@ public class QproRepresentation {
 	public String traverse(SimpleNode n) {
 //		logger.info("Traversing visited: " + n.toString());
 		StringBuffer traversedTree = new StringBuffer();
-		Vector<Integer> posLiterals = new Vector<Integer>();
-		Vector<Integer> negLiterals = new Vector<Integer>();
+		Set<Integer> posLiterals = new HashSet<Integer>();
+		Set<Integer> negLiterals = new HashSet<Integer>();
 		SimpleNode tmpNode = null;
 		
 		SimpleNode parent = (SimpleNode) n.jjtGetParent();
@@ -95,12 +96,12 @@ public class QproRepresentation {
 			negLiterals = (n.getNegativeLiterals(NodeType.AND, negLiterals));
 
 			for (int var : posLiterals)
-				traversedTree.append(var + " ");
-			traversedTree.append("\n");
+				traversedTree.append(" " + var);
+			traversedTree.append(" \n");
 
 			for (int var : negLiterals)
-				traversedTree.append(var + " ");
-			traversedTree.append("\n");
+				traversedTree.append(" " + var);
+			traversedTree.append(" \n");
 
 			traversedTree.append(getEnclosedFormula((SimpleNode)n, NodeType.OR));
 
@@ -117,12 +118,12 @@ public class QproRepresentation {
 			negLiterals = (n.getNegativeLiterals(NodeType.OR, negLiterals));
 
 			for (int var : posLiterals)
-				traversedTree.append(var + " ");
-			traversedTree.append("\n");
+				traversedTree.append(" " + var);
+			traversedTree.append(" \n");
 
 			for (int var : negLiterals)
-				traversedTree.append(var + " ");
-			traversedTree.append("\n");
+				traversedTree.append(" " + var);
+			traversedTree.append(" \n");
 
 			traversedTree.append(getEnclosedFormula((SimpleNode)n, NodeType.AND));
 

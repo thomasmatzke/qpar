@@ -23,7 +23,7 @@ public interface SlaveRemote extends Remote {
 	
 //	public Hashtable<String, Solver> getThreads() throws RemoteException;
 	
-	public void computeTqbf(TQbfRemote tqbf) throws RemoteException;
+//	public void computeTqbf(TQbfRemote tqbf) throws RemoteException;
 	
 //	public ArrayList<String> getCurrentJobs() throws RemoteException;
 	
