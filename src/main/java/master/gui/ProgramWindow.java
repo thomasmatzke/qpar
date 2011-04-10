@@ -26,6 +26,7 @@ import main.java.master.Job;
 import main.java.master.Master;
 import main.java.master.SlaveRegistry;
 import main.java.master.logic.heuristic.HeuristicFactory;
+import main.java.slave.solver.SolverFactory;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -250,13 +251,8 @@ public class ProgramWindow extends JFrame {
 			newJobButton.setText("New Job");
 			newJobButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					Set<String> solvers;
-					try {
-						solvers = SlaveRegistry.instance().getAllAvaliableSolverIds();
-					} catch (RemoteException e1) {
-						logger.error("RMi fail", e1);
-						solvers = new HashSet<String>();
-					}
+					ArrayList<String> solvers;					
+					solvers = SolverFactory.getavailableSolvers();
 					if(solvers.size() < 1) {
 						JOptionPane.showMessageDialog(null, "There are currently no slaves registered. " +
 								"Slaves have to register their solver-options with the Master to create a new job.");

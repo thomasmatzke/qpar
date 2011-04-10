@@ -103,9 +103,9 @@ public class Shell implements Runnable, Observer{
 			case SHUTDOWNALLSLAVES:
 				shutdownallslaves();
 				break;
-			case WAITFORSLAVE:
-				waitforslave(token);
-				break;
+//			case WAITFORSLAVE:
+//				waitforslave(token);
+//				break;
 			case HELP:
 				help();
 				break;
@@ -267,21 +267,21 @@ public class Shell implements Runnable, Observer{
 //		
 //	}
 
-	/**
-	 * Syntax: WAITFORSLAVE number_of_cores solverid
-	 * @param token
-	 */
-	private void waitforslave(StringTokenizer token) {
-		try{
-			int cores 		= Integer.parseInt(token.nextToken());
-			String solver 	= token.nextToken();
-						
-			SlaveRegistry.instance().waitForCoresWithSolver(cores, solver);
-		} catch(NoSuchElementException e) {
-			puts("Syntax: WAITFORSALVE number_of_cores solverid");
-			return;
-		}
-	}
+//	/**
+//	 * Syntax: WAITFORSLAVE number_of_cores solverid
+//	 * @param token
+//	 */
+//	private void waitforslave(StringTokenizer token) {
+//		try{
+//			int cores 		= Integer.parseInt(token.nextToken());
+//			String solver 	= token.nextToken();
+//						
+//			SlaveRegistry.instance().waitForCoresWithSolver(cores, solver);
+//		} catch(NoSuchElementException e) {
+//			puts("Syntax: WAITFORSALVE number_of_cores solverid");
+//			return;
+//		}
+//	}
 	
 	/**
 	 * Syntax: SOURCE path

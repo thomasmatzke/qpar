@@ -110,6 +110,10 @@ public class Evaluation implements Observer {
 			}
 		}
 
+		for(Job j : jobsTodo) {
+			j.deleteObserver(this);
+		}
+		
 		this.stoppedAt = new Date();
 		logger.info(this.getReport());
 	}

@@ -586,6 +586,9 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 				case TIMEOUT:
 					this.triggerTimeout();
 					break;
+				case ERROR:
+					this.abort("Error in tqbf");
+					break;
 				case NEW:				
 				default:
 					assert (false);

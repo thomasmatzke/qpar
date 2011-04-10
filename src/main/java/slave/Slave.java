@@ -58,8 +58,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 	 */
 	public static void main(String[] args) throws InterruptedException, RemoteException {
 		ArgumentParser ap = new ArgumentParser(args);
-		// Basic console logging
-//		BasicConfigurator.configure();
 						
 		String solversString = ap.getOption("solvers");
 		if(solversString != null) {
@@ -70,7 +68,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 			}
 		} else {
 			availableSolvers.add("qpro");
-			availableSolvers.add("simple");
 		}
 		
 		new Slave(ap.nextParam());
@@ -115,7 +112,7 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 	
 	public String masterName = null;
 	
-	public List<TQbfRemote> tqbfs = new ArrayList<TQbfRemote>();
+//	public List<TQbfRemote> tqbfs = new ArrayList<TQbfRemote>();
 
 
 	public Slave(String masterIp) throws InterruptedException, RemoteException {
@@ -163,11 +160,8 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 	}
 
 	@Override
-	public void computeFormula(TQbfRemote tqbf) throws RemoteException {
-		this.tqbfs.add(tqbf);
-		assert(tqbfs.size() <= this.getCores());
-		Solver solver = SolverFactory.getSolver(tqbf);
-		Slave.globalThreadPool.execute(solver);
+	public void abortFormula(String tqbfId) throws RemoteException {
+		Solver.solvers.get(tqbfId).kill();
 	}
 
 //	@Override
@@ -175,6 +169,15 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 //		this.tqbfs.add(tqbf);
 //		tqbf.compute(this);
 //	}
+
+	@Override
+	public void computeFormula(TQbfRemote tqbf) throws RemoteException {
+//		this.tqbfs.add(tqbf);
+//		assert(tqbfs.size() <= this.getCores());
+		Solver solver = SolverFactory.getSolver(tqbf);
+		Slave.globalThreadPool.execute(solver);
+	}
+
 
 	public void connect() {
 		// if already connected clean up mess
@@ -206,19 +209,18 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 			try { Thread.sleep(5000); } catch (InterruptedException e) {}
 		}
 	}
-
-
-	@Override
-	synchronized public int freeCores() throws RemoteException {
-//		return this.getCores() - ComputationStateMachine.computations.size();
-		int computingcount = 0;
-		for(TQbfRemote tqbf : this.tqbfs) {
-			if(tqbf.isComputing())
-				computingcount++;
-		}
-		return this.getCores() - computingcount;
-	}
 	
+//	@Override
+//	synchronized public int freeCores() throws RemoteException {
+////		return this.getCores() - ComputationStateMachine.computations.size();
+//		int computingcount = 0;
+//		for(TQbfRemote tqbf : this.tqbfs) {
+//			if(tqbf.isComputing())
+//				computingcount++;
+//		}
+//		return this.getCores() - computingcount;
+//	}
+
 	@Override
 	public int getCores() throws RemoteException {
 		return Runtime.getRuntime().availableProcessors();
@@ -228,12 +230,12 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 	public String getHostName() throws RemoteException, UnknownHostException {
 		return hostname;
 	}
-
+	
 	@Override
 	public ArrayList<String> getSolvers() throws RemoteException {
 		return availableSolvers;
 	}
-	
+
 	@Override
 	public void kill(String reason) throws RemoteException {
 		logger.info("Killing slave...");
@@ -278,7 +280,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
             }};
         globalThreadPool.execute(r);
 	}
-
 	public String toString() {
 		try {
 			return "Slave -- Hostname: " + this.getHostName() + ", Solvers: "
@@ -291,21 +292,20 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Rem
 			return "";
 		}
 	}
+
 	/**
 	 * Observes tqbfs to remove from computations if terminated
 	 */
 	@Override
 	public void update(Object o, Object arg1) {
-		if(o instanceof TQbf) {
-			TQbf tqbf = (TQbf) o;
-			if(tqbf.getState() != State.COMPUTING)
-				this.tqbfs.remove(o);			
-		}
-	}
-
-	@Override
-	public void abortFormula(String tqbfId) throws RemoteException {
-		Solver.solvers.get(tqbfId).kill();
+//		if(o instanceof TQbf) {
+//			TQbf tqbf = (TQbf) o;
+//			if(tqbf.getState() != State.COMPUTING) {
+//				logger.info("WANT TO KILL TQBF " + tqbf.getId() + ", array: " + this.tqbfs);
+//				this.tqbfs.remove(o);
+//			}
+//							
+//		}
 	}
 	
 }

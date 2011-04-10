@@ -27,9 +27,7 @@ public class Distributor implements Runnable, RemoteObserver, Serializable, Obse
 	
 	private boolean run = true;
 	
-	private Distributor() throws RemoteException {
-		SlaveRegistry.instance().addObserver(this);
-	} 
+	private Distributor() throws RemoteException {} 
 	
 	synchronized public static Distributor instance() {
 		if(instance == null) {
@@ -64,17 +62,22 @@ public class Distributor implements Runnable, RemoteObserver, Serializable, Obse
 			if(tqbf.isDontstart())
 				continue;
 			
-			List<SlaveRemote> slaves = SlaveRegistry.instance().freeCoreSlaves();
-			
-			synchronized(this) {
-				while(slaves.size() < 1){
-					try { wait(); } catch (InterruptedException e) {}
-					slaves = SlaveRegistry.instance().freeCoreSlaves();
-//					logger.info("Distributor found " + slaves.size() + " free slaves.");
-				}
-			}
+//			List<SlaveRemote> slaves = SlaveRegistry.instance().freeCoreSlaves();
+//			
+//			synchronized(this) {
+//				while(slaves.size() < 1){
+//					try { wait(); } catch (InterruptedException e) {}
+//					slaves = SlaveRegistry.instance().freeCoreSlaves();
+////					logger.info("Distributor found " + slaves.size() + " free slaves.");
+//				}
+//			}
 //			logger.info("freecoreslaves: " + slaves.size());
-			SlaveRemote s = slaves.get(0);
+//			SlaveRemote s = slaves.get(0);
+			
+			logger.info("acquiring slave");
+			SlaveRemote s = SlaveRegistry.instance().acquireFreeSlave(tqbf);
+			logger.info("slave acquired");
+			
 			try {
 				tqbf.addObserver((RemoteObserver)this);
 			} catch (RemoteException e1) {logger.error("", e1);}

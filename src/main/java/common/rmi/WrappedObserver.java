@@ -22,7 +22,7 @@ public class WrappedObserver implements Observer, Serializable {
 
 	@Override
 	public void update(final Observable o, final Object arg) {
-		// logger.info("Updating");
+		 logger.info("Updating");
 		final WrappedObserver ref = this;
 
 		Master.globalThreadPool.execute(new Runnable() {
