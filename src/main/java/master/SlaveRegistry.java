@@ -53,17 +53,29 @@ public class SlaveRegistry implements Observer{
 	}
 	
 	synchronized SlaveRemote findFreeSlave() {
-		SlaveRemote slave = null;
-		for(Entry<SlaveRemote, Integer> entry : runningComputations.entrySet()) {
+		SlaveRemote freeSlave = null;
+		for(SlaveRemote slave : slaves.values()) {
 			try {
-				if(entry.getKey().getCores() > entry.getValue()) {
-					slave = entry.getKey(); break;
+				if(slave.getCores() > getRunningComputationsOfSlave(slave)) {
+					freeSlave = slave; break;
 				}
 			} catch (RemoteException e) {
 				logger.error("", e);
 			}
 		}
-		return slave;
+		return freeSlave;
+	}
+	
+	synchronized public int getRunningComputationsOfSlave(SlaveRemote slave) {
+		return this.runningComputations.get(slave);
+//		int numComps = 0;
+//		try {
+//			numComps = slave.getRunningComputations();
+//		} catch (RemoteException e) {
+//			logger.error("", e);
+//		}
+//		logger.info(numComps + " computations running on slave");
+//		return numComps;
 	}
 	
 	synchronized public void put(String hostName, SlaveRemote slave) {
@@ -73,47 +85,6 @@ public class SlaveRegistry implements Observer{
 //		setChanged();
 //		notifyObservers();
 	}
-
-//	synchronized public int getCoresWithSolver(String solver) {
-//		int c = 0;
-//		try {
-//			for (SlaveRemote s : slaves.values()) {
-//				if (s.getSolvers().contains(solver))
-//					c += s.getCores();
-//			}
-//		} catch (RemoteException e) {
-//			logger.error("", e);
-//		}
-//		return c;
-//	}
-
-//	synchronized public int freeCores() {
-//		int f = 0;
-//		for (SlaveRemote s : this.slaves.values()) {
-//			try {
-//				f += s.freeCores();
-//			} catch (RemoteException e) {
-//			}
-//		}
-//		return f;
-//	}
-
-//	synchronized public List<SlaveRemote> freeCoreSlaves() {
-//		List<SlaveRemote> slaves = new ArrayList<SlaveRemote>();
-//
-//		for (SlaveRemote s : this.slaves.values()) {
-////			try {
-////				logger.info("slave: " + s.getHostName() + ", freecores: " + s.freeCores());
-////			} catch (Exception e1) {
-////			}
-//			try {
-//				if (s.freeCores() > 0)
-//					slaves.add(s);
-//			} catch (RemoteException e) {
-//			}
-//		}
-//		return slaves;
-//	}
 
 	/**
 	 * Observes tqbfs

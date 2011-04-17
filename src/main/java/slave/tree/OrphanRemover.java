@@ -28,7 +28,7 @@ public class OrphanRemover {
 	
 	private void removeOrphans(SimpleNode n) {
 		if(n.isQuantifierNode() && !variables.contains(n.getVar()))
-				n.cutOutNode();
+				n.cutOutQuantifierNode();
 		
 		if(n.jjtGetNumChildren() == 0)
 			return;

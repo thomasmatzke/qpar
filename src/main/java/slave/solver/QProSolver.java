@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.rmi.RemoteException;
 import java.util.Date;
 
+import main.java.common.rmi.InterpretationData;
 import main.java.common.rmi.TQbfRemote;
 import main.java.slave.tree.QproRepresentation;
 import main.java.slave.tree.ReducedInterpretation;
@@ -52,13 +53,24 @@ public class QProSolver extends Solver {
 	public void run() {
 		this.overheadStartedAt = new Date();
 		
-//		this.inputString = toInputString(this.tqbf);
-		ReducedInterpretation ri;
+		InterpretationData id = null;
 		try {
-			ri = new ReducedInterpretation(tqbf.getWorkUnit());
+			id = tqbf.getWorkUnit();
+		} catch (RemoteException e2) {
+			logger.error("", e2);
+		}
+		
+		if(id.getRootNode() == null) {
+			this.error();
+			return;
+		}
+		
+		ReducedInterpretation ri;
+		try {			
+			ri = new ReducedInterpretation(id);
 		} catch (Exception e) {
-			logger.error("Reducer fail", e);
-			this.returnWithError(this.tqbfId, this.jobId, e);
+			logger.error("Tqbf " + this.tqbfId, e);
+			this.error();
 			return;
 		}
 			
@@ -66,7 +78,7 @@ public class QProSolver extends Solver {
 		
 		if(ri.isTruthValue()) {
 			logger.info("Formula " + this.tqbfId + " collapsed");
-			returnWithSuccess(tqbfId, jobId, ri.getTruthValue());
+			this.terminate(ri.getTruthValue(), 0, this.overheadMillis());
 			return;
 		}
 
@@ -89,7 +101,7 @@ public class QProSolver extends Solver {
 			input = new ByteArrayInputStream(this.input.getBytes("ISO-8859-1"));
 		} catch (UnsupportedEncodingException e1) {
 			logger.error("", e1);
-			returnWithError(tqbfId, jobId, e1);
+			this.error();
 			return;
 		}
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -98,8 +110,10 @@ public class QProSolver extends Solver {
 				
 		try {
 			synchronized(killMutex) {
-				if (killed)
+				if (killed) {
+					Solver.solvers.remove(this.tqbfId);
 					return;
+				}
 				logger.info("Starting qpro process... (" + tqbfId + ")");
 				this.run = true;
 				executor.execute(command, resultHandler);
@@ -107,11 +121,11 @@ public class QProSolver extends Solver {
 			}
 		} catch (ExecuteException e) {
 			logger.error("", e);
-			returnWithError(tqbfId, jobId, e);
+			this.error();
 			return;
 		} catch (IOException e) {
 			logger.error("", e);
-			returnWithError(tqbfId, jobId, e);
+			this.error();
 			return;
 		}
 		
@@ -119,21 +133,16 @@ public class QProSolver extends Solver {
 //		try {
 //			Thread.sleep(5000);
 //		} catch (InterruptedException e2) {
-//			// TODO Auto-generated catch block
 //			e2.printStackTrace();
 //		}
 		
 		while (!resultHandler.hasResult()) {
 			try {
 //				logger.info("waitsfor " + tqbf.getTimeout() * 1000 + " ms");
-				resultHandler.waitFor(tqbf.getTimeout() * 1000);
+				resultHandler.waitFor(this.timeout * 1000);
 				watchdog.destroyProcess();
-				solvers.remove(this);
+				solvers.remove(this.tqbfId);
 			} catch (InterruptedException e1) {
-			} catch (RemoteException e) {
-				watchdog.destroyProcess();
-				logger.error("", e);
-				return;
 			}
 			
 		}
@@ -144,31 +153,29 @@ public class QProSolver extends Solver {
 			handleResult(output.toString("ISO-8859-1"));
 		} catch (UnsupportedEncodingException e) {
 			logger.error("", e);
-			returnWithError(tqbfId, jobId, e);
+			this.error();
 			return;
 		}
-		
+		Solver.solvers.remove(this.tqbfId);
 	}
 
 	private void handleResult(String readString) {
-		if (killed)
+		if (killed) {
+			this.error();
 			return;
+		}
 
 		logger.info("qpro return string: " + readString);
 				
 		if(this.isTimedOut()) {
 			// we timeouted
-			try {
-				this.tqbf.timeout();
-			} catch (RemoteException e) {
-				logger.error("", e);
-			}
-		} if (readString.startsWith("1")) {
+			this.timeout();
+		} else if (readString.startsWith("1")) {
 			// If qpro returns 1 the subformula is satisfiable
-			returnWithSuccess(tqbfId, jobId, true, this.getSolvertime(), this.getOverheadtime());
+			this.terminate(true, this.solverMillis(), this.overheadMillis());
 		} else if (readString.startsWith("0")) {
 			// IF qpro returns 0 the subformula is unsatisfiable
-			returnWithSuccess(tqbfId, jobId, false, this.getSolvertime(), this.getOverheadtime());
+			this.terminate(false, this.solverMillis(), this.overheadMillis());
 
 		} else {
 //			logger.error("Qpro Input of tqbf " + this.tqbfId + ": \n" + this.input);
@@ -176,7 +183,8 @@ public class QProSolver extends Solver {
 			String errorString = "Unexpected result from solver.\n"
 					+ "	Return String: " + readString + "\n" + "	TQbfId:		 : "
 					+ tqbfId + "\n";
-			returnWithError(tqbfId, jobId, new Exception(errorString));
+			logger.error(errorString);
+			this.error();
 		}
 	}
 
@@ -191,16 +199,16 @@ public class QProSolver extends Solver {
 		}
 	}
 	
-	public long getSolvertime() {
+	public long solverMillis() {
 		return this.qproProcessStoppedAt.getTime() - this.qproProcessStartedAt.getTime();
 	}
 	
-	public long getOverheadtime() {
+	public long overheadMillis() {
 		return this.overheadStoppedAt.getTime()	- this.overheadStartedAt.getTime();
 	}
 	
 	public boolean isTimedOut() {
 //		logger.info("SOLVERTIME: " + this.getSolvertime() + ", " + "TIMEOUT: " + this.timeout);
-		return this.getSolvertime() > this.timeout * 1000;
+		return this.solverMillis() > this.timeout * 1000;
 	}
 }

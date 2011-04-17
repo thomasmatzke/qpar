@@ -32,8 +32,6 @@ public class SimpleNode implements Node, Serializable {
 
 	public int id;				
 	public int var = -1;			// -1 = not a var node
-//	public String op = "";			// "" = not an operator node
-//	public String truthValue = "";	// "" = not truth assigned
 	public enum NodeType {
 		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
 	}
@@ -45,18 +43,21 @@ public class SimpleNode implements Node, Serializable {
 	}
 
 	/**
-	 * Cuts this node from the tree, connecting the parent with its children
+	 * Cuts this (quantifier) node from the tree, connecting the parent with its children
 	 * Limited to one child per node and parent
 	 */
-	public void cutOutNode() {
-		if(this.jjtGetNumChildren() > 1 || this.jjtGetParent().jjtGetNumChildren() > 1)
-			throw new IllegalStateException("Node and parent must only have 1 child");
+	public void cutOutQuantifierNode() {
+		assert(this.isQuantifierNode());
 		
+		// give parent new child reference
 		SimpleNode parent = (SimpleNode)this.jjtGetParent();
-		SimpleNode child  = (SimpleNode)this.jjtGetChild(0);
+		for(int i = 0; i < parent.jjtGetNumChildren(); i++) {
+			if(parent.children[i] == this)
+				parent.children[i] = this.children[0];
+		}
 		
-		parent.children[0] = child;
-		child.jjtSetParent(parent);		
+		// set parent of child to its grandparent
+		this.children[0].jjtSetParent(this.jjtGetParent());
 	}
 	
 	/**

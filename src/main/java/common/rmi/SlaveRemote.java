@@ -21,16 +21,6 @@ public interface SlaveRemote extends Remote {
 	
 	public void abortFormula(String tqbfId) throws RemoteException;
 	
-//	public Hashtable<String, Solver> getThreads() throws RemoteException;
-	
-//	public void computeTqbf(TQbfRemote tqbf) throws RemoteException;
-	
-//	public ArrayList<String> getCurrentJobs() throws RemoteException;
-	
-	public void setMailInfo(String mailServer, String mailUser, String mailPass) throws RemoteException;
-	
-	public void setExceptionNotifierAddress(String address) throws RemoteException;
-	
-//	public int freeCores() throws RemoteException;
+	public int getRunningComputations()  throws RemoteException;
 	
 }

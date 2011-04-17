@@ -20,7 +20,7 @@ public class InterpretationData implements Serializable {
 	static Logger logger = Logger.getLogger(InterpretationData.class);
 	
 	private byte[] serializedFormula;
-	private SimpleNode formulaRoot;
+//	private SimpleNode formulaRoot;
 //	private Vector<Integer> eVars = new Vector<Integer>();
 //	private Vector<Integer> aVars = new Vector<Integer>();
 	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
@@ -33,40 +33,34 @@ public class InterpretationData implements Serializable {
 	}
 
 	public SimpleNode getRootNode() {
-		if(this.formulaRoot == null) {
-			if(this.serializedFormula == null) {
-				// This is weird...
-				logger.error("TransmissionQbf didnt contain a formula tree or a serialized formula-tree");
-				assert(false);
-				return null;
-			} else {
-				// This means the root was nullified by transient while serialization
-				// deserialize and write to root-variable
-				try {
-					ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(this.serializedFormula));
-					this.formulaRoot = (SimpleNode) in.readObject();
-					in.close();
-					return formulaRoot;
-				} catch (Exception e) {
-					// this sucks...
-					logger.error("Problem while deserializing formula", e);
-					return null;
-				}
-			}
+		SimpleNode formulaRoot;
+		if(this.serializedFormula == null) {
+			return null;
 		} else {
-			return this.formulaRoot;
+			// This means the root was nullified by transient while serialization
+			// deserialize and write to root-variable
+			try {
+				ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(this.serializedFormula));
+				formulaRoot = (SimpleNode) in.readObject();
+				in.close();
+				return formulaRoot;
+			} catch (Exception e) {
+				// this sucks...
+				logger.error("Problem while deserializing formula", e);
+				return null;
+			}
 		}
 	}
 	
-	public void setSerializedFormula(byte[] serializedFormula) {
+	private void setSerializedFormula(byte[] serializedFormula) {
 		this.serializedFormula = serializedFormula;
 	}
 
-	public byte[] getSerializedFormula() {
-		return serializedFormula;
-	}
+//	public byte[] getSerializedFormula() {
+//		return serializedFormula;
+//	}
 
-	public void setTrueVars(ArrayList<Integer> trueVars) {
+	private void setTrueVars(ArrayList<Integer> trueVars) {
 		this.trueVars = trueVars;
 	}
 
@@ -74,7 +68,7 @@ public class InterpretationData implements Serializable {
 		return trueVars;
 	}
 
-	public void setFalseVars(ArrayList<Integer> falseVars) {
+	private void setFalseVars(ArrayList<Integer> falseVars) {
 		this.falseVars = falseVars;
 	}
 

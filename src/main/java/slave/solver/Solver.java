@@ -1,10 +1,9 @@
 package main.java.slave.solver;
 
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
-import main.java.common.rmi.Result;
 import main.java.common.rmi.TQbfRemote;
 
 import org.apache.log4j.Logger;
@@ -19,7 +18,7 @@ import org.apache.log4j.Logger;
 public abstract class Solver implements Runnable {
 	static Logger logger = Logger.getLogger(QProSolver.class);
 	
-	public static HashMap<String, Solver> solvers = new HashMap<String, Solver>();
+	public static ConcurrentHashMap<String, Solver> solvers = new ConcurrentHashMap<String, Solver>();
 		
 	protected TQbfRemote tqbf;
 	protected String tqbfId = null;
@@ -35,7 +34,7 @@ public abstract class Solver implements Runnable {
 			this.tqbfId = tqbf.getId();
 			this.jobId = tqbf.getJobId();
 			this.timeout = tqbf.getTimeout();
-			solvers.put(tqbfId,this);
+			Solver.solvers.put(tqbfId,this);
 		} catch (RemoteException e) {
 			logger.error("", e);
 		}
@@ -45,43 +44,42 @@ public abstract class Solver implements Runnable {
 
 	public abstract void run();
 
-	protected void returnWithError(String tqbfId, String jobId, Exception e) {
-		Result r = new Result(tqbfId, jobId);
-//		logger.error("Cant complete tqbf computation", e);
-		r.type = Result.Type.ERROR;
-		r.exception = e;
+	protected void timeout() {
 		try {
-			this.tqbf.handleResult(r);
-		} catch (RemoteException e1) {
-			logger.error("", e);
-		}
-	}
-
-	protected void returnWithSuccess(String tqbfId, String jobId,
-			boolean result, long solverTime, long overheadTime) {
-		Result r = new Result(tqbfId, jobId);
-
-		if (result)
-			r.type = Result.Type.TRUE;
-		else
-			r.type = Result.Type.FALSE;
-
-		if (solverTime > 0)
-			r.solverTime = solverTime;
-
-		r.overheadTime = overheadTime;
-		
-		logger.info("Returning result for formula " + tqbfId + ": " + r.type);
-		try {
-			this.tqbf.handleResult(r);
+			this.tqbf.timeout();
 		} catch (RemoteException e) {
-			logger.error("", e);
+			logger.error("RMI fail while sending timeout", e);
 		}
-
+		tearDown();
 	}
 	
-	protected void returnWithSuccess(String tqbfId, String jobId, boolean result) {
-		returnWithSuccess(tqbfId, jobId, result, 0, 0);
+	protected void terminate(boolean isSolvable, long solverMillis, long overheadMillis) {
+		try {
+			this.tqbf.setSolverMillis(solverMillis);
+			this.tqbf.setOverheadMillis(solverMillis);
+			this.tqbf.terminate(isSolvable);
+		} catch (RemoteException e) {
+			logger.error("RMI fail while sending result", e);
+		}
+		tearDown();
+	}
+	
+	protected void error() {
+		try {
+			this.tqbf.error();
+		} catch (RemoteException e) {
+			logger.error("RMI fail while sending error", e);
+		}
+		tearDown();
+	}
+	
+	protected void tearDown() {
+		logger.info("Tearing down solver of tqbf " + this.tqbfId);
+		Solver.solvers.remove(this.tqbfId);
+	}
+	
+	public void finalize() {
+		Solver.solvers.remove(this.tqbfId);
 	}
 
 }

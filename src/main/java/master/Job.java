@@ -23,7 +23,6 @@ import javax.swing.table.AbstractTableModel;
 import main.java.QPar;
 import main.java.common.rmi.RemoteObservable;
 import main.java.common.rmi.RemoteObserver;
-import main.java.common.rmi.Result;
 import main.java.common.rmi.WrappedObserver;
 import main.java.master.logic.DTNode;
 import main.java.master.logic.Qbf;
@@ -33,6 +32,7 @@ import main.java.master.logic.heuristic.HeuristicFactory;
 import org.apache.log4j.Logger;
 
 public class Job extends Observable implements RemoteObserver, RemoteObservable {
+	private static final long serialVersionUID = 9045629901672956321L;
 
 	public enum State {
 		READY, RUNNING, COMPLETE, ERROR, TIMEOUT
@@ -45,10 +45,10 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	private static AbstractTableModel tableModel;
 	static Logger logger = Logger.getLogger(Job.class);
 
-	private boolean jobResult;
+	private boolean isSolvable;
 	private long timeout = 0, setupTime = 0;
 	
-	public int usedCores = 0;
+	public int usedCores = 0, handledResults = 0;
 	
 	private Qbf formula;
 	public DTNode decisionRoot = null;
@@ -60,8 +60,6 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	public String heuristic, id, inputFileString, outputFileString, solverId;
 
 	private HashMap<State, Date> history = new HashMap<State, Date>();
-
-	private List<Result> results = new ArrayList<Result>();
 
 	public Job(String inputFile, String outputFile, String solverId, String heuristicId, long timeout, int maxCores) throws RemoteException {
 		this.setSetupTime(new Date().getTime());
@@ -88,8 +86,16 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			this.setState(State.ERROR);
 			return;
 		}
-
+	
 		try {
+			// We only want to serialize the tree once
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			ObjectOutputStream out;
+			out = new ObjectOutputStream(bos);
+			out.writeObject(formula.root);
+			out.close();
+			this.serializedFormula = bos.toByteArray();
+			
 			subformulas = splitQbf();
 		} catch (IOException e1) {
 			logger.error("Couldnt split formula", e1);
@@ -106,6 +112,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		this.setSetupTime(new Date().getTime() - this.getSetupTime());
 	}
 
+	
+	
 	private static void addJob(Job job) {
 		jobs.put(job.id, job);
 		if (tableModel != null) {
@@ -125,17 +133,47 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		}
 		return jobs;
 	}
+			
+	synchronized public void error() {
+		this.abortComputations();
+		this.setState(State.ERROR);
+		this.freeResources();
+	}
+			
+	synchronized public void complete(boolean result) {
+		this.setResult(result);
 
-	synchronized public void triggerTimeout() {
+		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
+		this.abortComputations();
+
+		// Write the results to a file
+		// But only if we want that. In case of a evaluation
+		// the outputfile is set to null
+		if (this.getOutputFileString() != null) {
+			try {
+				BufferedWriter out = new BufferedWriter(new FileWriter(this.getOutputFileString()));
+				out.write(resultText());
+				out.flush();
+			} catch (IOException e) {
+				logger.error(e);
+			}
+		}
+		
+		if (Job.getTableModel() != null)
+			Job.getTableModel().fireTableDataChanged();
+		
+		this.setState(State.COMPLETE);
+		this.freeResources();
+	}
+	
+	synchronized public void timeout() {
 		if (this.isComplete() || this.isError()) {
 			return;
 		}
 		logger.info("Timeout reached. Job: " + this.id + ", Timeout: " + this.timeout);
 		abortComputations();
 		this.setState(State.TIMEOUT);
-
-		notifyAll();
-
+		this.freeResources();
 	}
 
 	public void startBlocking() {
@@ -203,28 +241,17 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			leafCtr++;
 		}
 
-		
-
 		assert (leaves.size() == usedCores);
 
 		logger.debug("Generating TransmissionQbfs...");
 		List<TQbf> tqbfs = new ArrayList<TQbf>();
-
-		// We only want to serialize the tree once
-
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutputStream out;
-		out = new ObjectOutputStream(bos);
-		out.writeObject(formula.root);
-		out.close();
-		byte[] serializedFormula = bos.toByteArray();
-
+	
 		// Generate ids for leaves and corresponding tqbfs
 		int idCtr = 0;
 		for (DTNode node : leaves) {
 			String tqbfId = this.id + "." + Integer.toString(idCtr++);
 			node.setId(tqbfId);
-			TQbf tqbf = new TQbf(tqbfId, this.id, this.solverId, node.variablesAssignedTrue, node.variablesAssignedFalse, this.timeout, serializedFormula);
+			TQbf tqbf = new TQbf(tqbfId, this, this.solverId, node.variablesAssignedTrue, node.variablesAssignedFalse, this.timeout, serializedFormula);
 			tqbfs.add(tqbf);
 		}
 		assert (tqbfs.size() == usedCores);
@@ -234,7 +261,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		return tqbfs;
 	}
 
-	private boolean mergeQbf(String tqbfId, boolean result) {
+	synchronized private boolean mergeQbf(String tqbfId, boolean result) {
 		logger.info("Merging tqbf " + tqbfId);
 		if (decisionRoot.hasTruthValue())
 			return true;
@@ -264,16 +291,15 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 		logger.info("Job abort. Reason: " + why);
 		abortComputations();
-		// this.freeResources();
 		this.setState(State.ERROR);
 	}
 
 	public void setResult(boolean r) {
-		this.jobResult = r;
+		this.isSolvable = r;
 	}
 
 	public boolean getResult() {
-		return jobResult;
+		return isSolvable;
 	}
 
 	public long totalMillis() {
@@ -298,22 +324,11 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
-
 	
-	// TODO: move this crap to TQbf
-	synchronized public void handleResult(Result r) {
-
-		this.results.add(r);
-		if (this.getStatus() != State.RUNNING)
+	synchronized public void handleResult(TQbf terminatedTqbf) {
+		handledResults++;
+		if(!this.isRunning())
 			return;
-
-		if (r.type == Result.Type.ERROR) {
-			logger.error("Slave returned error for subformula: " + r.tqbfId, r.exception);
-
-			this.abortComputations();
-			this.setState(State.ERROR);
-			return;
-		}
 
 		/*
 		 * If we are in benchmarking mode we wait for all tqbfs, because they
@@ -345,20 +360,27 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			}
 
 		} else {
-			solved = mergeQbf(r.tqbfId, r.getResult());
+			solved = mergeQbf(terminatedTqbf.getId(), terminatedTqbf.getResult());
 		}
 
-		logger.info("Result of tqbf(" + r.tqbfId + ") merged into Qbf of Job " + this.id + " (" + r.type + ")");
+		logger.info("Result of tqbf(" + terminatedTqbf.getId() + ") merged into Qbf of Job " + this.id + " (" + terminatedTqbf.getResult() + ")");
 		// this.formulaDesignations.remove(r.tqbfId);
 		if (solved) {
-			fireJobCompleted(decisionRoot.getTruthValue());
+			complete(decisionRoot.getTruthValue());
 		} else {
-			if (results.size() == this.usedCores) {
+			if (handledResults == this.usedCores) {
+				StringBuffer errorMsg = new StringBuffer();
+				errorMsg.append("No result on merge. Handled results: " + handledResults + ", " +
+								 "Used cores: " + this.usedCores + "\n");
+				errorMsg.append("Job status: " + this.getStatus() + "\n");
+				for(TQbf tqbf : this.subformulas) {
+					errorMsg.append("Tqbf " + tqbf.getId() + " state is " + tqbf.getState() + "\n");
+				}
+				
 				// Received all subformulas but still no result...something is
 				// wrong
-				logger.fatal("Merging broken!");
-				logger.fatal("Dumping decisiontree: \n" + decisionRoot.dump());
-				throw new RuntimeException("Merging broken!");
+				logger.error(errorMsg.toString());
+				logger.error("Dumping decisiontree: \n" + decisionRoot.dump());
 			}
 		}
 
@@ -383,7 +405,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			assert (finished.get(0).getComputationTime() <= finished.get(1).getComputationTime());
 
 		for (TQbf tqbf : finished) {
-			boolean isCompleted = mergeQbf(tqbf.getId(), tqbf.getResult().getResult());
+			boolean isCompleted = mergeQbf(tqbf.getId(), tqbf.getResult());
 			tqbf.setMerged();
 			if (isCompleted) {
 				this.completingTqbf = tqbf;
@@ -394,40 +416,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		return solved;
 	}
 
-	private void fireJobCompleted(boolean result) {
-		this.setState(State.COMPLETE);
-		this.setResult(result);
-
-		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
-		this.abortComputations();
-
-		// Write the results to a file
-		// But only if we want that. In case of a evaluation
-		// the outputfile is set to null
-		if (this.getOutputFileString() != null) {
-			try {
-				BufferedWriter out = new BufferedWriter(new FileWriter(this.getOutputFileString()));
-				out.write(resultText());
-				out.flush();
-			} catch (IOException e) {
-				logger.error(e);
-			}
-		}
-
-		// if (Shell.getWaitfor_jobid().equals(this.id)) {
-		// synchronized (Master.getShellThread()) {
-		// Master.getShellThread().notify();
-		// }
-		// }
-
-		if (Job.getTableModel() != null)
-			Job.getTableModel().fireTableDataChanged();
-				
-		synchronized (this) {
-			notifyAll();
-		}
-
-	}
+	
 
 	private void abortComputations() {
 		for (TQbf tqbf : this.subformulas) {
@@ -435,9 +424,9 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		}
 	}
 
-	public Qbf getFormula() {
-		return formula;
-	}
+//	public Qbf getFormula() {
+//		return formula;
+//	}
 
 	public String getHeuristic() {
 		return heuristic;
@@ -483,12 +472,13 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		this.solverId = solver;
 	}
 
-	public void setState(State state) {
+	synchronized private void setState(State state) {
 		logger.debug("Job " + this.id + " to change state from " + this.state + " to " + state);
 		this.state = state;
 		this.history.put(state, new Date());
 		setChanged();
 		notifyObservers();
+		notifyAll();
 		if (Job.getTableModel() != null) {
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
@@ -522,7 +512,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		long added = 0;
 		for (TQbf tqbf : this.subformulas) {
 			if(tqbf.isTerminated()) {
-				added += tqbf.getResult().solverTime;
+				added += tqbf.getSolverMillis();
 				terminatedCount++;
 			}				
 		}
@@ -537,8 +527,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 		long maxTime = 0;
 		for (TQbf tqbf : this.subformulas) {
-			if(tqbf.isTerminated() && tqbf.getResult().solverTime > maxTime)
-				maxTime = tqbf.getResult().solverTime;
+			if(tqbf.isTerminated() && tqbf.getSolverMillis() > maxTime)
+				maxTime = tqbf.getSolverMillis();
 		}
 		return maxTime;
 	}
@@ -551,7 +541,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		long added = 0;
 		for (TQbf tqbf : this.subformulas) {
 			if(tqbf.isTerminated()) {
-				added += tqbf.getResult().overheadTime;
+				added += tqbf.getOverheadMillis();
 				terminated++;
 			}				
 		}
@@ -579,24 +569,21 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 				case MERGED:
 					break;
 				case TERMINATED:
-					this.handleResult(tqbf.getResult());
+					this.handleResult(tqbf);
 					break;
 				case DONTSTART:
 					break;
 				case TIMEOUT:
-					this.triggerTimeout();
+					this.timeout();
 					break;
 				case ERROR:
-					this.abort("Error in tqbf");
+					this.error();
 					break;
 				case NEW:				
 				default:
 					assert (false);
 			}
 		}
-//		synchronized(this) {
-//			notifyAll();
-//		}
 	}
 
 	public HashMap<State, Date> getHistory() {
@@ -629,6 +616,12 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 	public boolean isTimeout() {
 		return (this.getStatus().equals(State.TIMEOUT) ? true : false);
+	}
+
+	private void freeResources() {
+		this.formula = null;
+		this.decisionRoot = null;
+		this.serializedFormula = null;
 	}
 
 }

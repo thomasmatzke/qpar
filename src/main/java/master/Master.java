@@ -92,44 +92,16 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 		System.exit(-1);
 	}
 
-//	public static Shell getShell() {
-//		return shell;
-//	}
-//
-//	public static Thread getShellThread() {
-//		return shellthread;
-//	}
-
-//	@Override
-//	public void unregisterSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
-//		logger.info("Unregistering Slave. Hostname: " + slave.getHostName());
-//		SlaveRegistry.instance().removeSlave(slave.getHostName());
-//	}
-
 	@Override
 	public void registerSlave(SlaveRemote slave) throws RemoteException, UnknownHostException {
 		logger.info("Registering Slave. Hostname: " + slave.getHostName() + ", Cores: " + slave.getCores() + ", Solvers: " + slave.getSolvers());
-		if(QPar.isMailInfoComplete())
-			slave.setMailInfo(QPar.mailServer, QPar.mailUser, QPar.mailPass);
-		if(QPar.getExceptionNotifierAddress() != null)
-			slave.setExceptionNotifierAddress(QPar.getExceptionNotifierAddress());
+		
 		SlaveRegistry.instance().put(slave.getHostName(), slave);
 	}
 
-//	@Override
-//	public void returnResult(Result r) throws RemoteException {
-//		logger.info("Result returned. Job: " + r.jobId + ", tqbfId: " + r.tqbfId + ", ResultType: " + r.type.toString());
-//		TqbfRegistry.instance().registerResult(r);
-//	}
-
 	@Override
 	public void ping() throws RemoteException {}
-	
-//	@Override
-//	public void notifyComputationStarted(String tqbfId) throws RemoteException {
-//		logger.info("Computation started on formula " + tqbfId);
-//		TqbfRegistry.instance().acknowledgeComputationStart(tqbfId);
-//	}
+
 
 	@Override
 	public void displaySlaveMessage(String slave, String message) throws RemoteException {
@@ -137,9 +109,6 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	}
 	
 	public static void main(String[] args) throws Throwable {
-			
-		// Basic console logging
-//		BasicConfigurator.configure();
 
 		ap = new ArgumentParser(args);
 		Master.startGui = ap.hasOption("gui");

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd" >
+<log4j:configuration>
+  <!-- APPENDERS LIST -->
+  <!-- show log entries on console -->
+  <appender name="consoleAppender" class="org.apache.log4j.ConsoleAppender">
+  	<param name="Threshold" value="INFO"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d [%t] %-5p %c %x - %m%n"/>
+    </layout>
+  </appender> 
+
+  <!-- log all logs to a separate log file every day -->
+  <appender name="masterFileAppender" class="org.apache.log4j.DailyRollingFileAppender">
+    <param name="file" value="master.err" />
+    <param name="datePattern" value="'.'yyyy-MM-dd" />
+    <param name="append" value="false" />
+    <param name="Threshold" value="ERROR"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d [%t] %-5p %c %x - %m%n"/>
+    </layout>
+  </appender>
+
+  <!-- log all logs to a separate log file every day -->
+  <appender name="slaveFileAppender" class="org.apache.log4j.DailyRollingFileAppender">
+  <param name="Threshold" value="ERROR"/>
+    <param name="file" value="slave.err" />
+    <param name="datePattern" value="'.'yyyy-MM-dd" />
+    <param name="append" value="false" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d [%t] %-5p %c %x - %m%n"/>
+    </layout>
+  </appender>
+
+  <!-- LOGGER LIST -->
+  <logger name="main.java.master">
+    <appender-ref ref="masterFileAppender"/>
+  </logger>
+  
+  <logger name="main.java.slave">
+    <appender-ref ref="slaveFileAppender"/>
+  </logger>
+  
+  <logger name="main.java.common">
+    <appender-ref ref="masterFileAppender"/>
+    <appender-ref ref="slaveFileAppender"/>
+  </logger>
+  
+  <root>
+    <priority value="info"></priority>
+    <appender-ref ref="consoleAppender"/>
+  </root>
+</log4j:configuration>

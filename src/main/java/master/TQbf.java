@@ -1,12 +1,7 @@
 package main.java.master;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -16,13 +11,9 @@ import java.util.Observable;
 import main.java.common.rmi.InterpretationData;
 import main.java.common.rmi.RemoteObservable;
 import main.java.common.rmi.RemoteObserver;
-import main.java.common.rmi.Result;
 import main.java.common.rmi.SlaveRemote;
 import main.java.common.rmi.TQbfRemote;
 import main.java.common.rmi.WrappedObserver;
-import main.java.master.logic.parser.SimpleNode;
-import main.java.slave.solver.Solver;
-import main.java.slave.tree.Reducer;
 
 import org.apache.log4j.Logger;
 
@@ -32,12 +23,11 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 		
 	private static final long serialVersionUID = -6627723521432123349L;
 	private ArrayList<Integer> falseVars = new ArrayList<Integer>();
+	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
 	
 	private Map<State, Date> history = new HashMap<State, Date>();
 	private String id;
-	private String jobId;
-	private Result result = null;
-	public byte[] serializedFormula = null;
+	private Job job;
 	
 	private SlaveRemote slave;
 
@@ -46,19 +36,47 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 	private State state = State.NEW;
 	
 	private long timeout;
-	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
 	
-	private ArrayDeque<SimpleNode> truthAssignedNodes = null;
+	private long overheadMillis, solverMillis;
 	
-	public TQbf(String tqbfId, String jobId, String solverId, ArrayList<Integer> trueVars, ArrayList<Integer> falseVars, long timeout, byte[] serializedFormula) throws RemoteException {
+	private boolean result;
+		
+	public boolean isResult() {
+		return result;
+	}
+
+	public void setResult(boolean result) {
+		this.result = result;
+	}
+	
+	public boolean getResult() {
+		return this.result;
+	}
+
+	public long getOverheadMillis() {
+		return overheadMillis;
+	}
+
+	public void setOverheadMillis(long overheadMillis) {
+		this.overheadMillis = overheadMillis;
+	}
+
+	public long getSolverMillis() {
+		return solverMillis;
+	}
+
+	public void setSolverMillis(long solverMillis) {
+		this.solverMillis = solverMillis;
+	}
+
+	public TQbf(String tqbfId, Job job, String solverId, ArrayList<Integer> trueVars, ArrayList<Integer> falseVars, long timeout, byte[] serializedFormula) throws RemoteException {
 		super();
 		this.id = tqbfId;
-		this.jobId = jobId;
+		this.job = job;
 		this.solverId = solverId;
 		this.trueVars = trueVars;
 		this.falseVars = falseVars;
 		this.timeout = timeout;
-		this.serializedFormula = serializedFormula;
 		
 		UnicastRemoteObject.exportObject(this, 0);
 	}
@@ -106,19 +124,6 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 		this.setState(TQbf.State.COMPUTING);		
 	}
 	
-	public TQbf deepClone() throws Exception {
-		TQbf clonedObj = null;
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ObjectOutputStream oos = new ObjectOutputStream(baos);
-		oos.writeObject(this);
-		oos.close();
-		ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
-		ObjectInputStream ois = new ObjectInputStream(bais);
-		clonedObj = (TQbf) ois.readObject();
-		ois.close();
-		return clonedObj;
-	}
-	
 	public long getComputationTime() {
 		if(this.isComputing()) {
 			return new Date().getTime() - history.get(State.COMPUTING).getTime();
@@ -143,15 +148,9 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 	}
 		
 	public String getJobId() {
-		return jobId;
+		return job.id;
 	}
-	
-	synchronized public Result getResult() {
-		if(this.result == null)
-			throw new IllegalStateException("No result available. Tqbf State: " + this.getState());
-		return result;
-	}
-		
+			
 	public SlaveRemote getSlave() {
 		return slave;
 	}
@@ -179,14 +178,14 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 
 	@Override
 	public InterpretationData getWorkUnit() throws RemoteException {
-		InterpretationData id = new InterpretationData(this.serializedFormula, this.trueVars, this.falseVars);
+		InterpretationData id = new InterpretationData(this.job.serializedFormula, this.trueVars, this.falseVars);
 		return id;
 	}
 
-	synchronized public void handleResult(Result r) throws RemoteException{
-		if(this.isComputing())
-			this.setResult(r);		
-	}
+//	synchronized public void handleResult(Result r) throws RemoteException{
+//		if(this.isComputing())
+//			this.setResult(r);		
+//	}
 
 	public boolean isAborted() {
 		return this.state == State.ABORTED ? true : false;
@@ -219,42 +218,24 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 	public boolean isTimeout() {
 		return this.state == State.TIMEOUT ? true : false;
 	}
-
-	public void reduceFast() {
-		ArrayDeque<SimpleNode> reducableNodes = new ArrayDeque<SimpleNode>();
-
-		// The parents of the assignednodes are reducable, so lets get them
-		for (SimpleNode n : truthAssignedNodes) {
-			if (n.jjtGetParent() != null)
-				reducableNodes.add((SimpleNode) n.jjtGetParent());
-		}
-
-		Reducer r = new Reducer(reducableNodes);
-		r.reduce();
-		// this.root.dump(this.getId() + "  ");
-	}
 	
 	public void setId(String id) {
 		this.id = id;
 	}
-	
-	public void setJobId(String jobId) {
-		this.jobId = jobId;
-	}
-	
+		
 	synchronized public void setMerged() {
 		if(!this.getState().equals(State.TERMINATED))
 			throw new IllegalStateException("Cant merge a non TERMINATED tqbf. State was: " + this.getState());
 		this.setState(State.MERGED);
 	}
 	
-	synchronized public void setResult(Result r) {
-		synchronized(this) {
-			this.result = r;
-			notifyAll();
-		}
-		this.setState(State.TERMINATED);
-	}
+//	synchronized public void setResult(Result r) {
+//		synchronized(this) {
+//			this.result = r;
+//			notifyAll();
+//		}
+//		this.setState(State.TERMINATED);
+//	}
 	
 	public void setSlave(SlaveRemote slave) {
 		this.slave = slave;
@@ -264,36 +245,44 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 		this.solverId = solverId;
 	}
 	
-	private void setState(State state) {
-		if(this.isAborted() || this.isMerged() || this.isError() || this.isTimeout())
+	synchronized private void setState(State state) {
+		if(this.isAborted() || this.isMerged() || this.isError() || this.isTimeout()) {
+			logger.error("Wanted to set state from " + this.getState() + " to " + state);
 			throw new IllegalStateException();
+		}
+			
 		logger.info("Tqbf " + this.getId() + " to change state from " + this.state + " to " + state);
 		this.state = state;
 		history.put(state, new Date());
 		setChanged();
         notifyObservers();
+        notifyAll();
 	}
 
 	public void setTimeout(long timeout) {
 		this.timeout = timeout;
 	}
 
+	@Override
 	synchronized public void timeout() {
 		if(!this.isComputing())
 			throw new IllegalStateException("Tqbf must be computing to change to state TIMEOUT. State was: " + this.getState());
 		this.setState(State.TIMEOUT);
 	}
-
-	/**
-	 * Blocks until computation is terminated
-	 */
-	public void waitFor() {
-		synchronized(this) {
-			while(result == null) {
-				try { wait(); } catch (InterruptedException e) {}
-			}
-		}
+		
+	@Override
+	synchronized public void error() {
+		if(!this.isComputing())
+			return;
+		this.setState(State.ERROR);
 	}
-
+	
+	@Override
+	synchronized public void terminate(boolean isSolvable) {
+		if(this.getState().equals(State.ABORTED))
+			return;
+		this.setResult(isSolvable);
+		this.setState(State.TERMINATED);
+	}
 
 }

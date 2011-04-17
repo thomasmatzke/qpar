@@ -6,34 +6,37 @@ MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblabla
 #newjob testing/simple3.qbf testing/simple3.qbf.txt qpro litcount 1 60
 #startjob 1
 
-evaluate testing/boole 1 16 qpro 60
-#evaluate testing/semaphore_small 1 32 qpro 60
+#evaluate testing/boole 1 64 qpro 60
+#evaluate testing/semaphore_small 1 64 qpro 60
 #evaluate testing/semaphore_medium 1 64 qpro 60
-#evaluate testing/semaphore_big 1 32 qpro 60
+#evaluate testing/semaphore_big 1 64 qpro 60
 
-#evaluate testing/ring_small 1 16 qpro 60
-#evaluate testing/ring_medium 1 16 qpro 60
-#evaluate testing/ring_big 1 16 qpro 60
+#evaluate testing/ring_small 1 64 qpro 60
+#evaluate testing/ring_medium 1 64 qpro 60
+#evaluate testing/ring_big 1 64 qpro 60
 
 #evaluate testing/counter_small 1 32 qpro 60
 #evaluate testing/counter_medium 1 32 qpro 60
 #evaluate testing/counter_big 1 32 qpro 60
 #evaluate testing/counter_biggest 1 32 qpro 60
 
-#evaluate testing/ncf_small 1 32 qpro 60
-#evaluate testing/ncf_medium 1 32 qpro 60
-#evaluate testing/ncf_big 1 32 qpro 30
+#evaluate testing/ncf_small 1 64 qpro 60
+#evaluate testing/ncf_medium 1 64 qpro 60
+#evaluate testing/ncf_big 1 64 qpro 30
 
-#evaluate testing/consistency_big 4 4 qpro 60
-#evaluate testing/consistency_bigger 1 32 qpro 60
+#evaluate testing/dme_small 1 64 qpro 60
+#evaluate testing/dme_big 1 64 qpro 60
 
-#evaluate testing/dme_big 1 32 qpro 60
-#evaluate testing/dme_small 1 32 qpro 60
+# something broken todo
+#evaluate testing/consistency_big 1 64 qpro 60
+#evaluate testing/consistency_bigger 1 64 qpro 60
 
-#evaluate testing/possibility_big 1 64 qpro 60
-#evaluate testing/possibility_bigger 1 64 qpro 60
+# too big for 1 min timeout
+#evaluate testing/possibility_small 1 64 qpro 60
+#evaluate testing/possibility_medium 1 64 qpro 60
 
-#evaluate testing/assertion_small 4 4 qpro 60
+# too big for 1 min timeout
+#evaluate testing/assertion_small 1 64 qpro 60
 #evaluate testing/assertion_medium 1 64 qpro 60
 #evaluate testing/assertion_big 1 64 qpro 60
 

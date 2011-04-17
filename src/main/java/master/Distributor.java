@@ -23,7 +23,7 @@ public class Distributor implements Runnable, RemoteObserver, Serializable, Obse
 	
 	private volatile static Distributor instance;
 	
-	private BlockingQueue<TQbf> queue = new LinkedBlockingQueue<TQbf>();
+	private BlockingQueue<TQbf> queue = new LinkedBlockingQueue<TQbf>(1000);
 	
 	private boolean run = true;
 	
@@ -61,29 +61,14 @@ public class Distributor implements Runnable, RemoteObserver, Serializable, Obse
 			
 			if(tqbf.isDontstart())
 				continue;
-			
-//			List<SlaveRemote> slaves = SlaveRegistry.instance().freeCoreSlaves();
-//			
-//			synchronized(this) {
-//				while(slaves.size() < 1){
-//					try { wait(); } catch (InterruptedException e) {}
-//					slaves = SlaveRegistry.instance().freeCoreSlaves();
-////					logger.info("Distributor found " + slaves.size() + " free slaves.");
-//				}
-//			}
-//			logger.info("freecoreslaves: " + slaves.size());
-//			SlaveRemote s = slaves.get(0);
-			
-			logger.info("acquiring slave");
+	
 			SlaveRemote s = SlaveRegistry.instance().acquireFreeSlave(tqbf);
-			logger.info("slave acquired");
 			
 			try {
 				tqbf.addObserver((RemoteObserver)this);
 			} catch (RemoteException e1) {logger.error("", e1);}
 			tqbf.compute(s);
-//			sendTqbf(tqbf, s);
-			
+
 			// We have to wait til the formula is started to get accurate measurement
 			// of free cores
 			synchronized(this) {
@@ -95,18 +80,6 @@ public class Distributor implements Runnable, RemoteObserver, Serializable, Obse
 		}
 	}
 	
-//	private void sendTqbf(TQbf tqbf, SlaveRemote slave) {
-//		try {
-//			synchronized(tqbf) {
-//				if(tqbf.getState() == State.NEW)
-//					Master.globalThreadPool.execute(new TransportThread(slave, tqbf, tqbf.getSolverId()));
-//			}
-//		} catch (Exception e) {
-//			logger.error("", e);
-//			tqbf.abort();
-//		}
-//	}
-		
 	public void stop() {
 		this.run = false;
 	}

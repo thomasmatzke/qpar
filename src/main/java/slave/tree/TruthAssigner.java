@@ -35,29 +35,29 @@ public class TruthAssigner {
 	 * @return
 	 */
 	public ArrayDeque<SimpleNode> assign() {
-		TreeStatistic preStat = new TreeStatistic(this.root);
+//		TreeStatistic preStat = new TreeStatistic(this.root);
 		logger.debug("Assigning " + Arrays.toString(trueVars.toArray()) + ", " + Arrays.toString(falseVars.toArray()));
 		ArrayDeque<SimpleNode> assigned = assignNode(root);
 		logger.debug("Assigned " + assigned.size() + " nodes.");
-		TreeStatistic postStat = new TreeStatistic(this.root);
-		
-		int deltaAnd = postStat.getNumAnd() - preStat.getNumAnd();
-		int deltaOr = postStat.getNumOr() - preStat.getNumOr();
-		int deltaTrue = postStat.getNumTrue() - preStat.getNumTrue();
-		int deltaFalse = postStat.getNumFalse() - preStat.getNumFalse();
-		int deltaForall = postStat.getNumForall() - preStat.getNumForall();
-		int deltaExists = postStat.getNumExists() - preStat.getNumExists();
-		int deltaVar = postStat.getNumVar() - preStat.getNumVar();
-		int deltaNot = postStat.getNumNot() - preStat.getNumNot();
-				
-		logger.info("Assign Statistic: DeltaAnd: " + deltaAnd + 
-				", DeltaOr: " + deltaOr +
-				", DeltaTrue: " + deltaTrue + 
-				", DeltaFalse: " + deltaFalse + 
-				", DeltaNot: " + deltaNot + 
-				", DeltaForall: " + deltaForall + 
-				", DeltaExists: " + deltaExists + 
-				", DeltaVar: " + deltaVar);
+//		TreeStatistic postStat = new TreeStatistic(this.root);
+//		
+//		int deltaAnd = postStat.getNumAnd() - preStat.getNumAnd();
+//		int deltaOr = postStat.getNumOr() - preStat.getNumOr();
+//		int deltaTrue = postStat.getNumTrue() - preStat.getNumTrue();
+//		int deltaFalse = postStat.getNumFalse() - preStat.getNumFalse();
+//		int deltaForall = postStat.getNumForall() - preStat.getNumForall();
+//		int deltaExists = postStat.getNumExists() - preStat.getNumExists();
+//		int deltaVar = postStat.getNumVar() - preStat.getNumVar();
+//		int deltaNot = postStat.getNumNot() - preStat.getNumNot();
+//				
+//		logger.info("Assign Statistic: DeltaAnd: " + deltaAnd + 
+//				", DeltaOr: " + deltaOr +
+//				", DeltaTrue: " + deltaTrue + 
+//				", DeltaFalse: " + deltaFalse + 
+//				", DeltaNot: " + deltaNot + 
+//				", DeltaForall: " + deltaForall + 
+//				", DeltaExists: " + deltaExists + 
+//				", DeltaVar: " + deltaVar);
 		
 		return assigned;
 	}

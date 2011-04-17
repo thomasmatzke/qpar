@@ -127,6 +127,8 @@ public class Evaluation implements Observer {
 						fileIs = results[f][c][h].getResult();
 						continue;
 					}
+					if(results[f][c][h].isTimeout() || results[f][c][h].isError())
+						continue;
 					if (!fileIs.equals(results[f][c][h].getResult()))
 						return false;
 				}
@@ -419,6 +421,7 @@ public class Evaluation implements Observer {
 		int running = 0;
 		int error = 0;
 		int complete = 0;
+		int timeout = 0;
 		for (Job jo : this.jobsTodo) {
 			switch(jo.getStatus()) {
 				case RUNNING:
@@ -430,11 +433,14 @@ public class Evaluation implements Observer {
 				case COMPLETE:
 					complete++;
 					break;
+				case TIMEOUT:
+					timeout++;
+					break;
 				default:
 					break;
 			}
 		}
-		logger.info("Jobs RUNNING: " + running + ", ERROR: " + error + ", COMPLETE: " + complete);
+		logger.info("Jobs RUNNING: " + running + ", ERROR: " + error + ", COMPLETE: " + complete + ", TIMEOUT: " + timeout);
 	}
 
 	private boolean allJobsTerminated() {

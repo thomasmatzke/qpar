@@ -106,20 +106,20 @@
     </target>
     <target name="master">
         <java classname="main.java.master.Master" failonerror="true" fork="yes">
-            <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m -Djava.rmi.server.useLocalHostname=true -Dcom.sun.management.jmxremote"/>
+            <jvmarg line="-Xss5m -ea -Xms64m -Xmx768m -Djava.rmi.server.useLocalHostname=true -Dcom.sun.management.jmxremote"/>
             <arg line="-i=batch.txt"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="master_console">
         <java classname="main.java.master.Master" failonerror="true" fork="yes">
-            <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m"/>
+            <jvmarg line="-Xss5m -ea -Xms64m -Xmx1024m"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="slave">
         <java classname="main.java.slave.Slave" failonerror="true" fork="yes">
-            <jvmarg line="-Xss5m -ea -Xms64m -Xmx256m -Dcom.sun.management.jmxremote"/>
+            <jvmarg line="-Xss5m -ea -Xms64m -Xmx768m -Dcom.sun.management.jmxremote"/>
             <arg line=""/>
             <classpath refid="qpar.classpath"/>
         </java>
