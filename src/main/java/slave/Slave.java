@@ -11,6 +11,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,7 +40,7 @@ import sun.misc.Signal;
  */
 public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	public static ArrayList<String> availableSolvers = new ArrayList<String>();
-	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
+	public static ExecutorService globalThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 2);
 
 	public static String hostname = null;
 	static Logger logger = Logger.getLogger(Slave.class);
@@ -166,13 +167,7 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote  {
 	public void abortFormula(String tqbfId) throws RemoteException {
 		Solver.solvers.get(tqbfId).kill();
 	}
-
-//	@Override
-//	synchronized public void computeTqbf(TQbfRemote tqbf) throws RemoteException {
-//		this.tqbfs.add(tqbf);
-//		tqbf.compute(this);
-//	}
-
+	
 	@Override
 	public void computeFormula(TQbfRemote tqbf) throws RemoteException {
 //		this.tqbfs.add(tqbf);

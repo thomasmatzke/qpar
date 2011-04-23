@@ -33,13 +33,9 @@ public class Qbf {
 	public Vector<Integer> aVars = new Vector<Integer>();
 	public Vector<Integer> vars  = new Vector<Integer>();
 	public SimpleNode root = null;
-//	public int id;
 	
 	public DependencyNode dependencyGraphRoot;
 		
-	private Object mergeLock = new Object();
-	
-	
 	/**
 	* constructor
 	* @param filename The file containing the QBF that will be stored in this object

@@ -5,16 +5,9 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 public interface MasterRemote extends Remote {
-	
-//	public void unregisterSlave(SlaveRemote ref) throws RemoteException, UnknownHostException;
-
 	public void registerSlave(SlaveRemote ref) throws RemoteException, UnknownHostException;
-
-//	public void returnResult(Result r) throws RemoteException;
-	
 	public void ping() throws RemoteException;
-	
-//	public void notifyComputationStarted(String tqbfId) throws RemoteException;
-	
 	public void displaySlaveMessage(String slave, String message) throws RemoteException;
+	public Boolean getCachedResult(byte[] hash) throws RemoteException;
+	public void cacheResult(byte[] hash, boolean result) throws RemoteException;
 }

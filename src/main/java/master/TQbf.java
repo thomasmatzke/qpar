@@ -14,6 +14,7 @@ import main.java.common.rmi.RemoteObserver;
 import main.java.common.rmi.SlaveRemote;
 import main.java.common.rmi.TQbfRemote;
 import main.java.common.rmi.WrappedObserver;
+import main.java.slave.Slave;
 
 import org.apache.log4j.Logger;
 
@@ -114,13 +115,7 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 	synchronized public void compute(SlaveRemote slave) {
 		logger.info("Computing formula " + this.getId() + "...");
 		this.setSlave(slave);
-		try {
-			slave.computeFormula(this);
-		} catch (RemoteException e) {
-			logger.error("", e);
-			this.setState(State.ERROR);
-			return;
-		}
+		Master.globalThreadPool.execute(new ComputeSendThread(this.slave, this));
 		this.setState(TQbf.State.COMPUTING);		
 	}
 	
@@ -182,11 +177,6 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 		return id;
 	}
 
-//	synchronized public void handleResult(Result r) throws RemoteException{
-//		if(this.isComputing())
-//			this.setResult(r);		
-//	}
-
 	public boolean isAborted() {
 		return this.state == State.ABORTED ? true : false;
 	}
@@ -228,14 +218,6 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 			throw new IllegalStateException("Cant merge a non TERMINATED tqbf. State was: " + this.getState());
 		this.setState(State.MERGED);
 	}
-	
-//	synchronized public void setResult(Result r) {
-//		synchronized(this) {
-//			this.result = r;
-//			notifyAll();
-//		}
-//		this.setState(State.TERMINATED);
-//	}
 	
 	public void setSlave(SlaveRemote slave) {
 		this.slave = slave;
@@ -283,6 +265,26 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 			return;
 		this.setResult(isSolvable);
 		this.setState(State.TERMINATED);
+	}
+	
+	private class ComputeSendThread implements Runnable {
+		SlaveRemote slave;
+		TQbf tqbf;
+		public ComputeSendThread(SlaveRemote slave, TQbf tqbf) {
+			this.slave = slave;
+			this.tqbf = tqbf;
+		}
+		
+		@Override
+		public void run() {
+			try {
+				slave.computeFormula(tqbf);
+			} catch (RemoteException e) {
+				logger.error("", e);
+				tqbf.setState(State.ERROR);
+				return;
+			}
+		}
 	}
 
 }

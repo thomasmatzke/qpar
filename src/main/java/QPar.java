@@ -19,8 +19,17 @@ public class QPar {
 	public static String mailServer = null;
 	public static String mailUser = null;
 	public static String mailPass = null;
-	public static boolean benchmarkMode = false;
+	private static boolean benchmarkMode = false;
+	private static boolean resultCaching = false;
 	
+	public static boolean isResultCaching() {
+		return resultCaching;
+	}
+
+	public static void setResultCaching(boolean resultCaching) {
+		QPar.resultCaching = resultCaching;
+	}
+
 	public static boolean isMailInfoComplete() {
 		return mailServer != null && mailUser != null && mailPass != null;
 	}
@@ -37,7 +46,8 @@ public class QPar {
 		QPar.mailServer 					= properties.getProperty("mailServer");
 		QPar.setExceptionNotifierAddress(properties.getProperty("exceptionNotifierAddress"));
 		QPar.enableExceptionNotifications 	= Boolean.parseBoolean(properties.getProperty("enableExceptionNotifications"));
-		QPar.benchmarkMode 					= Boolean.parseBoolean(properties.getProperty("benchmarkMode"));
+		QPar.setBenchmarkMode(Boolean.parseBoolean(properties.getProperty("benchmarkMode")));
+		QPar.setResultCaching(Boolean.parseBoolean(properties.getProperty("resultCaching")));
 	}
 	
 	public static void sendExceptionMail(Throwable t) {
@@ -84,6 +94,14 @@ public class QPar {
 
 	public static String getExceptionNotifierAddress() {
 		return exceptionNotifierAddress;
+	}
+
+	public static void setBenchmarkMode(boolean benchmarkMode) {
+		QPar.benchmarkMode = benchmarkMode;
+	}
+
+	public static boolean isBenchmarkMode() {
+		return benchmarkMode;
 	}
 	
 }

@@ -84,4 +84,9 @@ public class ReducedInterpretation {
 			throw new IllegalStateException("Not truth values found");
 		}
 	}
+	
+	public byte[] getTreeHash() {
+		return TreeHash.treeHash(this.root);
+	}
+	
 }

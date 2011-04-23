@@ -10,6 +10,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -48,7 +49,9 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	
 	public static AbstractTableModel slaveTableModel;
 	
+	public static ConcurrentHashMap<String, Boolean> resultCache = new ConcurrentHashMap<String, Boolean>();
 	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
+	private int cacheHits = 0, cacheMisses = 0;
 	
 	public Master() throws FileNotFoundException, RemoteException, NotBoundException {		
 		
@@ -122,6 +125,22 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 			QPar.sendExceptionMail(t);
 			throw t;
 		}
+	}
+
+	@Override
+	public Boolean getCachedResult(byte[] hash) throws RemoteException {
+		Boolean result = Master.resultCache.get(new String(hash));
+		if(result == null)
+			cacheMisses++;
+		else
+			cacheHits++;
+		logger.info("ResultCache Hits: " + cacheHits + ", Misses: " + cacheMisses);
+		return result;
+	}
+
+	@Override
+	public void cacheResult(byte[] hash, boolean result) throws RemoteException {
+		Master.resultCache.put(new String(hash), Boolean.valueOf(result));
 	}
 	
 }

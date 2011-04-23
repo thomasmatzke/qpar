@@ -25,7 +25,7 @@ public class DTNode {
 		this.type = type;
 	}
 	
-	public String dump() {
+	synchronized public String dump() {
 		
 		String indent = "";
 		for(int i = 0; i < this.depth; i++)
@@ -46,7 +46,7 @@ public class DTNode {
 		return type.toString() + " " + variablesAssignedTrue + ", " + variablesAssignedFalse;
 	}
 	
-	public int getDepth() {
+	synchronized public int getDepth() {
 		if(depth >= 0)
 			return depth;
 		if(parent == null) {

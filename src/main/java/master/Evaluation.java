@@ -416,7 +416,6 @@ public class Evaluation implements Observer {
 	 */
 	@Override
 	synchronized public void update(Observable arg0, Object arg1) {
-		Job j = (Job) arg0;
 		notifyAll();
 		int running = 0;
 		int error = 0;

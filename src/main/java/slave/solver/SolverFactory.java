@@ -23,7 +23,7 @@ public class SolverFactory {
 	 * 
 	 * @return
 	 */
-	public static ArrayList<String> getavailableSolvers() {
+	synchronized public static ArrayList<String> getavailableSolvers() {
 		if (solvers == null) {
 			solvers = new ArrayList<String>();
 			solvers.add("qpro");

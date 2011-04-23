@@ -32,6 +32,7 @@ public class SimpleNode implements Node, Serializable {
 
 	public int id;				
 	public int var = -1;			// -1 = not a var node
+		
 	public enum NodeType {
 		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
 	}
@@ -772,7 +773,7 @@ public class SimpleNode implements Node, Serializable {
 		ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
 		return (SimpleNode) in.readObject();
 	}
-		
+	
 	public boolean isStartNode() {
 		return (this.getNodeType().equals(NodeType.START) ? true : false); 
 	}

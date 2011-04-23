@@ -153,6 +153,7 @@ public class Shell implements Runnable, Observer{
 			BufferedWriter out = new BufferedWriter(new FileWriter(new File(directory).getAbsolutePath() + File.separator + "evaluation.txt"));
 			out.write(report);
 			out.flush();
+			out.close();
 		} catch (IOException e) {
 			logger.error("While writing report: ", e);
 		}
@@ -295,6 +296,7 @@ public class Shell implements Runnable, Observer{
 				while((line = in.readLine()) != null) {
 					parseLine(line);
 				}
+				in.close();
 			} catch (FileNotFoundException e) {
 				logger.error("Cant find formula file: ", e);
 			} catch (IOException e) {
@@ -303,8 +305,7 @@ public class Shell implements Runnable, Observer{
 		} else {
 			puts("Syntax: SOURCE path");
 		}	
-		
-		
+				
 	}
 
 	private void help() {

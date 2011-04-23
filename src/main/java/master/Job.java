@@ -52,7 +52,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	
 	private Qbf formula;
 	public DTNode decisionRoot = null;
-	public byte[] serializedFormula;
+	volatile public byte[] serializedFormula;
 	public List<TQbf> subformulas;
 
 	private TQbf completingTqbf = null;
@@ -95,7 +95,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			out.writeObject(formula.root);
 			out.close();
 			this.serializedFormula = bos.toByteArray();
-			
+			bos.close();
 			subformulas = splitQbf();
 		} catch (IOException e1) {
 			logger.error("Couldnt split formula", e1);
@@ -105,10 +105,11 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 		for (TQbf tqbf : subformulas) {
 			tqbf.addObserver(this);
-//			tqbf.setSolverId(this.solverId);
-//			tqbf.setJobId(this.id);
-//			tqbf.setTimeout(this.timeout);
 		}
+		
+		// Dont need the tree anymore
+		this.formula = null;
+		
 		this.setSetupTime(new Date().getTime() - this.getSetupTime());
 	}
 
@@ -142,7 +143,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			
 	synchronized public void complete(boolean result) {
 		this.setResult(result);
-
+		this.setState(State.COMPLETE);
+		
 		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
 		this.abortComputations();
 
@@ -154,6 +156,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 				BufferedWriter out = new BufferedWriter(new FileWriter(this.getOutputFileString()));
 				out.write(resultText());
 				out.flush();
+				out.close();
 			} catch (IOException e) {
 				logger.error(e);
 			}
@@ -161,8 +164,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		
 		if (Job.getTableModel() != null)
 			Job.getTableModel().fireTableDataChanged();
-		
-		this.setState(State.COMPLETE);
+			
 		this.freeResources();
 	}
 	
@@ -305,7 +307,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	public long totalMillis() {
 		if(!this.isTimeout() && !this.isComplete())
 			throw new IllegalStateException();
-		
+				
 		long total = 0;
 		total += this.getSetupTime();
 		if(this.isTimeout())
@@ -338,7 +340,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		 * any results are available.
 		 */
 		boolean solved = false;
-		if (QPar.benchmarkMode) {
+		if (QPar.isBenchmarkMode()) {
 			/*
 			 * If all remaining tqbfs are already computing longer than those
 			 * which are finished, then we can merge the finished ones (in order
@@ -361,6 +363,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 
 		} else {
 			solved = mergeQbf(terminatedTqbf.getId(), terminatedTqbf.getResult());
+			this.completingTqbf = terminatedTqbf;
 		}
 
 		logger.info("Result of tqbf(" + terminatedTqbf.getId() + ") merged into Qbf of Job " + this.id + " (" + terminatedTqbf.getResult() + ")");
@@ -387,7 +390,6 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	private boolean mergeFinishedTqbfsInOrder() {
-		boolean solved = false;
 		ArrayList<TQbf> finished = new ArrayList<TQbf>();
 		for (TQbf tqbf : this.subformulas) {
 			if(tqbf.isTerminated())
@@ -413,7 +415,7 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			}
 		}
 
-		return solved;
+		return false;
 	}
 
 	

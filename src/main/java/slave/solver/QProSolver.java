@@ -37,48 +37,27 @@ public class QProSolver extends Solver {
 	private Date qproProcessStartedAt = null;
 	private Date qproProcessStoppedAt = null;
 	
-	private Date overheadStartedAt = null;
-	private Date overheadStoppedAt = null;
+	
 
 	private ExecuteWatchdog watchdog = null;
 
 	private volatile Object killMutex = new Object();
 	
 	String input = null;
+
+	
 	
 	public QProSolver(TQbfRemote tqbf) {
 		super(tqbf);
 	}
 
 	public void run() {
-		this.overheadStartedAt = new Date();
-		
-		InterpretationData id = null;
-		try {
-			id = tqbf.getWorkUnit();
-		} catch (RemoteException e2) {
-			logger.error("", e2);
-		}
-		
-		if(id.getRootNode() == null) {
-			this.error();
+		if(!this.run)
 			return;
-		}
 		
-		ReducedInterpretation ri;
-		try {			
-			ri = new ReducedInterpretation(id);
-		} catch (Exception e) {
-			logger.error("Tqbf " + this.tqbfId, e);
-			this.error();
-			return;
-		}
-			
-		this.overheadStoppedAt = new Date();
-		
-		if(ri.isTruthValue()) {
+		if(reducedInterpretation.isTruthValue()) {
 			logger.info("Formula " + this.tqbfId + " collapsed");
-			this.terminate(ri.getTruthValue(), 0, this.overheadMillis());
+			this.terminate(reducedInterpretation.getTruthValue(), 0, this.overheadMillis());
 			return;
 		}
 
@@ -93,7 +72,7 @@ public class QProSolver extends Solver {
 		CommandLine command = new CommandLine("qpro");
 		DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
 //ri.getInterpretation().dump(this.tqbfId);
-		QproRepresentation qproInput = new QproRepresentation(ri); 
+		QproRepresentation qproInput = new QproRepresentation(reducedInterpretation); 
 		this.input = qproInput.getQproRepresentation();
 //logger.info("qpro input for tqbf(" + this.tqbfId +")" + this.input);
 		ByteArrayInputStream input;
@@ -165,7 +144,7 @@ public class QProSolver extends Solver {
 			return;
 		}
 
-		logger.info("qpro return string: " + readString);
+//		logger.info("qpro return string: " + readString);
 				
 		if(this.isTimedOut()) {
 			// we timeouted

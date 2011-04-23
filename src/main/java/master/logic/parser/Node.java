@@ -10,41 +10,24 @@ import java.util.Set;
 import java.util.Vector;
 
 public interface Node {
-//	public String 	op = "";
-//	//public String	truthValue = "";
-//	public int		var = -1;	
-//	public int		id = 0;
-//	public boolean	reducable = false;
-//	public NodeType nodeType = null;
 
-//	public enum NodeType {
-//		START, VAR, FORALL, EXISTS, AND, OR, NOT, TRUE, FALSE
-//	}
-	
 	// custom(ized) methods
 	public double getTruthProbability();
-//	public ArrayList<SimpleNode>		assignTruthValue(int v, boolean b);
 	public boolean	checkConnectionToRoot();
 	public void		deleteChildren();
 	public void		dump(String prefix);
-	// public boolean	findNodes(Vector<Integer> v); // was replaced by findVar(int v)
 	public int		getId();
-//	public String	getOp();
-//	public String	getTruthValue();
 	public int		getVar();
 	public int		getNodeVariable();
-//	public boolean	reduce();
 	public boolean	replaceChild(Node oldNode, Node newNode);
-//	public void		setOp(String o);
 	public void		setTruthValue(boolean t);
 	public void		setVar(int v);
 	public void		setNodeType(main.java.master.logic.parser.SimpleNode.NodeType n);
 	public main.java.master.logic.parser.SimpleNode.NodeType getNodeType();
-//	public String	traverse();
-//	public boolean	findVar(int v);
-//	public String getEnclosedFormula(NodeType op);
 	public Set<Integer> getPositiveLiterals(SimpleNode.NodeType op, Set<Integer> v);
 	public Set<Integer> getNegativeLiterals(SimpleNode.NodeType op, Set<Integer> v);
+	
+	
   /** This method is called after the node has been made the current
     node, it indicates that child nodes can now be added to it. */
   public void jjtOpen();

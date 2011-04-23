@@ -20,11 +20,10 @@ public class InterpretationData implements Serializable {
 	static Logger logger = Logger.getLogger(InterpretationData.class);
 	
 	private byte[] serializedFormula;
-//	private SimpleNode formulaRoot;
-//	private Vector<Integer> eVars = new Vector<Integer>();
-//	private Vector<Integer> aVars = new Vector<Integer>();
 	private ArrayList<Integer> trueVars = new ArrayList<Integer>();
 	private ArrayList<Integer> falseVars = new ArrayList<Integer>();
+	
+	private SimpleNode formulaRoot = null;
 	
 	public InterpretationData(byte[] serializedFormula, ArrayList<Integer> trueVars, ArrayList<Integer> falseVars) {
 		this.setSerializedFormula(serializedFormula);
@@ -33,23 +32,24 @@ public class InterpretationData implements Serializable {
 	}
 
 	public SimpleNode getRootNode() {
-		SimpleNode formulaRoot;
+		if(this.formulaRoot != null)
+			return this.formulaRoot;
+			
 		if(this.serializedFormula == null) {
 			return null;
 		} else {
-			// This means the root was nullified by transient while serialization
-			// deserialize and write to root-variable
 			try {
 				ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(this.serializedFormula));
-				formulaRoot = (SimpleNode) in.readObject();
+				this.formulaRoot = (SimpleNode) in.readObject();
 				in.close();
-				return formulaRoot;
 			} catch (Exception e) {
 				// this sucks...
 				logger.error("Problem while deserializing formula", e);
 				return null;
 			}
 		}
+		this.serializedFormula = null;
+		return this.formulaRoot;
 	}
 	
 	private void setSerializedFormula(byte[] serializedFormula) {
