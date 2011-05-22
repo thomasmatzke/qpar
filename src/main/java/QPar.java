@@ -4,23 +4,27 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 import main.java.master.Mailer;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 public class QPar {
 	static Logger logger = Logger.getLogger(QPar.class);
 	
-	public static boolean enableExceptionNotifications = false;
+	private static boolean enableExceptionNotifications = false;
 	private static String exceptionNotifierAddress = null;
-	public static String mailServer = null;
-	public static String mailUser = null;
-	public static String mailPass = null;
+	private static String mailServer = null;
+	private static String mailUser = null;
+	private static String mailPass = null;
 	private static boolean benchmarkMode = false;
 	private static boolean resultCaching = false;
+	private static boolean mailEvaluationResults = false;
+	private static HashMap<String, String> plugins = new HashMap<String, String>();
 	
 	public static boolean isResultCaching() {
 		return resultCaching;
@@ -47,7 +51,20 @@ public class QPar {
 		QPar.setExceptionNotifierAddress(properties.getProperty("exceptionNotifierAddress"));
 		QPar.enableExceptionNotifications 	= Boolean.parseBoolean(properties.getProperty("enableExceptionNotifications"));
 		QPar.setBenchmarkMode(Boolean.parseBoolean(properties.getProperty("benchmarkMode")));
+		QPar.setMailEvaluationResults(Boolean.parseBoolean(properties.getProperty("mailEvaluationResults")));
 		QPar.setResultCaching(Boolean.parseBoolean(properties.getProperty("resultCaching")));
+		for(Entry<Object, Object> e : properties.entrySet()) {
+			String key = (String)e.getKey();
+			String value = (String)e.getValue();
+			if(key.startsWith("plugin.")) {
+				String name = key.replaceAll("plugin\\.", "");
+				getPlugins().put(name, value);
+			}
+		}
+	}
+	
+	public static Set<String> getAvailableSolvers() {
+		return getPlugins().keySet();
 	}
 	
 	public static void sendExceptionMail(Throwable t) {
@@ -102,6 +119,22 @@ public class QPar {
 
 	public static boolean isBenchmarkMode() {
 		return benchmarkMode;
+	}
+
+	public static void setPlugins(HashMap<String, String> plugins) {
+		QPar.plugins = plugins;
+	}
+
+	public static HashMap<String, String> getPlugins() {
+		return plugins;
+	}
+
+	public static void setMailEvaluationResults(boolean mailEvaluationResults) {
+		QPar.mailEvaluationResults = mailEvaluationResults;
+	}
+
+	public static boolean isMailEvaluationResults() {
+		return mailEvaluationResults;
 	}
 	
 }

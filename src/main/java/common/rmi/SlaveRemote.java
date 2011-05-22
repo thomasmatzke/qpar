@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public interface SlaveRemote extends Remote {
 		
-	public void computeFormula(TQbfRemote tqbf) throws RemoteException;
+//	public void computeFormula(TQbfRemote tqbf) throws RemoteException;
 	
 	public void shutdown() throws RemoteException;
 	

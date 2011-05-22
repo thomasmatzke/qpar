@@ -2,7 +2,6 @@ package main.java.slave.tree;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import main.java.master.logic.parser.Node;
 import main.java.master.logic.parser.SimpleNode;

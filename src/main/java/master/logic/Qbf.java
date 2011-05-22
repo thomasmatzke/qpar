@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Vector;
 
-import main.java.QPar;
 import main.java.master.logic.heuristic.DependencyNode;
 import main.java.master.logic.heuristic.Heuristic;
 import main.java.master.logic.parser.ParseException;
@@ -13,7 +12,6 @@ import main.java.master.logic.parser.Qbf_parser;
 import main.java.master.logic.parser.SimpleNode;
 import main.java.master.logic.parser.TokenMgrError;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**

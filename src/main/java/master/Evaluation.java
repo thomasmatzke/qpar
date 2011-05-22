@@ -57,29 +57,7 @@ public class Evaluation implements Observer {
 
 		results = new Job[files.size()][this
 				.getNeededRuns(coresStart, coresEnd).size()][heuristics.size()];
-
-//		setupJobs();
 	}
-
-//	private void setupJobs() {
-//		for (int f = 0; f < files.size(); f++) {
-//			for (int c = 0; c < getNeededRuns(coresStart, coresEnd).size(); c++) {
-//				for (int h = 0; h < heuristics.size(); h++) {
-//					Job j;
-//					try {
-//						j = new Job(files.get(f).getAbsolutePath(), null,
-//								solver, heuristics.get(h), timeout,
-//								getNeededRuns(coresStart, coresEnd).get(c));
-//						results[f][c][h] = j;
-//						jobsTodo.add(j);
-//						j.addObserver(this);
-//					} catch (RemoteException e) {
-//						logger.error("", e);
-//					}
-//				}
-//			}
-//		}
-//	}
 
 	public void evaluate() {
 		this.startedAt = new Date();
@@ -103,10 +81,8 @@ public class Evaluation implements Observer {
 		}
 		synchronized (this) {
 			while (!allJobsTerminated()) {
-				try {
-					wait();
-				} catch (InterruptedException e) {
-				}
+				logger.info("Checking termination");
+				try { wait(); } catch (InterruptedException e) {}
 			}
 		}
 

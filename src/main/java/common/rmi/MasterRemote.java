@@ -10,4 +10,5 @@ public interface MasterRemote extends Remote {
 	public void displaySlaveMessage(String slave, String message) throws RemoteException;
 	public Boolean getCachedResult(byte[] hash) throws RemoteException;
 	public void cacheResult(byte[] hash, boolean result) throws RemoteException;
+	public TQbfRemote getWork() throws RemoteException;
 }

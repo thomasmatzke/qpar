@@ -1,21 +1,11 @@
 package main.java.master;
 
-import java.io.Serializable;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import main.java.common.rmi.RemoteObserver;
-import main.java.common.rmi.SlaveRemote;
-import main.java.master.TQbf.State;
-
 import org.apache.log4j.Logger;
 
-public class Distributor implements Runnable, RemoteObserver, Serializable, Observer  {
+public class Distributor {
 
 	private static final long serialVersionUID = -6606810196441096609L;
 
@@ -24,22 +14,10 @@ public class Distributor implements Runnable, RemoteObserver, Serializable, Obse
 	private volatile static Distributor instance;
 	
 	private BlockingQueue<TQbf> queue = new LinkedBlockingQueue<TQbf>(1000);
-	
-	private boolean run = true;
-	
-	private Distributor() throws RemoteException {} 
-	
+		
 	synchronized public static Distributor instance() {
-		if(instance == null) {
-			try {
-				instance = new Distributor();
-				UnicastRemoteObject.exportObject(instance, 0);
-			} catch (RemoteException e) {
-				logger.error("", e);
-			}
-			
-			Master.globalThreadPool.execute(instance);
-		}
+		if(instance == null)
+			instance = new Distributor();
 		
 		return instance;
 	}
@@ -50,53 +28,15 @@ public class Distributor implements Runnable, RemoteObserver, Serializable, Obse
 			logger.info("Added tqbf " + tqbf.getId() + " to distribution queue.");
 		}
 	}
-	
-	@Override
-	public void run() {
-		while(run) {
-			TQbf tqbf;
-			try {
-				tqbf = queue.take();
-			} catch (InterruptedException e) {continue;}
-			
-			if(tqbf.isDontstart())
-				continue;
-	
-			SlaveRemote s = SlaveRegistry.instance().acquireFreeSlave(tqbf);
-			
-			try {
-				tqbf.addObserver((RemoteObserver)this);
-			} catch (RemoteException e1) {logger.error("", e1);}
-			tqbf.compute(s);
 
-			// We have to wait til the formula is started to get accurate measurement
-			// of free cores
-			synchronized(this) {
-				while(tqbf.isNew()) {
-					try { wait(); } catch (InterruptedException e) {}
-				}
-			}
-			assert(!tqbf.isNew());
+	public TQbf getWork() {
+//		logger.info("Taking workunit. queue size: " + this.queue.size());
+		TQbf ret = null;
+		while(ret == null) {
+			try { ret = queue.take(); } catch (InterruptedException e) {}
 		}
+//		logger.info("took workunit");
+		return ret;
 	}
-	
-	public void stop() {
-		this.run = false;
-	}
-
-	@Override
-	public void update(Object o, Object arg) throws RemoteException {
-		synchronized(this) {
-			notifyAll();
-		}
-	}
-
-	@Override
-	public void update(Observable o, Object arg) {
-		synchronized(this) {
-			notifyAll();
-		}
-	}
-
 
 }

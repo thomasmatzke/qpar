@@ -20,11 +20,10 @@ import main.java.ArgumentParser;
 import main.java.QPar;
 import main.java.common.rmi.MasterRemote;
 import main.java.common.rmi.SlaveRemote;
+import main.java.common.rmi.TQbfRemote;
 import main.java.master.console.Shell;
 import main.java.master.gui.ProgramWindow;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 
@@ -141,6 +140,12 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	@Override
 	public void cacheResult(byte[] hash, boolean result) throws RemoteException {
 		Master.resultCache.put(new String(hash), Boolean.valueOf(result));
+	}
+
+	@Override
+	public TQbfRemote getWork() throws RemoteException {
+		logger.info("Returning work unit");
+		return Distributor.instance().getWork();
 	}
 	
 }

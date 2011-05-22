@@ -7,7 +7,6 @@ package main.java.master.logic.parser;
    between nodes. */
 
 import java.util.Set;
-import java.util.Vector;
 
 public interface Node {
 

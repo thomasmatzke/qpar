@@ -84,8 +84,7 @@ public class DependencyNode {
 						 (this.type == children.get(1).type) && children.get(1).homogenousSubtree());
 			default:
 				logger.fatal("A DependencyNode must not have more than 3 childnodes.");
-				System.exit(-1);
-				return false;
+				throw new RuntimeException();
 		}
 				
 	}
@@ -113,8 +112,7 @@ public class DependencyNode {
 				// Cant be. homogenousSubtree would have returned already
 				assert(false);
 				logger.fatal("Algorithm fail... Contact Author.");
-				System.exit(-1);
-				return null;
+				throw new RuntimeException();
 			case 1:
 				CondensedDependencyNode n = new CondensedDependencyNode(this.type);
 				DependencyNode current = this;
@@ -139,8 +137,7 @@ public class DependencyNode {
 			default:
 				assert(false);
 				logger.fatal("A DependencyNode must not have more than 3 childnodes.");
-				System.exit(-1);
-				return null;
+				throw new RuntimeException();
 		}
 		
 			
@@ -169,8 +166,7 @@ public class DependencyNode {
 			default:
 				assert(false);
 				logger.fatal("A DependencyNode must not have more than 3 childnodes.");
-				System.exit(-1);
-				return null;
+				throw new RuntimeException();
 		}
 	}
 	

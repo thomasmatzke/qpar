@@ -16,14 +16,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import main.java.QPar;
-import main.java.common.rmi.RemoteObservable;
-import main.java.common.rmi.RemoteObserver;
-import main.java.common.rmi.WrappedObserver;
 import main.java.master.logic.DTNode;
 import main.java.master.logic.Qbf;
 import main.java.master.logic.heuristic.Heuristic;
@@ -31,7 +29,7 @@ import main.java.master.logic.heuristic.HeuristicFactory;
 
 import org.apache.log4j.Logger;
 
-public class Job extends Observable implements RemoteObserver, RemoteObservable {
+public class Job extends Observable implements Observer {
 	private static final long serialVersionUID = 9045629901672956321L;
 
 	public enum State {
@@ -136,16 +134,17 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 			
 	synchronized public void error() {
+		logger.error("Tqbf computation returned with error");
 		this.abortComputations();
 		this.setState(State.ERROR);
 		this.freeResources();
 	}
 			
 	synchronized public void complete(boolean result) {
+		logger.info("Job complete. Resolved to: " + result);
 		this.setResult(result);
 		this.setState(State.COMPLETE);
-		
-		logger.info("Job complete. Resolved to: " + result + ". Aborting computations.");
+				
 		this.abortComputations();
 
 		// Write the results to a file
@@ -305,8 +304,10 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 	}
 
 	public long totalMillis() {
-		if(!this.isTimeout() && !this.isComplete())
+		if(!this.isTimeout() && !this.isComplete()) {
+			logger.error("State was expected TIMEOUT or COMPLETE. But was: " + this.getStatus());
 			throw new IllegalStateException();
+		}			
 				
 		long total = 0;
 		total += this.getSetupTime();
@@ -418,8 +419,6 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 		return false;
 	}
 
-	
-
 	private void abortComputations() {
 		for (TQbf tqbf : this.subformulas) {
 			tqbf.abort();
@@ -519,6 +518,8 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			}				
 		}
 
+		if(terminatedCount == 0)
+			return 0;
 		double mean = (double) added / (double) terminatedCount;
 		return mean;
 	}
@@ -548,21 +549,17 @@ public class Job extends Observable implements RemoteObserver, RemoteObservable 
 			}				
 		}
 
+		if(terminated == 0)
+			return 0;
 		double mean = (double) added / (double) terminated;
 		return mean;
 	}
-
-	@Override
-	public void addObserver(RemoteObserver o) throws RemoteException {
-		WrappedObserver mo = new WrappedObserver(o);
-		addObserver(mo);
-	}
-
+	
 	/**
 	 * Observes its tqbfs
 	 */
 	@Override
-	public void update(Object o, Object o1) throws RemoteException {
+	synchronized public void update(Observable o, Object o1) {
 		if (o instanceof TQbf) {
 			TQbf tqbf = (TQbf) o;
 			switch (tqbf.getState()) {

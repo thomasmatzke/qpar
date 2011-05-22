@@ -126,7 +126,7 @@ public class Shell implements Runnable, Observer{
 		String	solver					= null;
 		int 	cores_min				= 1;
 		int 	cores_max				= 1;
-		long 	timeout					= 60000;
+		long 	timeout					= 60;
 		
 		try {
 			directory 			= token.nextToken();
@@ -158,7 +158,7 @@ public class Shell implements Runnable, Observer{
 			logger.error("While writing report: ", e);
 		}
 		
-		if(Mailer.email != null && Mailer.server != null && Mailer.user != null && Mailer.pass != null)
+		if(QPar.isMailEvaluationResults())
 			Mailer.send_mail(Mailer.email, Mailer.server, Mailer.user, Mailer.pass, "ParLogEval Report", report);
 	}
 
@@ -395,7 +395,7 @@ public class Shell implements Runnable, Observer{
 			new Job(input_path, output_path, solverid, heuristic, timeout, maxCores);
 			
 		} catch(NoSuchElementException e) {
-			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic max_cores");
+			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic max_cores timeout");
 		} catch (RemoteException e) {
 			logger.error("", e);
 		}

@@ -9,16 +9,13 @@ import java.util.Map;
 import java.util.Observable;
 
 import main.java.common.rmi.InterpretationData;
-import main.java.common.rmi.RemoteObservable;
-import main.java.common.rmi.RemoteObserver;
 import main.java.common.rmi.SlaveRemote;
+import main.java.common.rmi.SolverRemote;
 import main.java.common.rmi.TQbfRemote;
-import main.java.common.rmi.WrappedObserver;
-import main.java.slave.Slave;
 
 import org.apache.log4j.Logger;
 
-public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
+public class TQbf extends Observable implements TQbfRemote {
 	public enum State { ABORTED, COMPUTING, DONTSTART, ERROR, MERGED, NEW, TERMINATED, TIMEOUT }
 	static Logger logger = Logger.getLogger(TQbf.class);
 		
@@ -41,7 +38,7 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 	private long overheadMillis, solverMillis;
 	
 	private boolean result;
-		
+	
 	public boolean isResult() {
 		return result;
 	}
@@ -93,36 +90,28 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 				} catch (RemoteException e) {
 					logger.error("", e);
 				}
-				this.setState(State.ABORTED);
 				break;
 			case ABORTED:
 			case TERMINATED:
 			case TIMEOUT:
 			case MERGED:
-				break;
+			case ERROR:
 			case DONTSTART:
+				break;			
 			default:
+				logger.error("Unexpected TQbf state: " + this.getState());
 				assert(false);
 		}				
 	}
-	
-	@Override
-	public void addObserver(RemoteObserver o) throws RemoteException {
-		WrappedObserver mo = new WrappedObserver(o);
-        addObserver(mo);
-	}
-	
-	synchronized public void compute(SlaveRemote slave) {
-		logger.info("Computing formula " + this.getId() + "...");
-		this.setSlave(slave);
-		Master.globalThreadPool.execute(new ComputeSendThread(this.slave, this));
-		this.setState(TQbf.State.COMPUTING);		
-	}
-	
+
 	public long getComputationTime() {
 		if(this.isComputing()) {
 			return new Date().getTime() - history.get(State.COMPUTING).getTime();
 		} else if(this.isTerminated() || this.isMerged()) {
+			if(history.get(State.TERMINATED) == null)
+				logger.info("terminated null. state: " + this.getState());
+			if(history.get(State.COMPUTING) == null)
+				logger.info("COMPUTING null state: " + this.getState());
 			return history.get(State.TERMINATED).getTime() - history.get(State.COMPUTING).getTime();
 		} else {
 			throw new IllegalStateException("TQbf was not computing or terminated/merged");
@@ -227,7 +216,7 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 		this.solverId = solverId;
 	}
 	
-	synchronized private void setState(State state) {
+	synchronized public void setState(State state) {
 		if(this.isAborted() || this.isMerged() || this.isError() || this.isTimeout()) {
 			logger.error("Wanted to set state from " + this.getState() + " to " + state);
 			throw new IllegalStateException();
@@ -237,7 +226,15 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 		this.state = state;
 		history.put(state, new Date());
 		setChanged();
-        notifyObservers();
+        
+		Master.globalThreadPool.execute(
+		new Runnable() {
+			@Override
+			public void run() {
+				notifyObservers();
+			}
+		});	
+        
         notifyAll();
 	}
 
@@ -254,6 +251,7 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 		
 	@Override
 	synchronized public void error() {
+		logger.info("received error in state: " + this.getState());
 		if(!this.isComputing())
 			return;
 		this.setState(State.ERROR);
@@ -265,26 +263,6 @@ public class TQbf extends Observable implements TQbfRemote, RemoteObservable{
 			return;
 		this.setResult(isSolvable);
 		this.setState(State.TERMINATED);
-	}
-	
-	private class ComputeSendThread implements Runnable {
-		SlaveRemote slave;
-		TQbf tqbf;
-		public ComputeSendThread(SlaveRemote slave, TQbf tqbf) {
-			this.slave = slave;
-			this.tqbf = tqbf;
-		}
-		
-		@Override
-		public void run() {
-			try {
-				slave.computeFormula(tqbf);
-			} catch (RemoteException e) {
-				logger.error("", e);
-				tqbf.setState(State.ERROR);
-				return;
-			}
-		}
 	}
 
 }

@@ -1,14 +1,9 @@
 package main.java.master;
 
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import main.java.common.rmi.SlaveRemote;

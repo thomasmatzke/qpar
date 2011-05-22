@@ -6,7 +6,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JButton;
@@ -21,12 +20,13 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
+import main.java.QPar;
 import main.java.common.rmi.SlaveRemote;
 import main.java.master.Job;
 import main.java.master.Master;
 import main.java.master.SlaveRegistry;
 import main.java.master.logic.heuristic.HeuristicFactory;
-import main.java.slave.solver.SolverFactory;
+import main.java.slave.solver.SolverPluginFactory;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -251,8 +251,8 @@ public class ProgramWindow extends JFrame {
 			newJobButton.setText("New Job");
 			newJobButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					ArrayList<String> solvers;					
-					solvers = SolverFactory.getavailableSolvers();
+					Set<String> solvers;					
+					solvers = QPar.getAvailableSolvers();
 					if(solvers.size() < 1) {
 						JOptionPane.showMessageDialog(null, "There are currently no slaves registered. " +
 								"Slaves have to register their solver-options with the Master to create a new job.");

@@ -3,7 +3,6 @@ package main.java.slave.tree;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Vector;
 
 import main.java.master.logic.parser.Node;
 import main.java.master.logic.parser.SimpleNode;

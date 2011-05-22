@@ -1,11 +1,9 @@
 package main.java.slave.tree;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import main.java.master.logic.parser.Node;
 import main.java.master.logic.parser.SimpleNode;
-import main.java.master.logic.parser.SimpleNode.NodeType;
 
 import org.apache.log4j.Logger;
 

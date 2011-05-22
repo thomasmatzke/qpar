@@ -1,13 +1,20 @@
 package main.java.slave.solver;
 
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import main.java.QPar;
 import main.java.common.rmi.InterpretationData;
 import main.java.common.rmi.TQbfRemote;
+import main.java.master.TQbf;
 import main.java.slave.Slave;
 import main.java.slave.tree.ReducedInterpretation;
 
@@ -20,100 +27,185 @@ import org.apache.log4j.Logger;
  * @author thomasm
  * 
  */
-public abstract class Solver implements Runnable {
-	static Logger logger = Logger.getLogger(QProSolver.class);
+public class Solver implements Runnable {
+	static Logger logger = Logger.getLogger(Solver.class);
 	
+	public static ExecutorService solverThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	private static ExecutorService pluginThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 	public static ConcurrentHashMap<String, Solver> solvers = new ConcurrentHashMap<String, Solver>();
 		
 	protected TQbfRemote tqbf;
-	protected String tqbfId = null;
-	protected String jobId = null;
+	protected String tqbfId = null, jobId = null, solverId = null;
 	protected long timeout;
-	protected Date overheadStartedAt = null;
+	public Date overheadStartedAt = null;
 	protected Date overheadStoppedAt = null;
 	protected InterpretationData interpretationData;
 	protected ReducedInterpretation reducedInterpretation;
+	final SolverPlugin plugin;
+	volatile protected boolean killSignalReceived = false, pluginStarted = false, timedOut = false;
+
+	private Date pluginStoppedAt, pluginStartedAt;
 	
-	volatile protected boolean killed = false;
-	protected boolean run = true;
+	Lock killLock = new ReentrantLock();
+	
+	public Solver(TQbfRemote tqbf) throws RemoteException, UnknownHostException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+		this.tqbf = tqbf;
+		this.tqbfId = tqbf.getId();
+		this.jobId = tqbf.getJobId();
+		this.timeout = tqbf.getTimeout();
+		this.solverId = tqbf.getSolverId();
+		tqbf.setSlave(Slave.instance());
+		this.plugin = SolverPluginFactory.getSolver(this.solverId);
+	}
+
+	public void run() {
 		
-	public Solver(TQbfRemote tqbf) {
+		synchronized(tqbf) {
+			try {
+				if(!tqbf.isNew())
+					return;	
+				Solver.solvers.put(tqbfId, this);
+				tqbf.setState(TQbf.State.COMPUTING);
+			} catch (RemoteException e) {logger.error("", e);}	
+		}
+		
 		try {
-			this.tqbf = tqbf;
-			this.tqbfId = tqbf.getId();
-			this.jobId = tqbf.getJobId();
-			this.timeout = tqbf.getTimeout();
-			Solver.solvers.put(tqbfId,this);
-			
-			this.overheadStartedAt = new Date();
-			
-			interpretationData = tqbf.getWorkUnit();
-			
-			if(interpretationData.getRootNode() == null) {
-				// means the job already cleaned up when we requested the data
-				this.run = false;
-				this.overheadStoppedAt = new Date();
+			if(this.killSignalReceived)
 				return;
-			}
-			
+			this.overheadStartedAt = new Date();
+			interpretationData = tqbf.getWorkUnit();		
+			if(interpretationData.getRootNode() == null) {
+				// data was nulled means job is done
+				return;
+//				throw new IllegalStateException("Rootnode of InterpretationData was null.");
+			}		
 			reducedInterpretation = new ReducedInterpretation(interpretationData);
 			this.overheadStoppedAt = new Date();
 			
+			if(this.killSignalReceived)
+				return;
+			if(reducedInterpretation.isTruthValue()) {
+//				logger.info("Formula " + this.tqbfId + " collapsed");
+				this.terminate(reducedInterpretation.getTruthValue(), 0, this.overheadMillis());
+				return;
+			}
 			if(QPar.isResultCaching()) {
 				Boolean cached = Slave.getMaster().getCachedResult(reducedInterpretation.getTreeHash());
 				if(cached != null) {
-					this.run = false;
 					this.terminate(cached, 0, overheadStoppedAt.getTime() - overheadStartedAt.getTime());
+					return;
 				}
 			}
 			
+			killLock.lock();
+			if(this.killSignalReceived) {
+				// we have been killed do nothing
+			} else {
+				// we havent been killed. start the plugin and set the flag
+				this.pluginStarted = true;
+				
+				TimerTask task = new TimerTask() {
+				public void run() {
+					logger.info("Timing out");
+					timedOut = true;
+					kill();
+				}};
+				Timer t = new Timer();
+				t.schedule(task, this.timeout * 1000);
+				this.pluginStartedAt = new Date();
+				plugin.initialize(reducedInterpretation);
+				pluginThreadPool.execute(plugin);
+			}
+			killLock.unlock();
 			
+			
+			Boolean pluginResult = plugin.waitForResult();
+			this.pluginStoppedAt = new Date();
+			
+			if(timedOut)
+				this.timeout();
+			else
+				this.terminate(pluginResult, solverMillis(), overheadMillis());
+						
 		} catch (RemoteException e) {
-			logger.error("", e);
-			this.run = false;
+			logger.error(e.getMessage());
+		} catch (Exception e) {
+			if(timedOut) {
+				timeout();
+				return;
+			} else if(this.killSignalReceived) {
+			} else {
+				this.error(e);
+			}
+		} finally {
+			tearDown();
 		}
+					
 	}
 
-	public abstract void kill();
-
-	public abstract void run();
-
+	public void kill() {
+		killLock.lock();
+		try {
+			if(this.pluginStarted) {
+				plugin.kill();
+			} else {
+				this.killSignalReceived = true;
+			}
+		} finally {
+			killLock.unlock();
+		}
+	}
+	
 	protected void timeout() {
 		try {
 			this.tqbf.timeout();
+			logger.info("Returned timeout " + this.tqbfId);
 		} catch (RemoteException e) {
 			logger.error("RMI fail while sending timeout", e);
 		}
-		tearDown();
 	}
 	
-	protected void terminate(boolean isSolvable, long solverMillis, long overheadMillis) {
+	protected void terminate(Boolean isSolvable, long solverMillis, long overheadMillis) {
+		if(isSolvable == null)
+			return;
+			
 		try {
 			this.tqbf.setSolverMillis(solverMillis);
-			this.tqbf.setOverheadMillis(solverMillis);
+			this.tqbf.setOverheadMillis(overheadMillis);
 			if(QPar.isResultCaching())
 				Slave.getMaster().cacheResult(reducedInterpretation.getTreeHash(), isSolvable);
 			this.tqbf.terminate(isSolvable);
-			
+			logger.info("Returned result " + this.tqbfId + " " + isSolvable);
 		} catch (RemoteException e) {
 			logger.error("RMI fail while sending result", e);
 		}
-		tearDown();
+		
 	}
 	
-	protected void error() {
+	protected void error(Exception e) {
+		logger.error("", e);
+		logger.error("Reporting error to master");
 		try {
 			this.tqbf.error();
-		} catch (RemoteException e) {
-			logger.error("RMI fail while sending error", e);
+			logger.info("Returned error " + this.tqbfId);
+		} catch (RemoteException re) {
+			logger.error("RMI fail while sending error", re);
 		}
-		tearDown();
 	}
 	
 	protected void tearDown() {
 		logger.info("Tearing down solver of tqbf " + this.tqbfId);
 		Solver.solvers.remove(this.tqbfId);
 	}
+	
+	public long solverMillis() {
+		return this.pluginStoppedAt.getTime() - this.pluginStartedAt.getTime();
+	}
+	
+	public long overheadMillis() {
+		return this.overheadStoppedAt.getTime()	- this.overheadStartedAt.getTime();
+	}
+	
 	
 	public void finalize() {
 		Solver.solvers.remove(this.tqbfId);

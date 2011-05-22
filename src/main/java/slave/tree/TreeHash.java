@@ -2,11 +2,10 @@ package main.java.slave.tree;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-
-import org.apache.commons.lang3.ArrayUtils;
 
 import main.java.master.logic.parser.SimpleNode;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 public class TreeHash {
 

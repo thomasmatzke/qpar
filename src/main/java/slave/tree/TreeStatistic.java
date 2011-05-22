@@ -1,11 +1,9 @@
 package main.java.slave.tree;
 
-import org.apache.log4j.Logger;
-
 import main.java.master.logic.parser.Node;
 import main.java.master.logic.parser.SimpleNode;
-import main.java.master.logic.parser.SimpleNode.NodeType;
-import main.java.slave.solver.QProSolver;
+
+import org.apache.log4j.Logger;
 
 public class TreeStatistic {
 	static Logger logger = Logger.getLogger(TreeStatistic.class);

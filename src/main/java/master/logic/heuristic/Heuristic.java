@@ -5,10 +5,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import main.java.QPar;
 import main.java.master.logic.Qbf;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 public abstract class Heuristic {
@@ -32,8 +30,7 @@ public abstract class Heuristic {
 		return ordered;
 	}
 	
-	public abstract LinkedHashSet<Integer> sortGroup(Set<Integer> group);
-	
+	public abstract LinkedHashSet<Integer> sortGroup(Set<Integer> group);	
 	
 	/**
 	 * Builds an ordered vector of groups of variables which can be ordered by heuristics.
