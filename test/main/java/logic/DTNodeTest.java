@@ -2,11 +2,12 @@ package main.java.logic;
 
 import static org.junit.Assert.*;
 
-import main.java.master.logic.DTNode;
-import main.java.master.logic.DTNode.DTNodeType;
 
 import org.junit.Before;
 import org.junit.Test;
+
+import qpar.master.DTNode;
+import qpar.master.DTNode.DTNodeType;
 
 public class DTNodeTest {
 

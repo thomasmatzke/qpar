@@ -1,5 +1,3 @@
-MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblablabla123
-
 #newjob testing/counter_small/counter6_2-bin.qbf testing/counter6_2-bin.qbf.txt qpro litcount 8 60
 #startjob 1
 
@@ -7,10 +5,10 @@ MAIL_EVALUATION_REPORT thomas@matzke.at smtp.gmail.com qpar@matzke.at qparblabla
 #startjob 1
 
 # timeout test
-newjob testing/assertion_big/assertion7_0_3-bin.qbf testing/assertion7_0_3-bin.qbf.txt qpro litcount 128 5
-startjob 1
+#newjob testing/assertion_big/assertion7_0_3-bin.qbf testing/assertion7_0_3-bin.qbf.txt qpro litcount 128 5
+#startjob 1
 
-#evaluate testing/boole 1 32 qpro 60
+evaluate testing/boole 1 1 qpro 60
 #evaluate testing/semaphore_small 1 64 qpro 60
 #evaluate testing/semaphore_medium 1 64 qpro 60
 #evaluate testing/semaphore_big 1 64 qpro 60

@@ -98,27 +98,27 @@
         <antcall target="build"/>
     </target>
     <target name="master_gui">
-        <java classname="main.java.master.Master" failonerror="true" fork="yes">
+        <java classname="qpar.master.Master" failonerror="true" fork="yes">
             <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m"/>
             <arg line="-gui"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="master">
-        <java classname="main.java.master.Master" failonerror="true" fork="yes">
+        <java classname="qpar.master.Master" failonerror="true" fork="yes">
             <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m -Djava.rmi.server.useLocalHostname=true -Dcom.sun.management.jmxremote"/>
             <arg line="-i=batch.txt"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="master_console">
-        <java classname="main.java.master.Master" failonerror="true" fork="yes">
+        <java classname="qpar.master.Master" failonerror="true" fork="yes">
             <jvmarg line="-Xss5m -ea -Xms64m -Xmx1024m"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
     <target name="slave">
-        <java classname="main.java.slave.Slave" failonerror="true" fork="yes">
+        <java classname="qpar.slave.Slave" failonerror="true" fork="yes">
             <jvmarg line="-Xss5m -ea -Xms64m -Xmx1024m -Dcom.sun.management.jmxremote"/>
             <arg line=""/>
             <classpath refid="qpar.classpath"/>
