@@ -25,7 +25,7 @@ public class Qbf {
     static Logger logger = Logger.getLogger(Qbf.class);
 
 	Heuristic h = null;
-	private static int idCounter = 0;
+//	private static int idCounter = 0;
 	
 	private HashMap<Integer, Integer> literalCount = new HashMap<Integer, Integer>();	
 	public Vector<Integer> eVars = new Vector<Integer>();
@@ -93,10 +93,10 @@ public class Qbf {
 //		logger.debug("Dependencyree: \n" + dependencyGraphRoot.dump());
 	}
 
-	synchronized private static int getUniqueId() {
-		idCounter++;
-		return idCounter;
-	}
+//	synchronized private static int getUniqueId() {
+//		idCounter++;
+//		return idCounter;
+//	}
 	
 	public boolean isUniversalQuantified(Integer v) {
 		return aVars.contains(v);
