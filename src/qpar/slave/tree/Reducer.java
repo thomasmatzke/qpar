@@ -35,7 +35,7 @@ public class Reducer {
 			SimpleNode newReducable = reduceNode(current);
 			
 			if(newReducable != null)
-				reducableNodes.addLast(newReducable);
+				reducableNodes.addFirst(newReducable);
 		}
 	}
 		

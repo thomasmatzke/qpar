@@ -31,8 +31,8 @@ import qpar.slave.tree.ReducedInterpretation;
 public class Solver implements Runnable {
 	static Logger logger = Logger.getLogger(Solver.class);
 	
-	public static ExecutorService solverThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-	private static ExecutorService pluginThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+	public static ExecutorService solverThreadPool = Executors.newFixedThreadPool(Configuration.getAvailableProcessors());
+	private static ExecutorService pluginThreadPool = Executors.newFixedThreadPool(Configuration.getAvailableProcessors());
 	public static ConcurrentHashMap<String, Solver> solvers = new ConcurrentHashMap<String, Solver>();
 		
 	protected TQbfRemote tqbf;

@@ -17,6 +17,8 @@ public class HeuristicFactory {
 			heuristics.add("rand");
 			heuristics.add("litcount");
 			heuristics.add("probnet");
+			heuristics.add("shallow");
+			heuristics.add("edgecount");
 		}
 		return heuristics;
 	}
@@ -30,6 +32,10 @@ public class HeuristicFactory {
 			return new LCHeuristic(qbf);
 		if (id.equals("probnet"))
 			return new SimpleProbNetHeuristic(qbf);
+		if (id.equals("shallow"))
+			return new ShallowHeuristic(qbf);
+		if (id.equals("edgecount"))
+			return new EdgeCountHeuristic(qbf);
 		return null;
 	}
 }

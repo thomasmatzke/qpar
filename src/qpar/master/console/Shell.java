@@ -26,6 +26,7 @@ import qpar.master.Evaluation;
 import qpar.master.Job;
 import qpar.master.Mailer;
 import qpar.master.SlaveRegistry;
+import qpar.master.heuristic.HeuristicFactory;
 
 public class Shell implements Runnable, Observer{
 
@@ -136,13 +137,13 @@ public class Shell implements Runnable, Observer{
 			puts("Syntax: PARLOGEVAL directory_path_to_formulas coresMin coresMax solver timeout");
 			return;
 		}
-		List<String> heuristics = new ArrayList<String>();
-		heuristics.add("simple");
-		heuristics.add("rand");
-		heuristics.add("litcount");
-		heuristics.add("probnet");
+//		List<String> heuristics = new ArrayList<String>();
+//		heuristics.add("simple");
+//		heuristics.add("rand");
+//		heuristics.add("litcount");
+//		heuristics.add("probnet");
 		
-		Evaluation eval = new Evaluation(new File(directory), cores_min, cores_max, solver, heuristics, timeout);
+		Evaluation eval = new Evaluation(new File(directory), cores_min, cores_max, solver, HeuristicFactory.getAvailableHeuristics(), timeout);
 		eval.evaluate();
 		
 		String report = eval.getReport();

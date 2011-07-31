@@ -26,6 +26,7 @@ public class Configuration {
 	private static boolean resultCaching = false;
 	private static boolean mailEvaluationResults = false;
 	private static String evaluationAddress = null;
+	private static Integer availableProcessors = null;
 	private static HashMap<String, String> plugins = new HashMap<String, String>();
 	
 	public static boolean isResultCaching() {
@@ -51,11 +52,12 @@ public class Configuration {
 		Configuration.mailUser 						= properties.getProperty("mailUser");
 		Configuration.mailServer 					= properties.getProperty("mailServer");
 		Configuration.setExceptionNotifierAddress(properties.getProperty("exceptionNotifierAddress"));
-		Configuration.setExceptionNotifierAddress(properties.getProperty("evaluationAddress"));
+		Configuration.setEvaluationAddress(properties.getProperty("evaluationAddress"));
 		Configuration.enableExceptionNotifications 	= Boolean.parseBoolean(properties.getProperty("enableExceptionNotifications"));
 		Configuration.setBenchmarkMode(Boolean.parseBoolean(properties.getProperty("benchmarkMode")));
 		Configuration.setMailEvaluationResults(Boolean.parseBoolean(properties.getProperty("mailEvaluationResults")));
 		Configuration.setResultCaching(Boolean.parseBoolean(properties.getProperty("resultCaching")));
+		Configuration.setAvailableProcessors(Integer.parseInt(properties.getProperty("availableProcessors")));
 		for(Entry<Object, Object> e : properties.entrySet()) {
 			String key = (String)e.getKey();
 			String value = (String)e.getValue();
@@ -146,6 +148,14 @@ public class Configuration {
 
 	public static String getEvaluationAddress() {
 		return evaluationAddress;
+	}
+
+	public static void setAvailableProcessors(Integer availableProcessors) {
+		Configuration.availableProcessors = availableProcessors;
+	}
+
+	public static Integer getAvailableProcessors() {
+		return availableProcessors;
 	}
 	
 }

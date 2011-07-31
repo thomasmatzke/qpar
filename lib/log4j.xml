@@ -33,15 +33,15 @@
   </appender>
 
   <!-- LOGGER LIST -->
-  <logger name="main.java.master">
+  <logger name="qpar.master">
     <appender-ref ref="masterFileAppender"/>
   </logger>
   
-  <logger name="main.java.slave">
+  <logger name="qpar.slave">
     <appender-ref ref="slaveFileAppender"/>
   </logger>
   
-  <logger name="main.java.common">
+  <logger name="qpar.common">
     <appender-ref ref="masterFileAppender"/>
     <appender-ref ref="slaveFileAppender"/>
   </logger>

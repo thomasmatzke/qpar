@@ -35,6 +35,7 @@
     	<pathelement location="lib/commons-exec-1.1.jar"/>
         <pathelement location="lib/commons-io-1.4.jar"/>
         <pathelement location="lib/log4j-1.2.15.jar"/>
+        <pathelement location="lib/log4j.xml"/>
         <pathelement location="lib/mail.jar"/>
         <pathelement location="lib/commons-lang3-3.0-beta.jar"/>
         <pathelement location="lib/junit-4.8.2.jar"/>

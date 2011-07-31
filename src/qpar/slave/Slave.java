@@ -225,7 +225,7 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Run
 
 	@Override
 	public int getCores() throws RemoteException {
-		return Runtime.getRuntime().availableProcessors();
+		return Configuration.getAvailableProcessors();
 	}
 
 	@Override
@@ -292,7 +292,7 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Run
 
 	@Override
 	public void run() {
-		BoundedExecutor bex = new BoundedExecutor(Solver.solverThreadPool, Runtime.getRuntime().availableProcessors());
+		BoundedExecutor bex = new BoundedExecutor(Solver.solverThreadPool, Configuration.getAvailableProcessors());
 		
 		while (this.run) {
 			try {

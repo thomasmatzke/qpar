@@ -23,6 +23,10 @@ public abstract class Heuristic {
 		LinkedHashSet<Integer> ordered = new LinkedHashSet<Integer>();
 		for(Set<Integer> group : getDecisionGroups()) {
 			Set<Integer> orderedGroup = sortGroup(group);
+			if(!((Set<Integer>) orderedGroup).equals(group)) {
+				logger.error("Incorrect heuristic. \nInput: " + group + "\nOutput: " + orderedGroup);
+				throw new RuntimeException();
+			}
 			for(Integer variable : orderedGroup) {
 				ordered.add(variable);
 			}
