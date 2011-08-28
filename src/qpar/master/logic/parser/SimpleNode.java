@@ -730,6 +730,19 @@ public class SimpleNode implements Node, Serializable {
 		return prefix + toString();
 	}
 
+	public String subTreetoString(String indent) {
+		
+		StringBuffer ret = new StringBuffer();
+		
+		ret.append(indent + this + "\n");
+		
+		for(Node n : children) {
+			ret.append(((SimpleNode)n).subTreetoString(indent + indent) + "\n");
+		}
+		
+		return ret.toString();
+	}
+	
 	/*
 	 * Override this method if you want to customize how the node dumps out its
 	 * children.

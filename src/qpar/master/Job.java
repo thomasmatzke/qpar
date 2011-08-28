@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
@@ -54,11 +55,15 @@ public class Job extends Observable implements Observer {
 
 	private TQbf completingTqbf = null;
 	
-	public String heuristic, id, inputFileString, outputFileString, solverId;
+	public String id, inputFileString, outputFileString, solverId;
 
 	private HashMap<State, Date> history = new HashMap<State, Date>();
 
-	public Job(String inputFile, String outputFile, String solverId, String heuristicId, long timeout, int maxCores) throws RemoteException {
+	private Heuristic heuristic;
+	
+	public LinkedHashSet<Integer> variableOrder;
+	
+	public Job(String inputFile, String outputFile, String solverId, Heuristic h, long timeout, int maxCores) throws RemoteException {
 		this.setSetupTime(new Date().getTime());
 		this.usedCores = maxCores;
 		this.setTimeout(timeout);
@@ -67,13 +72,9 @@ public class Job extends Observable implements Observer {
 		this.setInputFileString(inputFile);
 		this.setOutputFileString(outputFile);
 		this.setSolver(solverId);
-		this.setHeuristic(heuristicId);
 		this.setState(State.READY);
+		this.heuristic = h;
 		
-		logger.info("Job created. \n" + "	JobId:        " + this.id + "\n" + "	HeuristicId:  " + this.getHeuristic() + "\n" + "	SolverId:     "
-				+ this.getSolver() + "\n" + "	#Cores:       " + this.usedCores + "\n" + "	Inputfile:    " + this.getInputFileString() + "\n"
-				+ "	Outputfile:   " + this.getOutputFileString() + "\n" + "	Timeout:  " + this.timeout + "\n");
-
 		if (tableModel != null)
 			tableModel.fireTableDataChanged();
 		try {
@@ -93,16 +94,20 @@ public class Job extends Observable implements Observer {
 			out.close();
 			this.serializedFormula = bos.toByteArray();
 			bos.close();
-			subformulas = splitQbf();
+			subformulas = splitQbf(h);
 		} catch (IOException e1) {
 			logger.error("Couldnt split formula", e1);
 			this.setState(State.ERROR);
 			return;
-		}
-
+		}	
+		
 		for (TQbf tqbf : subformulas) {
 			tqbf.addObserver(this);
 		}
+		
+		logger.info("Job created. \n" + "	JobId:        " + this.id + "\n" + "	HeuristicId:  " + this.heuristic.getId() + "\n" + "	SolverId:     "
+				+ this.getSolver() + "\n" + "	#Cores:       " + this.usedCores + "\n" + "	Inputfile:    " + this.getInputFileString() + "\n"
+				+ "	Outputfile:   " + this.getOutputFileString() + "\n" + "	Timeout:  " + this.timeout + "\n"+ "	Variable Order:  " + this.variableOrder + "\n");
 		
 		// Dont need the tree anymore
 		this.formula = null;
@@ -196,16 +201,15 @@ public class Job extends Observable implements Observer {
 		Distributor.instance().scheduleJob(this);
 	}
 
-	public List<TQbf> splitQbf() throws IOException {
+	public List<TQbf> splitQbf(Heuristic h) throws IOException {
 		logger.debug("Splitting into " + usedCores + " subformulas...");
 		long start = System.currentTimeMillis();
-		Heuristic h = HeuristicFactory.getHeuristic(this.getHeuristic(), formula);
 		logger.debug("Generating variable order...");
 		long heuristicTime = System.currentTimeMillis();
-		Integer[] order = h.getVariableOrder().toArray(new Integer[0]);
+		variableOrder = h.getVariableOrder(this.formula);
 		heuristicTime = System.currentTimeMillis() - heuristicTime;
 		logger.debug("Variable order generated. Took " + heuristicTime / 1000 + " seconds.");
-		logger.debug("Heuristic returned variable-assignment order: " + Arrays.toString(order));
+		logger.debug("Heuristic returned variable-assignment order: " + variableOrder);
 
 		int leafCtr = 1;
 		ArrayDeque<DTNode> leaves = new ArrayDeque<DTNode>();
@@ -214,9 +218,11 @@ public class Job extends Observable implements Observer {
 
 		// Generate the tree
 		logger.debug("Generating decision tree...");
+		
+		
 		while (leafCtr < usedCores) {
 			DTNode leaf = leaves.pollLast();
-			Integer splitVar = order[leaf.getDepth()];
+			Integer splitVar = new ArrayList<Integer>(variableOrder).get(leaf.getDepth());
 			if (formula.aVars.contains(splitVar)) {
 				leaf.setType(DTNode.DTNodeType.AND);
 			} else if (formula.eVars.contains(splitVar)) {
@@ -241,6 +247,8 @@ public class Job extends Observable implements Observer {
 			leafCtr++;
 		}
 
+		logger.debug(String.format("DT-Leaves: %d, Desired Cores: %d, Variable Order size: %d", leaves.size(), usedCores, variableOrder.size()));
+		
 		assert (leaves.size() == usedCores);
 
 		logger.debug("Generating TransmissionQbfs...");
@@ -322,7 +330,7 @@ public class Job extends Observable implements Observer {
 		String txt;
 		txt = "Job Id: " + this.id + "\n" + "State RUNNING at: " + this.history.get(State.RUNNING) + "\n" + "State COMPLETE at: "
 				+ this.history.get(State.COMPLETE) + "\n" + "Total secs: " + totalMillis() / 1000 + "\n" + "In millis: " + totalMillis() + "\n" + "Solver: "
-				+ this.getSolver() + "\n" + "Heuristic: " + this.getHeuristic() + "\n" + "Result: " + (this.getResult() ? "Solvable" : "Not Solvable") + "\n";
+				+ this.getSolver() + "\n" + "Heuristic: " + this.heuristic.getId() + "\n" + "Result: " + (this.getResult() ? "Solvable" : "Not Solvable") + "\n";
 
 		return txt.replaceAll("\n", System.getProperty("line.separator"));
 	}
@@ -427,11 +435,7 @@ public class Job extends Observable implements Observer {
 //	public Qbf getFormula() {
 //		return formula;
 //	}
-
-	public String getHeuristic() {
-		return heuristic;
-	}
-
+	
 	public String getInputFileString() {
 		return inputFileString;
 	}
@@ -451,11 +455,7 @@ public class Job extends Observable implements Observer {
 	public void setFormula(Qbf formula) {
 		this.formula = formula;
 	}
-
-	public void setHeuristic(String heuristic) {
-		this.heuristic = heuristic;
-	}
-
+	
 	public void setId(String id) {
 		this.id = id;
 	}

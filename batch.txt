@@ -1,12 +1,18 @@
-#newjob testing/counter_small/counter6_2-bin.qbf testing/counter6_2-bin.qbf.txt qpro shallow 8 60
+#newjob testing/counter_small/counter6_2-bin.qbf counter6_2-bin.qbf.txt qpro edgecount 64 60
 #startjob 1
 
-#newjob testing/simple3.qbf testing/simple3.qbf.txt qpro litcount 1 60
+#newjob testing/simple3.qbf simple3.qbf.txt qpro litcount 2 60
 #startjob 1
 
 # timeout test
 #newjob testing/assertion_big/assertion7_0_3-bin.qbf testing/assertion7_0_3-bin.qbf.txt qpro litcount 128 5
 #startjob 1
+
+#newjob testing/counter_big/counter4_16-bin.qbf counter4_16-bin.qbf.txt.rand qpro rand 64 60
+#startjob 1
+
+newjob testing/counter_big/counter4_16-bin.qbf counter4_16-bin.qbf.txt.htest qpro htest 2 600
+startjob 1
 
 # smallset
 #evaluate testing/boole 1 16 qpro 60
@@ -15,32 +21,36 @@
 #evaluate testing/counter_small 1 16 qpro 60
 #evaluate testing/ncf_small 1 16 qpro 60
 
+#test
+#evaluate testing/htest 1 64 qpro 60
 
 ######## official set #########
-evaluate testing/semaphore_small 1 64 qpro 600
-evaluate testing/semaphore_medium 1 64 qpro 600
-evaluate testing/semaphore_big 1 64 qpro 600
+#evaluate testing/semaphore_small 1 64 qpro 600
+#evaluate testing/semaphore_medium 1 64 qpro 600
+#evaluate testing/semaphore_big 1 64 qpro 600
 
-evaluate testing/ring_small 1 64 qpro 600
-evaluate testing/ring_medium 1 64 qpro 600
-evaluate testing/ring_big 1 64 qpro 600
+#evaluate testing/ring_small 1 64 qpro 600
+#evaluate testing/ring_medium 1 64 qpro 600 # all timeout
+#evaluate testing/ring_big 1 64 qpro 600 # aborted due to medium all timeout
 #evaluate testing/ring_big 1 64 qpro 600
 
-evaluate testing/counter_small 64 64 qpro 600
-evaluate testing/counter_medium 64 64 qpro 600
-evaluate testing/counter_big 1 64 qpro 600
+#evaluate testing/counter_small 1 64 qpro 600
+#evaluate testing/counter_medium 1 64 qpro 600
+#evaluate testing/counter_big 1 64 qpro 600
 #evaluate testing/counter_biggest 1 64 qpro 600
 
-evaluate testing/ncf_small 1 64 qpro 600
-evaluate testing/ncf_medium 1 64 qpro 600
-evaluate testing/ncf_big 1 64 qpro 600
+#evaluate testing/ncf_small 1 64 qpro 600
+#evaluate testing/ncf_medium 1 64 qpro 600
+#evaluate testing/ncf_big 1 64 qpro 600
 
-evaluate testing/dme_small 1 64 qpro 600
-evaluate testing/dme_big 1 64 qpro 600
+#evaluate testing/dme_small 1 64 qpro 600
+#evaluate testing/dme_big 1 64 qpro 600
+#evaluate testing/dme_small_real 1 64 qpro 600
+#evaluate testing/dme_big_real 1 64 qpro 600
 ######## official set #########
 
 # something broken todo
-#evaluate testing/consistency_big 1 64 qpro 60
+#evaluate testing/consistency_big 1 64 qpro 600
 #evaluate testing/consistency_bigger 1 64 qpro 60
 
 # too big for 1 min timeout

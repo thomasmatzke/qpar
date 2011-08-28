@@ -75,6 +75,7 @@ public class DTNode {
 				parent.setLeftChild(null);
 				parent.setRightChild(null);
 				sibling.setParent(null);
+				sibling.abortLeafNodes();
 			// AND TRUE
 			} else if(this.type == DTNodeType.TRUE) {
 				if (sibling.hasTruthValue()) {
@@ -91,6 +92,7 @@ public class DTNode {
 				parent.setLeftChild(null);
 				parent.setRightChild(null);
 				sibling.setParent(null);
+				sibling.abortLeafNodes();
 			// OR FALSE
 			} else if(this.type == DTNodeType.FALSE) {
 				if (sibling.hasTruthValue()) {
@@ -101,7 +103,8 @@ public class DTNode {
 				}
 			}
 		} else {
-			assert(false);
+			logger.error(String.format("Unexpected parent-DTNodeType: %s", getParent().getType()));
+			throw new IllegalStateException(String.format("Unexpected parent-DTNodeType: %s", getParent().getType()));
 		}
 //logger.info("reduced to " + this);
 		parent.reduce();
@@ -123,8 +126,8 @@ public class DTNode {
 
 	}
 	
-	public Vector<DTNode> getLeafNodes() {
-		Vector<DTNode> leafNodes = new Vector<DTNode>();
+	public ArrayList<DTNode> getLeafNodes() {
+		ArrayList<DTNode> leafNodes = new ArrayList<DTNode>();
 
 		// if there are no childs, we return the node
 		if ((leftChild == null) && (rightChild == null)) {
@@ -137,6 +140,17 @@ public class DTNode {
 		leafNodes.addAll(rightChild.getLeafNodes());
 
 		return leafNodes;
+	}
+	
+	public void abortLeafNodes() {
+		if ((leftChild == null) && (rightChild == null) && this.type == DTNodeType.TQBF) {
+			TQbf.tqbfs.get(this.id).abort();
+			return;
+		}
+		if(leftChild != null)
+			leftChild.getLeafNodes();
+		if(rightChild != null)
+			rightChild.getLeafNodes();
 	}
 
 	public void addChild(DTNode n) {

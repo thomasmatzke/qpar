@@ -14,6 +14,7 @@ import java.util.Observer;
 import org.apache.log4j.Logger;
 
 import qpar.master.Job.State;
+import qpar.master.heuristic.Heuristic;
 import qpar.master.heuristic.HeuristicFactory;
 
 public class Evaluation implements Observer {
@@ -67,8 +68,9 @@ public class Evaluation implements Observer {
 				for (int h = 0; h < heuristics.size(); h++) {
 					Job j;
 					try {
+						Heuristic heuristic = HeuristicFactory.getHeuristic(heuristics.get(h));
 						j = new Job(files.get(f).getAbsolutePath(), null,
-								solver, heuristics.get(h), timeout,
+								solver, heuristic, timeout,
 								getNeededRuns(coresStart, coresEnd).get(c));
 						results[f][c][h] = j;
 						jobsTodo.add(j);
@@ -100,7 +102,7 @@ public class Evaluation implements Observer {
 			Boolean fileIs = null;
 			for (int c = 0; c < getNeededRuns(coresStart, coresEnd).size(); c++) {
 				for (int h = 0; h < heuristics.size(); h++) {
-					if (fileIs == null) {
+					if (fileIs == null && !(results[f][c][h].isTimeout() || results[f][c][h].isError())) {
 						fileIs = results[f][c][h].getResult();
 						continue;
 					}

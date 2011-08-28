@@ -66,7 +66,9 @@ public class Qbf {
 			parser.doPostprocessing();
 			
 			logger.debug("postprocessing...");
-			//root.dump("> ");
+			// root.dump("> ");
+			
+			//logger.debug("Postprocessed Formula: \n" + root.subTreetoString("  "));
 		}
 		catch (ParseException e) {
 			logger.error("Parse error", e);
@@ -90,7 +92,7 @@ public class Qbf {
 		dependencyGraphRoot = this.root.dependencyTree()[0];
 		end = System.currentTimeMillis();
 		logger.debug("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
-//		logger.debug("Dependencyree: \n" + dependencyGraphRoot.dump());
+		logger.debug("Dependency Tree: \n" + dependencyGraphRoot.dump());
 	}
 
 //	synchronized private static int getUniqueId() {

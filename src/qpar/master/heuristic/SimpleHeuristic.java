@@ -10,12 +10,8 @@ import qpar.master.logic.parser.SimpleNode;
 public class SimpleHeuristic extends Heuristic {
 
 	LinkedHashSet<Integer> ret = new LinkedHashSet<Integer>();
-	
-	public SimpleHeuristic(Qbf qbf) {
-		super(qbf);
-	}
-
-	public LinkedHashSet<Integer> getVariableOrder() {
+		
+	public LinkedHashSet<Integer> getVariableOrder(Qbf qbf) {
 		
 		traverse(qbf.root);
 		
@@ -23,7 +19,7 @@ public class SimpleHeuristic extends Heuristic {
 	}
 	
 	@Override
-	public LinkedHashSet<Integer> sortGroup(Set<Integer> group) {
+	public LinkedHashSet<Integer> sortGroup(Set<Integer> group, Qbf qbf) {
 		assert(false);
 		return null;
 	}
@@ -55,6 +51,11 @@ public class SimpleHeuristic extends Heuristic {
 			default:
 				assert(false);
 		}
+	}
+
+	@Override
+	public String getId() {
+		return "simple";
 	}
 	
 }

@@ -20,13 +20,9 @@ import qpar.master.Qbf;
 public class EdgeCountHeuristic extends Heuristic {
 
 	static Logger logger = Logger.getLogger(EdgeCountHeuristic.class);
-	
-	public EdgeCountHeuristic(Qbf qbf) {
-		super(qbf);
-	}
-
+		
 	@Override
-	public LinkedHashSet<Integer> sortGroup(Set<Integer> group) {
+	public LinkedHashSet<Integer> sortGroup(Set<Integer> group, Qbf qbf) {
 		
 		HashMap<Integer, Integer> coveredEdges = edgeCount(qbf.root);
 		
@@ -91,6 +87,11 @@ public class EdgeCountHeuristic extends Heuristic {
 			res.add((Integer) entries[i].getKey());
 		}
 		return res;
+	}
+
+	@Override
+	public String getId() {
+		return "edgecount";
 	}
 
 }

@@ -54,7 +54,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	private int cacheHits = 0, cacheMisses = 0;
 	
 	public Master() throws FileNotFoundException, RemoteException, NotBoundException {		
-		
+				
 		// Start the registry
 		try {
 			registry = LocateRegistry.createRegistry(1099);
@@ -104,7 +104,6 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 
 	@Override
 	public void ping() throws RemoteException {}
-
 
 	@Override
 	public void displaySlaveMessage(String slave, String message) throws RemoteException {

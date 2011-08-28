@@ -26,6 +26,7 @@ import qpar.master.Evaluation;
 import qpar.master.Job;
 import qpar.master.Mailer;
 import qpar.master.SlaveRegistry;
+import qpar.master.heuristic.Heuristic;
 import qpar.master.heuristic.HeuristicFactory;
 
 public class Shell implements Runnable, Observer{
@@ -69,6 +70,9 @@ public class Shell implements Runnable, Observer{
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase()))
 		{
+			case HTEST:
+				htest(token);
+				break;
 			case EVALUATE:
 				evaluate(token);
 				break;
@@ -120,6 +124,21 @@ public class Shell implements Runnable, Observer{
 		
 	}
 	
+	private void htest(StringTokenizer token) {
+//		try{
+//			String 	input_path 	= token.nextToken();
+//			String 	solverid 	= token.nextToken();
+//			int		maxCores	= Integer.parseInt(token.nextToken());
+//			long	timeout		= Long.parseLong(token.nextToken());
+//			//TODO
+//			
+//		} catch(NoSuchElementException e) {
+//			puts("Syntax: HTEST path_to_formula solverid max_cores timeout");
+//		} catch (RemoteException e) {
+//			logger.error("", e);
+//		}
+	}
+
 	private void evaluate(StringTokenizer token) {
 		String	directory				= null;
 		String	solver					= null;
@@ -137,11 +156,6 @@ public class Shell implements Runnable, Observer{
 			puts("Syntax: PARLOGEVAL directory_path_to_formulas coresMin coresMax solver timeout");
 			return;
 		}
-//		List<String> heuristics = new ArrayList<String>();
-//		heuristics.add("simple");
-//		heuristics.add("rand");
-//		heuristics.add("litcount");
-//		heuristics.add("probnet");
 		
 		Evaluation eval = new Evaluation(new File(directory), cores_min, cores_max, solver, HeuristicFactory.getAvailableHeuristics(), timeout);
 		eval.evaluate();
@@ -388,10 +402,11 @@ public class Shell implements Runnable, Observer{
 			String 	input_path 	= token.nextToken();
 			String 	output_path = token.nextToken();
 			String 	solverid 	= token.nextToken();
-			String 	heuristic 	= token.nextToken();
+			String 	heuristicId 	= token.nextToken();
 			int		maxCores	= Integer.parseInt(token.nextToken());
 			long	timeout		= Long.parseLong(token.nextToken());
-			new Job(input_path, output_path, solverid, heuristic, timeout, maxCores);
+			Heuristic h = HeuristicFactory.getHeuristic(heuristicId);
+			new Job(input_path, output_path, solverid, h, timeout, maxCores);
 			
 		} catch(NoSuchElementException e) {
 			puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic max_cores timeout");

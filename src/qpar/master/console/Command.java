@@ -6,6 +6,7 @@ public enum Command {
 	HELP, QUIT,
 	MAIL,
 	SOURCE,
+	HTEST,
 	NOVALUE;
 	
 	public static Command toCommand(String str)

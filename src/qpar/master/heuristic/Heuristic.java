@@ -12,17 +12,12 @@ import qpar.master.Qbf;
 
 public abstract class Heuristic {
 
-	protected Qbf qbf;
 	protected static Logger logger = Logger.getLogger(Heuristic.class);
-	
-	public Heuristic(Qbf qbf) {
-		this.qbf = qbf;
-	}
-	
-	public LinkedHashSet<Integer> getVariableOrder() {
+		
+	public LinkedHashSet<Integer> getVariableOrder(Qbf qbf) {
 		LinkedHashSet<Integer> ordered = new LinkedHashSet<Integer>();
-		for(Set<Integer> group : getDecisionGroups()) {
-			Set<Integer> orderedGroup = sortGroup(group);
+		for(Set<Integer> group : getDecisionGroups(qbf)) {
+			Set<Integer> orderedGroup = sortGroup(group, qbf);
 			if(!((Set<Integer>) orderedGroup).equals(group)) {
 				logger.error("Incorrect heuristic. \nInput: " + group + "\nOutput: " + orderedGroup);
 				throw new RuntimeException();
@@ -35,7 +30,9 @@ public abstract class Heuristic {
 		return ordered;
 	}
 	
-	public abstract LinkedHashSet<Integer> sortGroup(Set<Integer> group);	
+	public abstract LinkedHashSet<Integer> sortGroup(Set<Integer> group, Qbf qbf);
+	
+	public abstract String getId();
 	
 	/**
 	 * Builds an ordered vector of groups of variables which can be ordered by heuristics.
@@ -43,10 +40,10 @@ public abstract class Heuristic {
 	 * 
 	 * @return A vector consisting of groups to be sorted by an heuristic
 	 */
-	protected ArrayList<Set<Integer>> getDecisionGroups() {
+	protected ArrayList<Set<Integer>> getDecisionGroups(Qbf qbf) {
 		ArrayList<Set<Integer>> groups = new ArrayList<Set<Integer>>();
 		CondensedDependencyNode condensedRoot = qbf.dependencyGraphRoot.condense();
-//		logger.debug("Condensed Tree: \n" + condensedRoot.dump());
+		logger.debug("Condensed Tree: \n" + condensedRoot.dump());
 		
 		int maxDepth = 0;
 		for(CondensedDependencyNode c : condensedRoot.allSubnodes()) {

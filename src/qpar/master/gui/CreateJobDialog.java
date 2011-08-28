@@ -21,6 +21,8 @@ import javax.swing.JTextField;
 import org.apache.log4j.Logger;
 
 import qpar.master.Job;
+import qpar.master.heuristic.Heuristic;
+import qpar.master.heuristic.HeuristicFactory;
 
 public class CreateJobDialog extends JDialog {
 
@@ -298,10 +300,11 @@ public class CreateJobDialog extends JDialog {
 					// TODO: Let set timeout & maxcores via GUI
 					if(new File(formulaTextField.getText()).exists()) {
 						try {
+							Heuristic h = HeuristicFactory.getHeuristic((String) getHeuristicComboBox().getSelectedItem());
 							new Job(getFormulaTextField().getText(),
 									getOutputFileTextField().getText(),
 									(String) getSolverComboBox().getSelectedItem(),
-									(String) getHeuristicComboBox().getSelectedItem(),
+									h,
 									0,
 									0);
 						} catch (RemoteException e1) {

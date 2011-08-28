@@ -18,12 +18,8 @@ public class ShallowHeuristic extends Heuristic {
 
 	static Logger logger = Logger.getLogger(ShallowHeuristic.class);
 	
-	public ShallowHeuristic(Qbf qbf) {
-		super(qbf);
-	}
-
 	@Override
-	public LinkedHashSet<Integer> sortGroup(Set<Integer> group) {
+	public LinkedHashSet<Integer> sortGroup(Set<Integer> group, Qbf qbf) {
 		LinkedHashSet<Integer> order = new LinkedHashSet<Integer>();
 		Deque<Node> nodes = new LinkedList<Node>();
 		
@@ -54,6 +50,11 @@ public class ShallowHeuristic extends Heuristic {
 //		return new LinkedHashSet<Integer>(p.next());
 		
 		return order;
+	}
+
+	@Override
+	public String getId() {
+		return "shallow";
 	}
 
 }

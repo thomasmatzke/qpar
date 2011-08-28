@@ -20,6 +20,7 @@ public class CondensedDependencyNode {
 	public NodeType type;
 	public ArrayList<Integer> variables = new ArrayList<Integer>();
 	private ArrayList<CondensedDependencyNode> children = new ArrayList<CondensedDependencyNode>();
+	private CondensedDependencyNode parent = null;
 	
 	public CondensedDependencyNode(DependencyNode.NodeType t) {
 		this.type = t;
@@ -29,6 +30,9 @@ public class CondensedDependencyNode {
 	}
 	
 	public Integer getDepth() {
+		if(depth == null) {
+			depth = parent.getDepth() + 1;
+		}
 		return depth;
 	}
 
@@ -47,12 +51,13 @@ public class CondensedDependencyNode {
 		if(this.depth != null)
 			n.depth = this.depth+1;
 		children.add(n);
+		n.setParent(this);
 	}
 	
 	public String dump() {
 		
 		String indent = "";
-		for(int i = 0; i < this.depth; i++)
+		for(int i = 0; i < this.getDepth(); i++)
 			indent += "  ";
 		
 		String s = indent + this + "\n";
@@ -104,6 +109,14 @@ public class CondensedDependencyNode {
 				System.exit(-1);
 				return null;
 		}
+	}
+
+	public void setParent(CondensedDependencyNode parent) {
+		this.parent = parent;
+	}
+
+	public CondensedDependencyNode getParent() {
+		return parent;
 	}
 	
 }

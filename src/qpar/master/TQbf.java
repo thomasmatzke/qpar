@@ -40,6 +40,21 @@ public class TQbf extends Observable implements TQbfRemote {
 	
 	private boolean result;
 	
+	public static HashMap<String, TQbf> tqbfs = new HashMap<String, TQbf>();
+	
+	public TQbf(String tqbfId, Job job, String solverId, ArrayList<Integer> trueVars, ArrayList<Integer> falseVars, long timeout, byte[] serializedFormula) throws RemoteException {
+		super();
+		this.id = tqbfId;
+		this.job = job;
+		this.solverId = solverId;
+		this.trueVars = trueVars;
+		this.falseVars = falseVars;
+		this.timeout = timeout;
+		
+		UnicastRemoteObject.exportObject(this, 0);
+		tqbfs.put(tqbfId, this);
+	}
+	
 	public boolean isResult() {
 		return result;
 	}
@@ -68,17 +83,7 @@ public class TQbf extends Observable implements TQbfRemote {
 		this.solverMillis = solverMillis;
 	}
 
-	public TQbf(String tqbfId, Job job, String solverId, ArrayList<Integer> trueVars, ArrayList<Integer> falseVars, long timeout, byte[] serializedFormula) throws RemoteException {
-		super();
-		this.id = tqbfId;
-		this.job = job;
-		this.solverId = solverId;
-		this.trueVars = trueVars;
-		this.falseVars = falseVars;
-		this.timeout = timeout;
-		
-		UnicastRemoteObject.exportObject(this, 0);
-	}
+	
 	
 	synchronized public void abort() {
 		switch(this.getState()) {

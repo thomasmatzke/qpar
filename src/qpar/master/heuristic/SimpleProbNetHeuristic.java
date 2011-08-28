@@ -9,12 +9,9 @@ import qpar.master.Qbf;
 
 public class SimpleProbNetHeuristic extends Heuristic {
 
-	public SimpleProbNetHeuristic(Qbf qbf) {
-		super(qbf);
-	}
-
+	
 	@Override
-	public LinkedHashSet<Integer> sortGroup(Set<Integer> group) {
+	public LinkedHashSet<Integer> sortGroup(Set<Integer> group, Qbf qbf) {
 		Set<Integer> universals 		= new HashSet<Integer>();
 		Set<Integer> existentials 		= new HashSet<Integer>();
 		LinkedHashSet<Integer> sorted	= new LinkedHashSet<Integer>();
@@ -35,6 +32,11 @@ public class SimpleProbNetHeuristic extends Heuristic {
 		}
 				
 		return sorted;
+	}
+
+	@Override
+	public String getId() {
+		return "probnet";
 	}
 
 }

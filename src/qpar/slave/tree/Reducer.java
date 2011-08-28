@@ -2,6 +2,7 @@ package qpar.slave.tree;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 import org.apache.log4j.Logger;
@@ -52,7 +53,7 @@ public class Reducer {
 //			logger.info("Disconnected from root");
 			return null;
 		}
-//logger.info("Reducing node " + node +" with children " + Arrays.toString(node.children));
+		logger.debug("Reducing node " + node +" with children " + Arrays.toString(node.children));
 		SimpleNode newNode = null;
 		if(node.jjtGetNumChildren() == 2)
 			newNode = evaluate(node, (SimpleNode)node.jjtGetChild(0), (SimpleNode)node.jjtGetChild(1));
@@ -73,7 +74,7 @@ public class Reducer {
 		}
 		newParentChildren.add(newNode);
 		parentNode.children = newParentChildren.toArray(new SimpleNode[newParentChildren.size()]);
-//logger.info("Reduced to: " + newNode);
+		logger.debug("Reduced to: " + newNode);
 		
 		// Disconnect ourself from parent node
 		node.jjtSetParent(null);

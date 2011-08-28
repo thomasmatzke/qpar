@@ -19,23 +19,26 @@ public class HeuristicFactory {
 			heuristics.add("probnet");
 			heuristics.add("shallow");
 			heuristics.add("edgecount");
+			//heuristics.add("htest");
 		}
 		return heuristics;
 	}
 	
-	public static Heuristic getHeuristic(String id, Qbf qbf) {
+	public static Heuristic getHeuristic(String id) {
 		if (id.equals("simple"))
-			return new SimpleHeuristic(qbf);
+			return new SimpleHeuristic();
 		if (id.equals("rand"))
-			return new RandHeuristic(qbf);
+			return new RandHeuristic();
 		if (id.equals("litcount"))
-			return new LCHeuristic(qbf);
+			return new LCHeuristic();
 		if (id.equals("probnet"))
-			return new SimpleProbNetHeuristic(qbf);
+			return new SimpleProbNetHeuristic();
 		if (id.equals("shallow"))
-			return new ShallowHeuristic(qbf);
+			return new ShallowHeuristic();
 		if (id.equals("edgecount"))
-			return new EdgeCountHeuristic(qbf);
+			return new EdgeCountHeuristic();
+		if (id.equals("htest"))
+			return new HTestHeuristic();
 		return null;
 	}
 }
