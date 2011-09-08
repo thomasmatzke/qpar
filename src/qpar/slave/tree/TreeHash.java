@@ -3,7 +3,6 @@ package qpar.slave.tree;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-
 import org.apache.commons.lang3.ArrayUtils;
 
 import qpar.master.logic.parser.SimpleNode;

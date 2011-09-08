@@ -4,7 +4,6 @@ package qpar.slave;
 import org.apache.log4j.Logger;
 
 import qpar.slave.solver.Solver;
-
 import sun.misc.Signal;
 
 /**

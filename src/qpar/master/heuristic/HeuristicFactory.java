@@ -2,8 +2,6 @@ package qpar.master.heuristic;
 
 import java.util.ArrayList;
 
-import qpar.master.Qbf;
-
 
 
 public class HeuristicFactory {

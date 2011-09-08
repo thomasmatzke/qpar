@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
@@ -59,7 +58,7 @@ public class QProPlugin implements SolverPlugin {
 			ByteArrayInputStream inputStream = new ByteArrayInputStream(qproInput.getQproRepresentation().getBytes("ISO-8859-1"));
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			executor.setStreamHandler(new PumpStreamHandler(output, null, inputStream));
-//			logger.info("QPROINPUT: " + qproInput.getQproRepresentation());
+			logger.debug("QPROINPUT: \n" + qproInput.getQproRepresentation());
 			
 			killLock.lock();
 			if(killed) {

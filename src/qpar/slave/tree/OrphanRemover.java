@@ -2,7 +2,6 @@ package qpar.slave.tree;
 
 import java.util.HashSet;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.logic.parser.Node;

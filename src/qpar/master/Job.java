@@ -8,7 +8,6 @@ import java.io.ObjectOutputStream;
 import java.rmi.RemoteException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -19,50 +18,43 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.swing.SwingUtilities;
-import javax.swing.table.AbstractTableModel;
-
-
 import org.apache.log4j.Logger;
 
 import qpar.common.Configuration;
 import qpar.master.heuristic.Heuristic;
-import qpar.master.heuristic.HeuristicFactory;
 
 public class Job extends Observable implements Observer {
 	private static final long serialVersionUID = 9045629901672956321L;
-
+	static Logger logger = Logger.getLogger(Job.class);
+	static Map<String, Job> jobs = new HashMap<String, Job>();
+	private static volatile int idCounter = 0;
+	
 	public enum State {
 		READY, RUNNING, COMPLETE, ERROR, TIMEOUT
 	}
 
-	private volatile State state;
-
-	private static volatile int idCounter = 0;
-	private static Map<String, Job> jobs = new HashMap<String, Job>();
-	private static AbstractTableModel tableModel;
-	static Logger logger = Logger.getLogger(Job.class);
-
+	
 	private boolean isSolvable;
-	private long timeout = 0, setupTime = 0;
+	private long 	timeout = 0, 
+					setupTime = 0, 
+					usedCores = 0, 
+					handledResults = 0;
 	
-	public int usedCores = 0, handledResults = 0;
-	
+	private TQbf completingTqbf = null;
 	private Qbf formula;
+	private Heuristic heuristic;
+	private HashMap<State, Date> history = new HashMap<State, Date>();
+	private volatile State state;
+	
 	public DTNode decisionRoot = null;
 	volatile public byte[] serializedFormula;
 	public List<TQbf> subformulas;
-
-	private TQbf completingTqbf = null;
-	
-	public String id, inputFileString, outputFileString, solverId;
-
-	private HashMap<State, Date> history = new HashMap<State, Date>();
-
-	private Heuristic heuristic;
-	
 	public LinkedHashSet<Integer> variableOrder;
-	
+	public String 	id, 
+					inputFileString, 
+					outputFileString, 
+					solverId;
+		
 	public Job(String inputFile, String outputFile, String solverId, Heuristic h, long timeout, int maxCores) throws RemoteException {
 		this.setSetupTime(new Date().getTime());
 		this.usedCores = maxCores;
@@ -75,8 +67,6 @@ public class Job extends Observable implements Observer {
 		this.setState(State.READY);
 		this.heuristic = h;
 		
-		if (tableModel != null)
-			tableModel.fireTableDataChanged();
 		try {
 			this.formula = new Qbf(inputFileString);
 		} catch (Exception e) {
@@ -105,9 +95,11 @@ public class Job extends Observable implements Observer {
 			tqbf.addObserver(this);
 		}
 		
+		int neededVariables = (int)Math.ceil(Math.log(this.usedCores)/Math.log(2));
+		
 		logger.info("Job created. \n" + "	JobId:        " + this.id + "\n" + "	HeuristicId:  " + this.heuristic.getId() + "\n" + "	SolverId:     "
 				+ this.getSolver() + "\n" + "	#Cores:       " + this.usedCores + "\n" + "	Inputfile:    " + this.getInputFileString() + "\n"
-				+ "	Outputfile:   " + this.getOutputFileString() + "\n" + "	Timeout:  " + this.timeout + "\n"+ "	Variable Order:  " + this.variableOrder + "\n");
+				+ "	Outputfile:   " + this.getOutputFileString() + "\n" + "	Timeout:  " + this.timeout + "\n"+ "	Variable Order:  " + new ArrayList<Integer>(this.variableOrder).subList(0, neededVariables) + "\n");
 		
 		// Dont need the tree anymore
 		this.formula = null;
@@ -119,9 +111,6 @@ public class Job extends Observable implements Observer {
 	
 	private static void addJob(Job job) {
 		jobs.put(job.id, job);
-		if (tableModel != null) {
-			tableModel.fireTableDataChanged();
-		}
 		logger.info("Job added. JobId: " + job.id);
 	}
 
@@ -165,9 +154,6 @@ public class Job extends Observable implements Observer {
 			}
 		}
 		
-		if (Job.getTableModel() != null)
-			Job.getTableModel().fireTableDataChanged();
-			
 		this.freeResources();
 	}
 	
@@ -364,7 +350,7 @@ public class Job extends Observable implements Observer {
 					maxTimeOfFinished = tqbf.getComputationTime();
 				}
 			}
-			logger.info("maxTimeFinished: " + maxTimeOfFinished + ", minTimeComputing: " + minTimeOfComputing);
+			logger.debug("maxTimeFinished: " + maxTimeOfFinished + ", minTimeComputing: " + minTimeOfComputing);
 			if (minTimeOfComputing > maxTimeOfFinished) {
 				solved = this.mergeFinishedTqbfsInOrder();
 			}
@@ -479,21 +465,6 @@ public class Job extends Observable implements Observer {
 		setChanged();
 		notifyObservers();
 		notifyAll();
-		if (Job.getTableModel() != null) {
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					Job.getTableModel().fireTableDataChanged();
-				}
-			});
-		}
-	}
-
-	public static AbstractTableModel getTableModel() {
-		return tableModel;
-	}
-
-	public static void setTableModel(AbstractTableModel tableModel) {
-		Job.tableModel = tableModel;
 	}
 
 	public long getTimeout() {

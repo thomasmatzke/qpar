@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.Mailer;
@@ -57,7 +56,13 @@ public class Configuration {
 		Configuration.setBenchmarkMode(Boolean.parseBoolean(properties.getProperty("benchmarkMode")));
 		Configuration.setMailEvaluationResults(Boolean.parseBoolean(properties.getProperty("mailEvaluationResults")));
 		Configuration.setResultCaching(Boolean.parseBoolean(properties.getProperty("resultCaching")));
-		Configuration.setAvailableProcessors(Integer.parseInt(properties.getProperty("availableProcessors")));
+		Integer processors = Integer.parseInt(properties.getProperty("availableProcessors"));
+		if(processors == 0) {
+			Configuration.setAvailableProcessors(Runtime.getRuntime().availableProcessors());
+		} else {
+			Configuration.setAvailableProcessors(processors);
+		}
+		
 		for(Entry<Object, Object> e : properties.entrySet()) {
 			String key = (String)e.getKey();
 			String value = (String)e.getValue();

@@ -1,11 +1,9 @@
 package qpar.master;
 
-import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ConcurrentHashMap;
-
 
 import org.apache.log4j.Logger;
 

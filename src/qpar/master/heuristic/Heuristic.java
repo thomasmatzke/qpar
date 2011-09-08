@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.Qbf;

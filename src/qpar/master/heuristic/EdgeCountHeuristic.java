@@ -8,14 +8,12 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
-import java.util.Vector;
 
 import org.apache.log4j.Logger;
 
-import qpar.common.Configuration;
-import qpar.master.logic.parser.*;
 import qpar.master.Qbf;
+import qpar.master.logic.parser.Node;
+import qpar.master.logic.parser.SimpleNode;
 
 public class EdgeCountHeuristic extends Heuristic {
 

@@ -5,7 +5,6 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.logic.parser.SimpleNode;

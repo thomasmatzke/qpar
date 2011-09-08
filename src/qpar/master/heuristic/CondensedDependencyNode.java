@@ -2,7 +2,6 @@ package qpar.master.heuristic;
 
 import java.util.ArrayList;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.heuristic.DependencyNode.NodeType;

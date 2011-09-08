@@ -3,7 +3,6 @@ package qpar.slave.tree;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.common.rmi.InterpretationData;

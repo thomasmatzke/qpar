@@ -10,13 +10,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.StringTokenizer;
-
 
 import org.apache.log4j.Logger;
 
@@ -173,21 +170,6 @@ public class Shell implements Runnable, Observer{
 		
 		if(Configuration.isMailEvaluationResults())
 			Mailer.send_mail(Configuration.getEvaluationAddress(), Configuration.getMailServer(), Configuration.getMailUser(), Configuration.getMailPass(), "ParLogEval Report", report);
-	}
-
-	/**
-	 * Syntax: MAIL_EVALUATION_REPORT my@email.com 
-	 * @param token
-	 */
-	private void set_report_address(StringTokenizer token) {
-		try {
-			Mailer.email 	= token.nextToken();
-			Mailer.server 	= token.nextToken();
-			Mailer.user 	= token.nextToken();
-			Mailer.pass 	= token.nextToken();
-		} catch(NoSuchElementException e) {
-			puts("Syntax: MAIL_EVALUATION_REPORT my@email.com");
-		}
 	}
 
 	/**

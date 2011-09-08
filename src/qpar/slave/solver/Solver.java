@@ -11,7 +11,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.common.Configuration;
@@ -88,7 +87,7 @@ public class Solver implements Runnable {
 			if(this.killSignalReceived)
 				return;
 			if(reducedInterpretation.isTruthValue()) {
-//				logger.info("Formula " + this.tqbfId + " collapsed");
+				logger.debug("Formula " + this.tqbfId + " collapsed");
 				this.terminate(reducedInterpretation.getTruthValue(), 0, this.overheadMillis());
 				return;
 			}

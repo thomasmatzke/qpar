@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.heuristic.DependencyNode;

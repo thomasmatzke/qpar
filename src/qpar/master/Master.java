@@ -14,9 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.table.AbstractTableModel;
-
-
 import org.apache.log4j.Logger;
 
 import qpar.common.ArgumentParser;
@@ -25,7 +22,6 @@ import qpar.common.rmi.MasterRemote;
 import qpar.common.rmi.SlaveRemote;
 import qpar.common.rmi.TQbfRemote;
 import qpar.master.console.Shell;
-import qpar.master.gui.ProgramWindow;
 
 
 /**
@@ -42,13 +38,9 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 
 	static Logger logger = Logger.getLogger(Master.class);
 	
-	private static ProgramWindow programWindow;
 	transient private Shell shell;
-	private static boolean startGui = false;
 	private Registry registry = null;
-	
-	public static AbstractTableModel slaveTableModel;
-	
+		
 	public static ConcurrentHashMap<String, Boolean> resultCache = new ConcurrentHashMap<String, Boolean>();
 	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
 	private int cacheHits = 0, cacheMisses = 0;
@@ -67,31 +59,23 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 		MasterRemote myInterface = this;
 		registry.rebind("Master", myInterface);
 		
-		if (Master.startGui) {
-			javax.swing.SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					programWindow = new ProgramWindow();
-					programWindow.setVisible(true);
-				}
-			});
+		if (ap.hasOption("i")) {
+			shell = new Shell(new BufferedReader(new FileReader(ap
+					.getOption("i"))));
+			shell.run();
+		} else if (ap.hasOption("h")) {
+			usage();
 		} else {
-			if (ap.hasOption("i")) {
-				shell = new Shell(new BufferedReader(new FileReader(ap
-						.getOption("i"))));
-				
-			} else {
-				shell = new Shell();
-			}
-
+			shell = new Shell();
 			shell.run();
 		}
+	
 		System.exit(0);
 	}
 
 	private static void usage() {
 		System.out
-				.println("Arguments: \"-gui\"               toggles graphical user interface"
-						+ "           \"-i=INPUTFILE\"       specifies a batch-file");
+				.println("Arguments: \"-i=INPUTFILE\"       specifies a batch-file");
 		System.exit(-1);
 	}
 
@@ -113,7 +97,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	public static void main(String[] args) throws Throwable {
 
 		ap = new ArgumentParser(args);
-		Master.startGui = ap.hasOption("gui");
+		ap.hasOption("gui");
 				
 		Configuration.loadConfig();
 		

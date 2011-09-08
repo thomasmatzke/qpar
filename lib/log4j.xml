@@ -99,7 +99,7 @@
   </logger>
   
   <root>
-    <priority value="debug"></priority>
+    <priority value="info"></priority>
     <appender-ref ref="consoleAppender"/>
   </root>
 </log4j:configuration>

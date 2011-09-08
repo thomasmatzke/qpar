@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.logic.parser.Node;

@@ -8,12 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.common.rmi.InterpretationData;
 import qpar.common.rmi.SlaveRemote;
-import qpar.common.rmi.SolverRemote;
 import qpar.common.rmi.TQbfRemote;
 
 public class TQbf extends Observable implements TQbfRemote {

@@ -2,7 +2,6 @@ package qpar.slave.solver;
 
 import java.util.Set;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.common.Configuration;

@@ -11,8 +11,8 @@
 #newjob testing/counter_big/counter4_16-bin.qbf counter4_16-bin.qbf.txt.rand qpro rand 64 60
 #startjob 1
 
-newjob testing/counter_big/counter4_16-bin.qbf counter4_16-bin.qbf.txt.htest qpro htest 2 600
-startjob 1
+#newjob testing/counter_big/counter4_16-bin.qbf counter4_16-bin.qbf.txt.htest qpro htest 2 600
+#startjob 1
 
 # smallset
 #evaluate testing/boole 1 16 qpro 60
@@ -45,8 +45,9 @@ startjob 1
 
 #evaluate testing/dme_small 1 64 qpro 600
 #evaluate testing/dme_big 1 64 qpro 600
+
 #evaluate testing/dme_small_real 1 64 qpro 600
-#evaluate testing/dme_big_real 1 64 qpro 600
+evaluate testing/dme_big_real 1 64 qpro 600
 ######## official set #########
 
 # something broken todo

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.Job.State;

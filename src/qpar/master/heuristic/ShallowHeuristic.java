@@ -3,13 +3,10 @@ package qpar.master.heuristic;
 import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import qpar.common.Permuter;
-import qpar.master.DTNode;
 import qpar.master.Qbf;
 import qpar.master.logic.parser.Node;
 

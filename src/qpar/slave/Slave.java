@@ -9,11 +9,9 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 
 import org.apache.log4j.Logger;
 
@@ -23,8 +21,6 @@ import qpar.common.rmi.MasterRemote;
 import qpar.common.rmi.SlaveRemote;
 import qpar.common.rmi.TQbfRemote;
 import qpar.slave.solver.Solver;
-import qpar.slave.solver.SolverPluginFactory;
-
 import sun.misc.Signal;
 
 /**

@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-
 import org.apache.log4j.Logger;
 
 import qpar.master.logic.parser.Node;
