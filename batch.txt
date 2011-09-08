@@ -31,8 +31,7 @@
 
 #evaluate testing/ring_small 1 64 qpro 600
 #evaluate testing/ring_medium 1 64 qpro 600 # all timeout
-#evaluate testing/ring_big 1 64 qpro 600 # aborted due to medium all timeout
-#evaluate testing/ring_big 1 64 qpro 600
+#evaluate testing/ring_big 1 64 qpro 600 # all timeout
 
 #evaluate testing/counter_small 1 64 qpro 600
 #evaluate testing/counter_medium 1 64 qpro 600
@@ -50,18 +49,18 @@
 evaluate testing/dme_big_real 1 64 qpro 600
 ######## official set #########
 
-# something broken todo
+# big ones
 #evaluate testing/consistency_big 1 64 qpro 600
-#evaluate testing/consistency_bigger 1 64 qpro 60
+#evaluate testing/consistency_bigger 1 64 qpro 600
 
 # too big for 1 min timeout
-#evaluate testing/possibility_small 1 64 qpro 60
-#evaluate testing/possibility_medium 1 64 qpro 60
+#evaluate testing/possibility_small 1 64 qpro 600
+#evaluate testing/possibility_medium 1 64 qpro 600
 
 # too big for 1 min timeout
-#evaluate testing/assertion_small 1 64 qpro 60
-#evaluate testing/assertion_medium 1 64 qpro 60
-#evaluate testing/assertion_big 1 64 qpro 60
+#evaluate testing/assertion_small 1 64 qpro 600
+#evaluate testing/assertion_medium 1 64 qpro 600
+#evaluate testing/assertion_big 1 64 qpro 600
 
 ### sat/unsat
 #evaluate testing/ncf_sat 1 64 qpro 600
