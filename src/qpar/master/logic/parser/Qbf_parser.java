@@ -15,7 +15,8 @@ public class Qbf_parser implements/*@bgen(jjtree)*/ Qbf_parserTreeConstants,Seri
         private Vector<SimpleNode> nodesToExpand = new Vector<SimpleNode>();
         private HashMap<Integer, Integer> literalCount  = new HashMap<Integer, Integer>();
         private HashMap<String, Integer> varNames = new HashMap<String, Integer>();
-        private int nextVarInt = 2;
+        //private int nextVarInt = 2;
+        private int nextVarInt = 1;
         private SimpleNode root;
 
         public Qbf_parser() {

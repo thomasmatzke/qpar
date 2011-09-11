@@ -31,7 +31,6 @@
     </path>
     <path id="qpar.classpath">
         <pathelement location="bin"/>
-        <pathelement location="img"/>
     	<pathelement location="lib/commons-exec-1.1.jar"/>
         <pathelement location="lib/commons-io-1.4.jar"/>
         <pathelement location="lib/log4j-1.2.15.jar"/>
@@ -98,17 +97,10 @@
         <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
         <antcall target="build"/>
     </target>
-    <target name="master_gui">
-        <java classname="qpar.master.Master" failonerror="true" fork="yes">
-            <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m"/>
-            <arg line="-gui"/>
-            <classpath refid="qpar.classpath"/>
-        </java>
-    </target>
     <target name="master">
         <java classname="qpar.master.Master" failonerror="true" fork="yes">
             <jvmarg line="-Xss5m -ea -Xms64m -Xmx512m -Djava.rmi.server.useLocalHostname=true -Dcom.sun.management.jmxremote -Dlogfile=master"/>
-            <arg line="-i=batch.txt"/>
+            <arg line="-i batch.txt"/>
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
@@ -125,7 +117,7 @@
             <classpath refid="qpar.classpath"/>
         </java>
     </target>
-    <target name="qpar">
+    <target name="test">
         <mkdir dir="${junit.output.dir}"/>
         <junit fork="yes" printsummary="withOutAndErr">
             <formatter type="xml"/>

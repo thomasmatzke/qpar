@@ -1,4 +1,7 @@
-#newjob testing/counter_small/counter6_2-bin.qbf counter6_2-bin.qbf.txt qpro edgecount 64 60
+#newjob testing/counter_small/counter6_2-bin.qbf counter6_2-bin.qbf.txt qpro edgecount 16 60
+#startjob 1
+
+#newjob testing/consistency_big/consistency_0_3-bin.qbf consistency_0_3-bin.qbf.txt qpro simple 16 60
 #startjob 1
 
 #newjob testing/simple3.qbf simple3.qbf.txt qpro litcount 2 60
@@ -8,11 +11,14 @@
 #newjob testing/assertion_big/assertion7_0_3-bin.qbf testing/assertion7_0_3-bin.qbf.txt qpro litcount 128 5
 #startjob 1
 
-#newjob testing/counter_big/counter4_16-bin.qbf counter4_16-bin.qbf.txt.rand qpro rand 64 60
+#newjob testing/counter_big/counter4_16-bin.qbf counter4_16-bin.qbf.txt.rand qpro simple 2 60
 #startjob 1
 
 #newjob testing/counter_big/counter4_16-bin.qbf counter4_16-bin.qbf.txt.htest qpro htest 2 600
 #startjob 1
+
+newjob testing/possibility_small/possibility10_0_1-bin.qbf possibility10_0_1-bin.qbf.txt qpro simple 64 600
+startjob 1
 
 # smallset
 #evaluate testing/boole 1 16 qpro 60
@@ -46,14 +52,14 @@
 #evaluate testing/dme_big 1 64 qpro 600
 
 #evaluate testing/dme_small_real 1 64 qpro 600
-evaluate testing/dme_big_real 1 64 qpro 600
+#evaluate testing/dme_big_real 1 64 qpro 600
 ######## official set #########
 
-# big ones
+# too big for 10 min
 #evaluate testing/consistency_big 1 64 qpro 600
 #evaluate testing/consistency_bigger 1 64 qpro 600
 
-# too big for 1 min timeout
+#
 #evaluate testing/possibility_small 1 64 qpro 600
 #evaluate testing/possibility_medium 1 64 qpro 600
 

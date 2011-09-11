@@ -2,6 +2,7 @@ package qpar.master;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -29,13 +30,9 @@ public class Distributor {
 		}
 	}
 
-	public TQbf getWork() {
-//		logger.info("Taking workunit. queue size: " + this.queue.size());
+	public TQbf getWork() throws InterruptedException {
 		TQbf ret = null;
-		while(ret == null) {
-			try { ret = queue.take(); } catch (InterruptedException e) {}
-		}
-//		logger.info("took workunit");
+		ret = queue.poll(3, TimeUnit.SECONDS);
 		return ret;
 	}
 

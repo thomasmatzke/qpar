@@ -4,19 +4,25 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Serializable;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.rmi.AccessException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
 
-import qpar.common.ArgumentParser;
+import com.sun.org.apache.xalan.internal.xsltc.cmdline.getopt.GetOpt;
+
 import qpar.common.Configuration;
 import qpar.common.rmi.MasterRemote;
 import qpar.common.rmi.SlaveRemote;
@@ -34,8 +40,6 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 
 	private static final long serialVersionUID = -6189223346936131655L;
 
-	private static ArgumentParser ap;
-
 	static Logger logger = Logger.getLogger(Master.class);
 	
 	transient private Shell shell;
@@ -44,35 +48,59 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	public static ConcurrentHashMap<String, Boolean> resultCache = new ConcurrentHashMap<String, Boolean>();
 	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
 	private int cacheHits = 0, cacheMisses = 0;
+	private MulticastBeacon multicastBeacon;
 	
-	public Master() throws FileNotFoundException, RemoteException, NotBoundException {		
-				
+	public Master(String path) throws UnknownHostException, SocketException, RemoteException, FileNotFoundException {
+		initialize();
+		shell = new Shell(new BufferedReader(new FileReader(path)));
+		shell.run();
+		tearDown();
+	}
+	
+	public Master() throws RemoteException, NotBoundException, UnknownHostException, SocketException {		
+		initialize();
+		shell = new Shell();
+		shell.run();
+		tearDown();
+	}
+	
+	private void initialize() throws UnknownHostException, SocketException, RemoteException {
+		Configuration.loadConfig();
+		
+		multicastBeacon = new MulticastBeacon();
+		Master.globalThreadPool.execute(multicastBeacon);
+		
 		// Start the registry
-		try {
-			registry = LocateRegistry.createRegistry(1099);
-		} catch (RemoteException e) {
-			logger.fatal(e);
-			throw e;
-		}
+		registry = LocateRegistry.createRegistry(1099);
 		
 		// Start own interface
 		MasterRemote myInterface = this;
 		registry.rebind("Master", myInterface);
-		
-		if (ap.hasOption("i")) {
-			shell = new Shell(new BufferedReader(new FileReader(ap
-					.getOption("i"))));
-			shell.run();
-		} else if (ap.hasOption("h")) {
-			usage();
-		} else {
-			shell = new Shell();
-			shell.run();
-		}
-	
-		System.exit(0);
+		logger.info(String.format("Master initialized. Bound names in the registry: %s", Arrays.asList(registry.list())));
 	}
+	
 
+	public void tearDown() {
+		logger.info("Tearing down Master...");
+		Master.globalThreadPool.shutdownNow();
+		multicastBeacon.stop();		
+		try {
+			for(TQbf t : TQbf.tqbfs.values()) {
+				UnicastRemoteObject.unexportObject(t, true);
+			}
+			UnicastRemoteObject.unexportObject(this, true);
+			UnicastRemoteObject.unexportObject(registry,true);
+			registry.unbind("Master");
+		} catch (Exception e) {
+			logger.error("", e);
+		} 
+		try {
+			logger.info(String.format("Master shut down. Bound names in the registry: %s", Arrays.asList(registry.list())));
+		} catch (Exception e) {
+			logger.error("", e);
+		}
+	}
+	
 	private static void usage() {
 		System.out
 				.println("Arguments: \"-i=INPUTFILE\"       specifies a batch-file");
@@ -95,16 +123,22 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	}
 	
 	public static void main(String[] args) throws Throwable {
-
-		ap = new ArgumentParser(args);
-		ap.hasOption("gui");
-				
-		Configuration.loadConfig();
+		GetOpt go = new GetOpt(args, "i:");
 		
-		Master.globalThreadPool.execute(new MulticastBeacon());
 		try {
-			new Master();
+		
+			int c = go.getNextOption();
+			if(c == -1) {
+				new Master();
+			} else if(c == 'i') {
+				String arg = go.getOptionArg();
+				new Master(arg);
+			} else {
+				usage();
+			}
+
 		} catch (Throwable t) {
+			logger.fatal("", t);
 			Configuration.sendExceptionMail(t);
 			throw t;
 		}
@@ -127,8 +161,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote, Seriali
 	}
 
 	@Override
-	public TQbfRemote getWork() throws RemoteException {
-		logger.info("Returning work unit");
+	public TQbfRemote getWork() throws RemoteException, InterruptedException {
 		return Distributor.instance().getWork();
 	}
 	

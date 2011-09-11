@@ -1,7 +1,10 @@
 package qpar.slave.solver;
 
 import java.net.UnknownHostException;
+import java.rmi.NoSuchObjectException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -15,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import qpar.common.Configuration;
 import qpar.common.rmi.InterpretationData;
+import qpar.common.rmi.MasterRemote;
 import qpar.common.rmi.TQbfRemote;
 import qpar.master.TQbf;
 import qpar.slave.Slave;
@@ -35,6 +39,7 @@ public class Solver implements Runnable {
 	public static ConcurrentHashMap<String, Solver> solvers = new ConcurrentHashMap<String, Solver>();
 		
 	protected TQbfRemote tqbf;
+	protected MasterRemote master;
 	protected String tqbfId = null, jobId = null, solverId = null;
 	protected long timeout;
 	public Date overheadStartedAt = null;
@@ -50,13 +55,13 @@ public class Solver implements Runnable {
 	
 	Lock killLock = new ReentrantLock();
 	
-	public Solver(TQbfRemote tqbf) throws RemoteException, UnknownHostException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+	public Solver(TQbfRemote tqbf, MasterRemote master) throws RemoteException, UnknownHostException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+		this.master = master;
 		this.tqbf = tqbf;
 		this.tqbfId = tqbf.getId();
 		this.jobId = tqbf.getJobId();
 		this.timeout = tqbf.getTimeout();
 		this.solverId = tqbf.getSolverId();
-		tqbf.setSlave(Slave.instance());
 		this.plugin = SolverPluginFactory.getSolver(this.solverId);
 	}
 
@@ -92,7 +97,7 @@ public class Solver implements Runnable {
 				return;
 			}
 			if(Configuration.isResultCaching()) {
-				Boolean cached = Slave.getMaster().getCachedResult(reducedInterpretation.getTreeHash());
+				Boolean cached = master.getCachedResult(reducedInterpretation.getTreeHash());
 				if(cached != null) {
 					this.terminate(cached, 0, overheadStoppedAt.getTime() - overheadStartedAt.getTime());
 					return;
@@ -175,7 +180,7 @@ public class Solver implements Runnable {
 			this.tqbf.setSolverMillis(solverMillis);
 			this.tqbf.setOverheadMillis(overheadMillis);
 			if(Configuration.isResultCaching())
-				Slave.getMaster().cacheResult(reducedInterpretation.getTreeHash(), isSolvable);
+				master.cacheResult(reducedInterpretation.getTreeHash(), isSolvable);
 			this.tqbf.terminate(isSolvable);
 			logger.info("Returned result " + this.tqbfId + " " + isSolvable);
 		} catch (RemoteException e) {

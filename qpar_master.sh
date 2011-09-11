@@ -3,9 +3,9 @@
 if [ "$1" = "--help" -o "$1" = "-h" ]; then
 	echo ""
 	echo "Usage:"
-	echo "qpar_master.sh [-gui] [-i=BATCHFILE] [-log={debugg|info}] "
+	echo "qpar_master.sh [-i=BATCHFILE]"
 	echo ""
 	exit
 fi
-
-java -classpath bin:lib/activemq-all-5.2.0.jar:lib/commons-io-1.4.jar:img:lib/log4j-1.2.15.jar main.java.master.MasterDaemon -Xss=1024m $*
+echo $*
+java -classpath bin:lib/commons-io-1.4.jar:lib/log4j-1.2.15.jar:lib/commons-exec-1.1.jar:lib/mail.jar:lib/commons-lang3-3.0-beta.jar -Xss5m -Xms64m -Xmx512m -Djava.rmi.server.useLocalHostname=true -Dlogfile=master qpar.master.Master $*

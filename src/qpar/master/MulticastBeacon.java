@@ -70,4 +70,8 @@ public class MulticastBeacon implements Runnable {
 		return null;
 	}
 	
+	public void finalize() {
+		socket.close();
+	}
+	
 }

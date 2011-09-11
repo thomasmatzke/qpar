@@ -14,24 +14,9 @@ Quickstart:
 1.	Master Setup
 Choose a control-host, which is reachable from all slave-hosts
 
-1.1	Edit a batch-file, like below
+1.1	Edit a batch-file, like "batch.txt"
 
--- my_batch_file.txt
-waitforslave 2 qpro
-newjob PATH_TO_YOUR_QBF PATH_TO_RESULT_SUMMARY qpro {simple|rand|litcount} max_cores
-startjob 1
-waitforresult 1
-killallslaves
-quit
---
-
-This will tell the master daemon to
-- Wait until 2 cores come available which provide the qpro solver
-- Create a new job with parameters. You have to choose a heuristic (simple, etc)
-- Start the job created above. Ids start at 1, and are incremented by 1
-- Wait until we have a result for the job with Id 1
-- Shutdown all registered remote slave hosts (the daemons not the machines)
-- Shutdown the master daemon
+1.2 
 
 1.2 Start the master daemon
 ./qpar_master.sh -i=PATH_TO_MY_BATCH_FILE [-log={debug|info}]

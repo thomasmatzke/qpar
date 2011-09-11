@@ -27,7 +27,13 @@ public class QProPlugin implements SolverPlugin {
 	Executor executor = new DefaultExecutor();
 	
 	Boolean returnValue = null;
-	Exception errorValue = null; 
+	Exception errorValue = null;
+
+
+	private QproRepresentation qproRepresentation;
+
+
+	private String qproInputString; 
 	
 	@Override
 	public void initialize(ReducedInterpretation ri) throws Exception {
@@ -54,11 +60,13 @@ public class QProPlugin implements SolverPlugin {
 			executor.setWatchdog(watchdog);
 			CommandLine command = new CommandLine("qpro");
 			DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
-			QproRepresentation qproInput = new QproRepresentation(ri);
-			ByteArrayInputStream inputStream = new ByteArrayInputStream(qproInput.getQproRepresentation().getBytes("ISO-8859-1"));
+			//ri.getInterpretation().dump("++");
+			qproRepresentation = new QproRepresentation(ri);
+			qproInputString = qproRepresentation.getQproRepresentation();
+			ByteArrayInputStream inputStream = new ByteArrayInputStream(qproInputString.getBytes("ISO-8859-1"));
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			executor.setStreamHandler(new PumpStreamHandler(output, null, inputStream));
-			logger.debug("QPROINPUT: \n" + qproInput.getQproRepresentation());
+			//logger.debug("QPROINPUT: \n" + qproRepresentation.getQproRepresentation());
 			
 			killLock.lock();
 			if(killed) {
@@ -113,7 +121,7 @@ public class QProPlugin implements SolverPlugin {
 			} else if (output.startsWith("0")) {
 				return false;
 			} else {
-				logger.error(output);
+				logger.error(String.format("Qpro returned no result. Treating as error. \nString returned: %s \nQPro input: %s", output, qproInputString));
 				throw new Exception(output);
 			}
 		} finally {

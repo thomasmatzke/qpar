@@ -27,7 +27,7 @@ public class PingTimer extends TimerTask {
 		// the master died. then try to reconnect
 		
 		try {
-			Slave.getMaster().ping();
+			slave.getMaster().ping();
 		} catch (RemoteException e) {
 			if(slave.connected){
 				logger.error("Ping to master failed");

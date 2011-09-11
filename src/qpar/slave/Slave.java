@@ -15,7 +15,8 @@ import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
 
-import qpar.common.ArgumentParser;
+import com.sun.org.apache.xalan.internal.xsltc.cmdline.getopt.GetOpt;
+
 import qpar.common.Configuration;
 import qpar.common.rmi.MasterRemote;
 import qpar.common.rmi.SlaveRemote;
@@ -29,43 +30,37 @@ import sun.misc.Signal;
  * @author thomasm
  * 
  */
-public final class Slave extends UnicastRemoteObject implements SlaveRemote, Runnable {
-	public static ArrayList<String> availableSolvers = new ArrayList<String>();
-	public static ExecutorService globalThreadPool = Executors.newCachedThreadPool();
+public final class Slave extends UnicastRemoteObject implements SlaveRemote {
+	private static final long serialVersionUID = -7927545942720427850L;
+	
+	public ArrayList<String> availableSolvers = new ArrayList<String>();
+	public ExecutorService globalThreadPool = Executors.newCachedThreadPool();
 
 	public static String hostname = null;
 	static Logger logger = Logger.getLogger(Slave.class);
 
-	private static MasterRemote master = null;
-	private static Slave instance;
-	private static final long serialVersionUID = -7927545942720427850L;
+	private MasterRemote master = null;
+	
 
 	private boolean run = true;
 	public boolean connected = false;
 
-	public static String masterIp;
+	private String masterRmiString;
 
-	public String masterName = null;
+	private PingTimer pingTimer;
 	
-	private Slave() throws InterruptedException, RemoteException, UnknownHostException {
+	
+	public Slave() throws UnknownHostException, IOException, InterruptedException {
+		BeaconListener bl = new BeaconListener();
+		new Slave(bl.getMasterAddress());
+	}
+	
+	public Slave(String masterHost) throws RemoteException, UnknownHostException {
 		logger.info("Starting Slave...");
+		
+		Configuration.loadConfig();
 
-		if (masterIp == null) {
-			// so no ip was set...listen for the beacon...
-			try {
-				globalThreadPool.execute(new BeaconListener(this));
-				// Wait til we found a signal
-				synchronized (this) {
-					wait();
-				}
-			} catch (UnknownHostException e) {
-				logger.error("Unknown host", e);
-			} catch (IOException e) {
-				logger.error("Cant start beaconlistener", e);
-			}
-		}
-
-		this.masterName = "rmi://" + this.masterIp + ":1099/Master";
+		this.masterRmiString = "rmi://" + masterHost + ":1099/Master";
 
 		try {
 			Slave.hostname = InetAddress.getLocalHost().getHostName();
@@ -73,8 +68,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Run
 			logger.fatal("Cant get hostname", e1);
 			throw e1;
 		}
-
-		Configuration.loadConfig();
 
 		MySignalHandler handler = new MySignalHandler(this);
 		Signal.handle(new Signal("INT"), handler);
@@ -85,26 +78,58 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Run
 
 		connect();
 
-		new PingTimer(10, this);
-
-	}
-	
-	synchronized public static Slave instance() throws UnknownHostException {
-		if(instance == null) {
+		pingTimer = new PingTimer(10, this);
+		
+		BoundedExecutor bex = new BoundedExecutor(Solver.solverThreadPool, Configuration.getAvailableProcessors());
+		
+		while (this.run) {
+				TQbfRemote tqbf = null;
+				try {
+					tqbf = this.getMaster().getWork();
+				} catch (InterruptedException e1) {}
+				if(tqbf == null) {
+					if(!this.run)
+						break;
+					else
+						continue;
+				}
 			try {
-				instance = new Slave();
-			} catch (RemoteException e) {
+				tqbf.setSlave(this);
+				Solver solver = new Solver(tqbf, this.getMaster());
+				bex.submitTask(solver);
+			} catch (Exception e) {
 				logger.error("", e);
-				throw new RuntimeException();
-			} catch (InterruptedException e) {}
+				this.run = false;
+			}
 		}
 		
-		return instance;
+		this.pingTimer.cancel();
+		this.killAllThreads();
+
+		UnicastRemoteObject.unexportObject(this, true);
+		
+		master = null;
+		globalThreadPool.shutdownNow();
+		logger.info("Slave thread shut down.");
+		System.exit(0); // TODO: try to eliminate system.exit() by killing all rmi exports
 	}
 	
+//	synchronized public static Slave instance() throws UnknownHostException {
+//		if(instance == null) {
+//			try {
+//				instance = new Slave();
+//			} catch (RemoteException e) {
+//				logger.error("", e);
+//				throw new RuntimeException();
+//			} catch (InterruptedException e) {}
+//		}
+//		
+//		return instance;
+//	}
 	
 	
-	public static MasterRemote getMaster() {
+	
+	public MasterRemote getMaster() {
 		return master;
 	}
 	
@@ -114,33 +139,14 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Run
 	 * 
 	 * @param args
 	 * @throws InterruptedException
-	 * @throws UnknownHostException 
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) throws InterruptedException, RemoteException, UnknownHostException {
-
-		Configuration.loadConfig();
-
-		ArgumentParser ap = new ArgumentParser(args);
-
-		String solversString = ap.getOption("solvers");
-		if (solversString != null) {
-			Scanner s = new Scanner(solversString).useDelimiter(",");
-			while (s.hasNext()) {
-				String cur = s.next();
-				availableSolvers.add(cur);
-			}
-		} else {
-			availableSolvers.add("qpro");
-		}
-
-		Slave.masterIp = ap.nextParam();
-		
-		globalThreadPool.execute(Slave.instance());
-
-	}
-
-	synchronized public static void setMaster(MasterRemote master) {
-		Slave.master = master;
+	public static void main(String[] args) throws InterruptedException, IOException {
+		GetOpt go = new GetOpt(args, "");
+		if(go.getCmdArgs().length > 0)
+			new Slave(go.getCmdArgs()[0]);
+		else
+			new Slave();
 	}
 
 	public static void shutdownHost() {
@@ -196,8 +202,8 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Run
 
 		while (!connected) {
 			try {
-				logger.info("Looking up " + masterName + "...");
-				setMaster((MasterRemote) Naming.lookup(masterName));
+				logger.info("Looking up " + masterRmiString + "...");
+				this.master = (MasterRemote) Naming.lookup(masterRmiString);
 				logger.info("Registering with Master...");
 				getMaster().registerSlave(this);
 				connected = true;
@@ -237,15 +243,19 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Run
 	@Override
 	public void kill(String reason) throws RemoteException {
 		logger.info("Killing slave...");
-		this.killAllThreads();
-
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
-				System.exit(0);
-			}
-		};
-		globalThreadPool.execute(r);
+			
+		this.run = false;
+		
+		
+		//UnicastRemoteObject.unexportObject(this, true);
+				
+//		Runnable r = new Runnable() {
+//			@Override
+//			public void run() {
+//				System.exit(0);
+//			}
+//		};
+//		globalThreadPool.execute(r);
 	}
 
 	public void killAllThreads() {
@@ -286,22 +296,5 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote, Run
 		return Solver.solvers.size();
 	}
 
-	@Override
-	public void run() {
-		BoundedExecutor bex = new BoundedExecutor(Solver.solverThreadPool, Configuration.getAvailableProcessors());
-		
-		while (this.run) {
-			try {
-//				logger.info("Requesting workunit from master...");
-				TQbfRemote tqbf = Slave.getMaster().getWork();			
-				Solver solver = new Solver(tqbf);
-//				Solver.solverThreadPool.execute(solver);
-				bex.submitTask(solver);
-			} catch (Exception e) {
-				logger.error("", e);
-				this.run = false;
-			}
-		}
-	}
 
 }

@@ -43,22 +43,25 @@ public class Shell implements Runnable, Observer{
 	}
 
 	public void run() {	
+		try {
 		String line = "";
-		while(run) {
-			try {
-				put(prompt);
-				line = read();
-				if(prompt.equals(""))
-					puts(line);
-				if(line == null)
-					return;
-				if(line.length() < 1) continue;
-				if(line.startsWith("#")) continue;
-				parseLine(line);
-			} catch(Throwable t) {
-				logger.error("", t);
-				Configuration.sendExceptionMail(t);
-			}	
+			while(run) {
+				
+					put(prompt);
+					line = read();
+					if(prompt.equals(""))
+						puts(line);
+					if(line == null)
+						return;
+					if(line.length() < 1) continue;
+					if(line.startsWith("#")) continue;
+					parseLine(line);
+					
+			}
+			in.close();
+		} catch(Throwable t) {
+			logger.error("", t);
+			Configuration.sendExceptionMail(t);
 		}
 		
 	}

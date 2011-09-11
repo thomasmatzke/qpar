@@ -22,7 +22,7 @@ public class QproRepresentation {
 	public String getQproRepresentation() {
 		StringBuffer buf = new StringBuffer();
 		
-		buf.append("QBF\n" + (Collections.max(root.getVariableSet())) + "\n");
+		buf.append("QBF\n" + ((Collections.max(root.getVariableSet()))+1) + "\n");
 				
 		if(root.isStartNode()) {
 			buf.append(traverse((SimpleNode)root.children[0]));
@@ -44,18 +44,19 @@ public class QproRepresentation {
 		SimpleNode parent = (SimpleNode) n.jjtGetParent();
 		
 		if (n.isExistsNode()) {
+			assert(n.jjtGetNumChildren() == 1);
 			
 			if(!parent.isForallNode())
 				traversedTree.append("q\n");
 			traversedTree.append("e ");
 
 			// add the first var
-			traversedTree.append(n.var + " ");
+			traversedTree.append((n.var+1) + " ");
 			
 			tmpNode = (SimpleNode)n.jjtGetChild(0);
 
 			while (tmpNode.isExistsNode()) {
-				traversedTree.append(tmpNode.getVar() + " ");
+				traversedTree.append((tmpNode.getVar()+1) + " ");
 				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
 			}
 			traversedTree.append("\n");
@@ -66,26 +67,32 @@ public class QproRepresentation {
 		}	
 			
 		if (n.isForallNode()) {	
+			assert(n.jjtGetNumChildren() == 1);
+			
 			if(!parent.isExistsNode())
 				traversedTree.append("q\n");
 			traversedTree.append("a ");
 
 			// add the first var
-			traversedTree.append(n.var + " ");
+			traversedTree.append((n.var+1) + " ");
 			
 			tmpNode = (SimpleNode)n.jjtGetChild(0);
 
-			while (tmpNode.getNodeType() == NodeType.FORALL) {
-				traversedTree.append(tmpNode.getVar() + " ");
+			while (tmpNode.isForallNode()) {
+				traversedTree.append((tmpNode.getVar()+1) + " ");
 				tmpNode = (SimpleNode)tmpNode.jjtGetChild(0);
 			}
 			traversedTree.append("\n");
 			traversedTree.append(traverse(tmpNode));
-			if(!parent.isQuantifierNode())
+//			if(!parent.isQuantifierNode())
+//				traversedTree.append("/q\n");
+			if (!((SimpleNode)n.jjtGetParent()).isQuantifierNode())
 				traversedTree.append("/q\n");
 		}	
 			
 		if (n.isAndNode()) {
+			assert(n.jjtGetNumChildren() == 2);
+			
 			/*
 			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
 			 *    traversedTree += "\n";
@@ -95,11 +102,11 @@ public class QproRepresentation {
 			negLiterals = (n.getNegativeLiterals(NodeType.AND, negLiterals));
 
 			for (int var : posLiterals)
-				traversedTree.append(" " + var);
+				traversedTree.append(" " + (var+1));
 			traversedTree.append(" \n");
 
 			for (int var : negLiterals)
-				traversedTree.append(" " + var);
+				traversedTree.append(" " + (var+1));
 			traversedTree.append(" \n");
 
 			traversedTree.append(getEnclosedFormula((SimpleNode)n, NodeType.OR));
@@ -108,6 +115,7 @@ public class QproRepresentation {
 		}
 
 		if (n.isOrNode()) {
+			assert(n.jjtGetNumChildren() == 2);
 			/*
 			 *if ((jjtGetParent().getNodeType() == NodeType.FORALL) || (jjtGetParent().getNodeType() == NodeType.EXISTS))
 			 *    traversedTree += "\n";
@@ -117,11 +125,11 @@ public class QproRepresentation {
 			negLiterals = (n.getNegativeLiterals(NodeType.OR, negLiterals));
 
 			for (int var : posLiterals)
-				traversedTree.append(" " + var);
+				traversedTree.append(" " + (var+1));
 			traversedTree.append(" \n");
 
 			for (int var : negLiterals)
-				traversedTree.append(" " + var);
+				traversedTree.append(" " + (var+1));
 			traversedTree.append(" \n");
 
 			traversedTree.append(getEnclosedFormula((SimpleNode)n, NodeType.AND));
