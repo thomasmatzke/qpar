@@ -136,6 +136,14 @@ public class QproRepresentation {
 
 			traversedTree.append("/d\n");
 		}
+		
+		if(n.isVarNode()) {
+			traversedTree.append(String.format("c\n%s\n\n/c\n", n.getNodeVariable()+1));
+		}
+		
+		if(n.isNotNode() && ((SimpleNode)n.jjtGetChild(0)).isVarNode()) {
+			traversedTree.append(String.format("c\n\n%s\n/c\n", n.getNodeVariable()+1));
+		}
 
 		return traversedTree.toString();
 	}

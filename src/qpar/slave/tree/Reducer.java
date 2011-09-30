@@ -32,9 +32,14 @@ public class Reducer {
 			
 			SimpleNode current = (SimpleNode) node;
 			SimpleNode newNode = null;
-			
+						
 			do {
 				logger.debug("Reducing node " + current +" with children " + Arrays.toString(current.children));
+				
+				
+//				if(((SimpleNode)current).isVarNode() && ((SimpleNode)current).getNodeVariable() == 1127)
+//					current.jjtGetParent().dump(Thread.currentThread().getName());
+				
 				if(current.jjtGetNumChildren() == 2){
 					assert((SimpleNode)current.jjtGetChild(0) != null);
 					assert((SimpleNode)current.jjtGetChild(1) != null);
@@ -47,7 +52,7 @@ public class Reducer {
 					newNode = evaluate(current, (SimpleNode)current.jjtGetChild(0), null);
 				} else
 					throw new RuntimeException("Node must have 1 or 2 children. Has: " + current.jjtGetNumChildren());
-				
+								
 				newNode.jjtSetParent(current.jjtGetParent());
 				for(int i = 0; i < current.jjtGetParent().jjtGetNumChildren(); i++) {
 					if(current.jjtGetParent().jjtGetChild(i) == current) {
@@ -55,6 +60,10 @@ public class Reducer {
 					}
 				}
 				logger.debug("Reduced to: " + newNode);
+				
+//				if(((SimpleNode)current.jjtGetParent()).isExistsNode() && ((SimpleNode)current.jjtGetParent()).getNodeVariable() == 1127)
+//					current.jjtGetParent().dump(Thread.currentThread().getName());
+				
 				current = (SimpleNode) newNode.jjtGetParent();
 			} while(newNode.isTruthNode() && !current.isStartNode());
 			
@@ -86,60 +95,60 @@ public class Reducer {
 	 * makes and cuts the neccessary connections (parent, children, etc)
 	 * @return further reducable node or else null
 	 */
-	public SimpleNode reduceNode(SimpleNode node) {
-		// No need to reduce if we are disconnected from root
-		// TODO: possible to eliminate this check?
-		if(!node.checkConnectionToRoot()) {
-//			logger.info("Disconnected from root");
-			return null;
-		}
-		logger.debug("Reducing node " + node +" with children " + Arrays.toString(node.children));
-		SimpleNode newNode = null;
-		if(node.jjtGetNumChildren() == 2)
-			newNode = evaluate(node, (SimpleNode)node.jjtGetChild(0), (SimpleNode)node.jjtGetChild(1));
-		else if(node.jjtGetNumChildren() == 1)
-			newNode = evaluate(node, (SimpleNode)node.jjtGetChild(0), null);
-		else
-			throw new RuntimeException("Node must have 1 or 2 children. Has: " + node.jjtGetNumChildren());
-		
-		SimpleNode parentNode = (SimpleNode) node.jjtGetParent();
-		
-		// Connect parent with new node
-		newNode.jjtSetParent(parentNode);
-		ArrayList<Node> newParentChildren = new ArrayList<Node>();
-		for(Node n : parentNode.children) {
-			if(n != node)
-				newParentChildren.add(n);
-		}
-		newParentChildren.add(newNode);
-		parentNode.children = newParentChildren.toArray(new SimpleNode[newParentChildren.size()]);
-		
-		
-		logger.debug("Reduced to: " + newNode);
-		
-//		if(node.isQuantifierNode() && node.getNodeVariable() == 908){
-//			node.jjtGetParent().dump("**");
+//	public SimpleNode reduceNode(SimpleNode node) {
+//		// No need to reduce if we are disconnected from root
+//		// TODO: possible to eliminate this check?
+//		if(!node.checkConnectionToRoot()) {
+////			logger.info("Disconnected from root");
+//			return null;
 //		}
-		
-		// Disconnect ourself from parent node
-		node.jjtSetParent(null);
-		
-		if(newNode.isTruthNode())
-			assert(newNode.children == null);
-		
-		
-		// if the new node is a truth node, return its parent for further reducing
-		if(newNode.isTruthNode())
-			return (SimpleNode) newNode.jjtGetParent();
-		
-		if(newNode.isQuantifierNode() || newNode.isNotNode())
-			assert(newNode.children.length == 1);
-		if(newNode.isAndNode() || newNode.isOrNode())
-			assert(newNode.children.length == 2);
-		if(newNode.isVarNode())
-			assert(newNode.children == null);
-		return null;
-	}
+//		logger.debug("Reducing node " + node +" with children " + Arrays.toString(node.children));
+//		SimpleNode newNode = null;
+//		if(node.jjtGetNumChildren() == 2)
+//			newNode = evaluate(node, (SimpleNode)node.jjtGetChild(0), (SimpleNode)node.jjtGetChild(1));
+//		else if(node.jjtGetNumChildren() == 1)
+//			newNode = evaluate(node, (SimpleNode)node.jjtGetChild(0), null);
+//		else
+//			throw new RuntimeException("Node must have 1 or 2 children. Has: " + node.jjtGetNumChildren());
+//		
+//		SimpleNode parentNode = (SimpleNode) node.jjtGetParent();
+//		
+//		// Connect parent with new node
+//		newNode.jjtSetParent(parentNode);
+//		ArrayList<Node> newParentChildren = new ArrayList<Node>();
+//		for(Node n : parentNode.children) {
+//			if(n != node)
+//				newParentChildren.add(n);
+//		}
+//		newParentChildren.add(newNode);
+//		parentNode.children = newParentChildren.toArray(new SimpleNode[newParentChildren.size()]);
+//		
+//		
+//		logger.debug("Reduced to: " + newNode);
+//		
+////		if(node.isQuantifierNode() && node.getNodeVariable() == 908){
+////			node.jjtGetParent().dump("**");
+////		}
+//		
+//		// Disconnect ourself from parent node
+//		node.jjtSetParent(null);
+//		
+//		if(newNode.isTruthNode())
+//			assert(newNode.children == null);
+//		
+//		
+//		// if the new node is a truth node, return its parent for further reducing
+//		if(newNode.isTruthNode())
+//			return (SimpleNode) newNode.jjtGetParent();
+//		
+//		if(newNode.isQuantifierNode() || newNode.isNotNode())
+//			assert(newNode.children.length == 1);
+//		if(newNode.isAndNode() || newNode.isOrNode())
+//			assert(newNode.children.length == 2);
+//		if(newNode.isVarNode())
+//			assert(newNode.children == null);
+//		return null;
+//	}
 	
 	/** 
 	 * Gets the new node resulting from boolean resolution
@@ -190,25 +199,32 @@ public class Reducer {
 				//logger.debug(String.format("parent: %s, left: %s, right: %s", parent.getNodeType(), left.getNodeType(), right.getNodeType()));
 				if(left.isTruthNode())
 					return evaluate(parent, right, left);
-				if(right.getTruth())
-					return left;
-				newNode.setTruthValue(false);
+				if(right.getTruth()){
+					newNode = left;
+				} else {
+					newNode.setTruthValue(false);
+				}				
 				break;
 			case OR:
+				assert(parent.isOrNode());
 				if(left.isTruthNode())
 					return evaluate(parent, right, left);
-				if(!right.getTruth())
-					return left;
-				newNode.setTruthValue(true);
+				if(!right.getTruth()) {
+					newNode = left;
+				} else {
+					newNode.setTruthValue(true);
+				}				
 				break;
 			case VAR:
 			case FALSE:
 			case TRUE:
+				throw new IllegalStateException();
 			default:
 				throw new IllegalStateException();
 		}
 		
 		assert(newNode != null);
+		
 		return newNode;
 		
 	}

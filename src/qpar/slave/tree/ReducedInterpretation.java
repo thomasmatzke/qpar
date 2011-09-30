@@ -31,30 +31,30 @@ public class ReducedInterpretation {
 		}
 		
 		
-TreeStatistic preStat = new TreeStatistic(this.root);
+//TreeStatistic preStat = new TreeStatistic(this.root);
 		
 		Reducer r = new Reducer(reducableNodes);
 		r.reduce();
 		
-TreeStatistic postStat = new TreeStatistic(this.root);
+//TreeStatistic postStat = new TreeStatistic(this.root);
+//		
+//int deltaAnd = postStat.getNumAnd() - preStat.getNumAnd();
+//int deltaOr = postStat.getNumOr() - preStat.getNumOr();
+//int deltaTrue = postStat.getNumTrue() - preStat.getNumTrue();
+//int deltaFalse = postStat.getNumFalse() - preStat.getNumFalse();
+//int deltaForall = postStat.getNumForall() - preStat.getNumForall();
+//int deltaExists = postStat.getNumExists() - preStat.getNumExists();
+//int deltaVar = postStat.getNumVar() - preStat.getNumVar();
+//int deltaNot = postStat.getNumNot() - preStat.getNumNot();
 		
-int deltaAnd = postStat.getNumAnd() - preStat.getNumAnd();
-int deltaOr = postStat.getNumOr() - preStat.getNumOr();
-int deltaTrue = postStat.getNumTrue() - preStat.getNumTrue();
-int deltaFalse = postStat.getNumFalse() - preStat.getNumFalse();
-int deltaForall = postStat.getNumForall() - preStat.getNumForall();
-int deltaExists = postStat.getNumExists() - preStat.getNumExists();
-int deltaVar = postStat.getNumVar() - preStat.getNumVar();
-int deltaNot = postStat.getNumNot() - preStat.getNumNot();
-		
-logger.debug("Reduce Statistic: DeltaAnd: " + deltaAnd + 
-		", DeltaOr: " + deltaOr +
-		", DeltaTrue: " + deltaTrue + 
-		", DeltaFalse: " + deltaFalse + 
-		", DeltaNot: " + deltaNot + 
-		", DeltaForall: " + deltaForall + 
-		", DeltaExists: " + deltaExists + 
-		", DeltaVar: " + deltaVar);
+//logger.debug("Reduce Statistic: DeltaAnd: " + deltaAnd + 
+//		", DeltaOr: " + deltaOr +
+//		", DeltaTrue: " + deltaTrue + 
+//		", DeltaFalse: " + deltaFalse + 
+//		", DeltaNot: " + deltaNot + 
+//		", DeltaForall: " + deltaForall + 
+//		", DeltaExists: " + deltaExists + 
+//		", DeltaVar: " + deltaVar);
 		
 		OrphanRemover ov = new OrphanRemover(this.root);
 		ov.removeOrphans();

@@ -47,9 +47,7 @@ public class Qbf {
 		// parse the formula, get various vectors of vars
 		try {
 			Qbf_parser parser = new Qbf_parser(new FileInputStream(filename));
-					
 			parser.ReInit(new FileInputStream(filename), null);
-	
 			logger.debug("Begin parsing...");
 			parser.Input();	
 			logger.debug("Succesful parse");
@@ -57,13 +55,10 @@ public class Qbf {
 			this.eVars = parser.getEVars();
 			this.aVars = parser.getAVars();
 			this.vars = parser.getVars();
-
 			root = parser.getRootNode();
 
 			//root.dump("> ");
-
 			parser.doPostprocessing();
-			
 			logger.debug("postprocessing...");
 			// root.dump("> ");
 			
@@ -85,13 +80,13 @@ public class Qbf {
 		logger.debug("All variables: " + vars);
 		logger.debug("Number of all v.: " + vars.size());
 		logger.debug("Finished parsing QBF from " + filename + ", Took: " + (end-start)/1000 + " seconds.");
-		
 		logger.debug("Generating dependency graph...");
 		start = System.currentTimeMillis();
 		dependencyGraphRoot = this.root.dependencyTree()[0];
 		end = System.currentTimeMillis();
 		logger.debug("Dependency graph generated. Took " + (end-start)/1000 + " seconds.");
-		logger.debug("Dependency Tree: \n" + dependencyGraphRoot.dump());
+		// This hampers performance severely!! only use if debugging
+		//logger.debug("Dependency Tree: \n" + dependencyGraphRoot.dump());
 	}
 
 //	synchronized private static int getUniqueId() {

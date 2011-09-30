@@ -66,7 +66,6 @@ public class Job extends Observable implements Observer {
 		this.setSolver(solverId);
 		this.setState(State.READY);
 		this.heuristic = h;
-		
 		try {
 			this.formula = new Qbf(inputFileString);
 		} catch (Exception e) {
@@ -74,7 +73,6 @@ public class Job extends Observable implements Observer {
 			this.setState(State.ERROR);
 			return;
 		}
-	
 		try {
 			// We only want to serialize the tree once
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -90,7 +88,6 @@ public class Job extends Observable implements Observer {
 			this.setState(State.ERROR);
 			return;
 		}	
-		
 		for (TQbf tqbf : subformulas) {
 			tqbf.addObserver(this);
 		}
@@ -251,7 +248,7 @@ public class Job extends Observable implements Observer {
 		assert (tqbfs.size() == usedCores);
 		long end = System.currentTimeMillis();
 		logger.debug("Formula splitted. Took " + (end - start) / 1000 + " seconds.");
-		logger.debug("\n" + decisionRoot.dump());
+//		logger.debug("\n" + decisionRoot.dump());
 		return tqbfs;
 	}
 

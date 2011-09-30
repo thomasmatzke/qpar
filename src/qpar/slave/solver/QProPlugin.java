@@ -15,6 +15,7 @@ import org.apache.log4j.Logger;
 
 import qpar.slave.tree.QproRepresentation;
 import qpar.slave.tree.ReducedInterpretation;
+import qpar.slave.tree.SimpleQProRepresentation;
 
 public class QProPlugin implements SolverPlugin {
 	static Logger logger = Logger.getLogger(QProPlugin.class);
@@ -60,10 +61,17 @@ public class QProPlugin implements SolverPlugin {
 			executor.setWatchdog(watchdog);
 			CommandLine command = new CommandLine("qpro");
 			DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
-			//ri.getInterpretation().dump("++");
+			
 			qproRepresentation = new QproRepresentation(ri);
 			qproInputString = qproRepresentation.getQproRepresentation();
 			ByteArrayInputStream inputStream = new ByteArrayInputStream(qproInputString.getBytes("ISO-8859-1"));
+			
+			//////
+//			SimpleQProRepresentation sqr = new SimpleQProRepresentation(ri);
+//			qproInputString = sqr.getQproRepresentation();
+//			ByteArrayInputStream inputStream = new ByteArrayInputStream(qproInputString.getBytes("ISO-8859-1"));
+			//////
+			
 			ByteArrayOutputStream output = new ByteArrayOutputStream();
 			executor.setStreamHandler(new PumpStreamHandler(output, null, inputStream));
 			//logger.debug("QPROINPUT: \n" + qproRepresentation.getQproRepresentation());
@@ -89,6 +97,7 @@ public class QProPlugin implements SolverPlugin {
 			returnValue = interpretQproOutput(output.toString("ISO-8859-1"));
 			
 		} catch (Exception e) {
+			ri.getInterpretation().dump("++");
 			errorValue = e;
 		} finally {
 			synchronized(this) {
