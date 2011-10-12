@@ -30,7 +30,7 @@ public class TQbf extends Observable implements TQbfRemote {
 
 	private String solverId = null;
 
-	private State state = State.NEW;
+	private volatile State state = State.NEW;
 	
 	private long timeout;
 	
@@ -170,35 +170,35 @@ public class TQbf extends Observable implements TQbfRemote {
 		return id;
 	}
 
-	public boolean isAborted() {
+	synchronized public boolean isAborted() {
 		return this.state == State.ABORTED ? true : false;
 	}
 
-	public boolean isComputing() {
+	synchronized public boolean isComputing() {
 		return this.state == State.COMPUTING ? true : false;
 	}
 
-	public boolean isDontstart() {
+	synchronized public boolean isDontstart() {
 		return this.state == State.DONTSTART ? true : false;
 	}
 
-	public boolean isError() {
+	synchronized public boolean isError() {
 		return this.state == State.ERROR ? true : false;
 	}
 
-	public boolean isMerged() {
+	synchronized public boolean isMerged() {
 		return this.state == State.MERGED ? true : false;
 	}
 
-	public boolean isNew() {
+	synchronized public boolean isNew() {
 		return this.state == State.NEW ? true : false;
 	}
 
-	public boolean isTerminated() {
+	synchronized public boolean isTerminated() {
 		return this.state == State.TERMINATED ? true : false;
 	}
 
-	public boolean isTimeout() {
+	synchronized public boolean isTimeout() {
 		return this.state == State.TIMEOUT ? true : false;
 	}
 	
@@ -207,7 +207,7 @@ public class TQbf extends Observable implements TQbfRemote {
 	}
 		
 	synchronized public void setMerged() {
-		if(!this.getState().equals(State.TERMINATED))
+		if(!this.isTerminated())
 			throw new IllegalStateException("Cant merge a non TERMINATED tqbf. State was: " + this.getState());
 		this.setState(State.MERGED);
 	}
@@ -239,7 +239,7 @@ public class TQbf extends Observable implements TQbfRemote {
 			}
 		});	
         
-        notifyAll();
+        //notifyAll();
 	}
 
 	public void setTimeout(long timeout) {
@@ -263,7 +263,7 @@ public class TQbf extends Observable implements TQbfRemote {
 	
 	@Override
 	synchronized public void terminate(boolean isSolvable) {
-		if(this.getState().equals(State.ABORTED))
+		if(!this.isComputing())
 			return;
 		this.setResult(isSolvable);
 		this.setState(State.TERMINATED);

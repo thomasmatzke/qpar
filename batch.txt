@@ -20,8 +20,11 @@
 #newjob testing/possibility_small/possibility10_0_1-bin.qbf possibility10_0_1-bin.qbf.txt qpro simple 64 600
 #startjob 1
 
+# Cirqit
+evaluate testing/boole 1 4 cirqit 20
+
 # smallset
-#evaluate testing/boole 1 16 qpro 60
+#evaluate testing/boole 1 4 qpro 20
 #evaluate testing/semaphore_small 1 16 qpro 60
 #evaluate testing/ring_small 1 16 qpro 60
 #evaluate testing/counter_small 1 16 qpro 60
@@ -56,15 +59,15 @@
 ######## official set #########
 
 # too big for 10 min
-evaluate testing/consistency_big 64 64 qpro 600
+#evaluate testing/consistency_big 64 64 qpro 600
 #evaluate testing/consistency_bigger 1 64 qpro 600
 
 #
-evaluate testing/possibility_small 64 64 qpro 600
+#evaluate testing/possibility_small 64 64 qpro 600
 #evaluate testing/possibility_medium 1 64 qpro 600
 
 # too big for 1 min timeout
-evaluate testing/assertion_small 64 64 qpro 600
+#evaluate testing/assertion_small 64 64 qpro 600
 #evaluate testing/assertion_medium 1 64 qpro 600
 #evaluate testing/assertion_big 1 64 qpro 600
 

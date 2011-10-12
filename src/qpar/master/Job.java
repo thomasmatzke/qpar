@@ -355,6 +355,7 @@ public class Job extends Observable implements Observer {
 		} else {
 			solved = mergeQbf(terminatedTqbf.getId(), terminatedTqbf.getResult());
 			this.completingTqbf = terminatedTqbf;
+			terminatedTqbf.setMerged();
 		}
 
 		logger.info("Result of tqbf(" + terminatedTqbf.getId() + ") merged into Qbf of Job " + this.id + " (" + terminatedTqbf.getResult() + ")");
@@ -380,7 +381,7 @@ public class Job extends Observable implements Observer {
 
 	}
 
-	private boolean mergeFinishedTqbfsInOrder() {
+	synchronized private boolean mergeFinishedTqbfsInOrder() {
 		ArrayList<TQbf> finished = new ArrayList<TQbf>();
 		for (TQbf tqbf : this.subformulas) {
 			if(tqbf.isTerminated())

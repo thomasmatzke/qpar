@@ -81,6 +81,7 @@ public class Evaluation implements Observer {
 				}
 			}
 		}
+		
 		synchronized (this) {
 			while (!allJobsTerminated()) {
 				logger.info("Checking termination");

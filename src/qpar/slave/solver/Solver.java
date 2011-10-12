@@ -201,7 +201,7 @@ public class Solver implements Runnable {
 	}
 	
 	protected void tearDown() {
-		logger.info("Tearing down solver of tqbf " + this.tqbfId);
+		logger.debug("Tearing down solver of tqbf " + this.tqbfId);
 		Solver.solvers.remove(this.tqbfId);
 		if(this.t != null)
 			t.cancel();			
