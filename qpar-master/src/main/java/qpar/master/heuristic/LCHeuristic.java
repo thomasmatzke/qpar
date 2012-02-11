@@ -26,9 +26,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import qpar.master.Qbf;
+import qpar.common.dom.formula.Qbf;
 
-public class LCHeuristic extends Heuristic {
+public class LCHeuristic extends AbstractHeuristic {
 
 	public LinkedHashSet<Integer> sortGroup(Set<Integer> group, Qbf qbf) {
 		ArrayList<Integer> orderedVector = sortByCount(qbf.getLiteralCount(), qbf);

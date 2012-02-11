@@ -21,10 +21,15 @@ package qpar.slave.tree;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
-import qpar.common.parser.Node;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import qpar.common.parser.jjtree.Node;
 import qpar.common.rmi.InterpretationData;
 
 public class ReducedInterpretation {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ReducedInterpretation.class);
 
 	Node root;
 	ArrayList<Integer> trueVars;
@@ -49,6 +54,7 @@ public class ReducedInterpretation {
 
 		OrphanRemover ov = new OrphanRemover(this.root);
 		ov.removeOrphans();
+
 	}
 
 	public Node getInterpretation() {

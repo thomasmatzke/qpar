@@ -22,9 +22,9 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import qpar.master.Qbf;
+import qpar.common.dom.formula.Qbf;
 
-public class HTestHeuristic extends Heuristic {
+public class HTestHeuristic extends AbstractHeuristic {
 
 	@Override
 	public LinkedHashSet<Integer> getVariableOrder(Qbf qbf) {

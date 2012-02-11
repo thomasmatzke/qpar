@@ -22,9 +22,9 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import qpar.master.Qbf;
+import qpar.common.dom.formula.Qbf;
 
-public class SimpleProbNetHeuristic extends Heuristic {
+public class SimpleProbNetHeuristic extends AbstractHeuristic {
 
 	@Override
 	public LinkedHashSet<Integer> sortGroup(Set<Integer> group, Qbf qbf) {

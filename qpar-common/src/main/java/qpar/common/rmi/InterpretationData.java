@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import qpar.common.parser.Node;
+import qpar.common.parser.jjtree.Node;
 
 /**
  * Data needed for the slave to compute a interpretation

@@ -54,12 +54,14 @@ public class CirqitPlugin implements SolverPlugin {
 
 	private String qproInputString;
 
+	@Override
 	public void initialize(final ReducedInterpretation ri) throws Exception {
 		this.ri = ri;
 		this.inputFile = File.createTempFile(UUID.randomUUID().toString(), null);
 		this.inputFilePath = this.inputFile.getAbsolutePath();
 	}
 
+	@Override
 	public void kill() {
 		this.killLock.lock();
 		try {
@@ -74,6 +76,7 @@ public class CirqitPlugin implements SolverPlugin {
 		}
 	}
 
+	@Override
 	public void run() {
 		try {
 			this.executor.setWatchdog(this.watchdog);
@@ -93,14 +96,17 @@ public class CirqitPlugin implements SolverPlugin {
 			// qproRepresentation.getQproRepresentation());
 
 			this.killLock.lock();
-			if (this.killed) {
+			try {
+				if (this.killed) {
+					this.killLock.unlock();
+					return;
+				} else {
+					this.executor.execute(command, resultHandler);
+					this.started = true;
+				}
+			} finally {
 				this.killLock.unlock();
-				return;
-			} else {
-				this.executor.execute(command, resultHandler);
-				this.started = true;
 			}
-			this.killLock.unlock();
 
 			while (!resultHandler.hasResult()) {
 				try {
@@ -126,6 +132,7 @@ public class CirqitPlugin implements SolverPlugin {
 
 	}
 
+	@Override
 	synchronized public Boolean waitForResult() throws Exception {
 		while (!this.terminated) {
 			this.wait();

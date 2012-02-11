@@ -21,7 +21,7 @@ package qpar.slave.tree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import qpar.common.parser.Node;
+import qpar.common.parser.jjtree.Node;
 
 public class TreeStatistic {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TreeStatistic.class);

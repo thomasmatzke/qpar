@@ -24,8 +24,8 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import qpar.common.parser.Node;
-import qpar.common.parser.SimpleNode;
+import qpar.common.parser.jjtree.Node;
+import qpar.common.parser.jjtree.SimpleNode;
 
 /**
  * Reduces a tree of Nodes following boolean rules
@@ -52,7 +52,7 @@ public class Reducer {
 			Node newNode = null;
 
 			do {
-				LOGGER.debug("Reducing node " + current + " with children " + Arrays.toString(current.getChildren()));
+				LOGGER.trace("Reducing node " + current + " with children " + Arrays.toString(current.getChildren()));
 
 				// if(((Node)current).isVarNode() &&
 				// ((Node)current).getNodeVariable() == 1127)
@@ -78,7 +78,7 @@ public class Reducer {
 						current.jjtGetParent().jjtAddChild(newNode, i);
 					}
 				}
-				LOGGER.debug("Reduced to: " + newNode);
+				LOGGER.trace("Reduced to: " + newNode);
 
 				// if(((Node)current.jjtGetParent()).isExistsNode() &&
 				// ((Node)current.jjtGetParent()).getNodeVariable() ==

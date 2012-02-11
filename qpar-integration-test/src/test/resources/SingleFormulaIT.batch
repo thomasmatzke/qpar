@@ -1,0 +1,4 @@
+newjob src/test/resources/counter4_2-bin.qbf src/test/resources/counter4_2-bin.qbf.txt simple edgecount 16 60
+startjob 1
+killallslaves
+quit

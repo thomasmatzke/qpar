@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -43,6 +44,8 @@ import qpar.common.rmi.MasterRemote;
 import qpar.common.rmi.SlaveRemote;
 import qpar.common.rmi.TQbfRemote;
 import qpar.master.console.Shell;
+import qpar.master.scheduling.ParallelJobsScheduler;
+import qpar.master.scheduling.Scheduler;
 
 /**
  * Handles communication with slaves
@@ -65,6 +68,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 	transient private MulticastBeacon multicastBeacon;
 
 	public static Configuration configuration = null;
+	public static Scheduler scheduler = null;
 
 	public Master(final String path) throws IOException {
 		try {
@@ -90,6 +94,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 
 	private void initialize() throws IOException {
 		configuration = ConfigurationFactory.getConfiguration();
+		scheduler = new ParallelJobsScheduler();
 
 		if (!configuration.isValid()) {
 			LOGGER.error("The configuration loaded from the configuration file is incomplete.");
@@ -111,7 +116,9 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 	final public void tearDown() {
 		LOGGER.info("Tearing down Master...");
 		Master.globalThreadPool.shutdownNow();
-		this.multicastBeacon.stop();
+		if (this.multicastBeacon != null) {
+			this.multicastBeacon.stop();
+		}
 		try {
 			for (TQbf t : TQbf.tqbfs.values()) {
 				UnicastRemoteObject.unexportObject(t, true);
@@ -119,14 +126,15 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 			UnicastRemoteObject.unexportObject(this, true);
 			UnicastRemoteObject.unexportObject(this.registry, true);
 			this.registry.unbind("Master");
+			if (this.registry != null) {
+				LOGGER.info(String.format("Master shut down. Bound names in the registry: %s", Arrays.asList(this.registry.list())));
+			}
+		} catch (NoSuchObjectException nsoe) {
+			LOGGER.info("Master-object was not exported. Not unbinding.");
 		} catch (Exception e) {
 			LOGGER.error("", e);
 		}
-		try {
-			LOGGER.info(String.format("Master shut down. Bound names in the registry: %s", Arrays.asList(this.registry.list())));
-		} catch (Exception e) {
-			LOGGER.error("", e);
-		}
+
 	}
 
 	private static void usage() {
@@ -136,8 +144,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 
 	@Override
 	public void registerSlave(final SlaveRemote slave) throws RemoteException, UnknownHostException {
-		LOGGER.info("Registering Slave. Hostname: " + slave.getHostName() + ", Cores: " + slave.getCores() + ", Solvers: "
-				+ slave.getSolvers());
+		LOGGER.info("Registering Slave. Hostname: " + slave.getHostName() + ", Cores: " + slave.getCores());
 
 		SlaveRegistry.getInstance().put(slave.getHostName(), slave);
 	}
@@ -191,7 +198,7 @@ public class Master extends UnicastRemoteObject implements MasterRemote {
 
 	@Override
 	public TQbfRemote getWork() throws RemoteException, InterruptedException {
-		return Distributor.getInstance().getWork();
+		return scheduler.pullWork();
 	}
 
 }

@@ -24,8 +24,6 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -50,14 +48,11 @@ import qpar.slave.tree.ReducedInterpretation;
 public class Solver implements Runnable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Solver.class);
 
-	public static ExecutorService solverThreadPool = Executors.newFixedThreadPool(Slave.availableProcessors);
-	private static ExecutorService pluginThreadPool = Executors.newFixedThreadPool(Slave.availableProcessors);
 	public static ConcurrentHashMap<String, Solver> solvers = new ConcurrentHashMap<String, Solver>();
 
 	protected TQbfRemote tqbf;
 	protected MasterRemote master;
-	protected String tqbfId = null, jobId = null, solverId = null;
-	protected long timeout;
+	private String tqbfId = null;
 	public Date overheadStartedAt = null;
 	protected Date overheadStoppedAt = null;
 	protected InterpretationData interpretationData;
@@ -76,10 +71,10 @@ public class Solver implements Runnable {
 		this.master = master;
 		this.tqbf = tqbf;
 		this.tqbfId = tqbf.getId();
-		this.jobId = tqbf.getJobId();
-		this.timeout = tqbf.getTimeout();
-		this.solverId = tqbf.getSolverId();
-		this.plugin = SolverPluginFactory.getSolver(this.solverId);
+		// this.jobId = tqbf.getJobId();
+		// this.timeout = tqbf.getTimeout();
+		// this.solverId = tqbf.getSolverId();
+		this.plugin = SolverPluginFactory.getSolver(tqbf.getSolverId());
 	}
 
 	@Override
@@ -129,27 +124,30 @@ public class Solver implements Runnable {
 			}
 
 			this.killLock.lock();
-			if (this.killSignalReceived) {
-				// we have been killed do nothing
-			} else {
-				// we havent been killed. start the plugin and set the flag
-				this.pluginStarted = true;
+			try {
+				if (this.killSignalReceived) {
+					// we have been killed do nothing
+				} else {
+					// we havent been killed. start the plugin and set the flag
+					this.pluginStarted = true;
 
-				TimerTask task = new TimerTask() {
-					@Override
-					public void run() {
-						LOGGER.info("Timing out Tqbf");
-						Solver.this.timedOut = true;
-						Solver.this.kill();
-					}
-				};
-				this.t = new Timer();
-				this.t.schedule(task, this.timeout * 1000);
-				this.pluginStartedAt = new Date();
-				this.plugin.initialize(this.reducedInterpretation);
-				pluginThreadPool.execute(this.plugin);
+					TimerTask task = new TimerTask() {
+						@Override
+						public void run() {
+							LOGGER.info("Timing out Tqbf");
+							Solver.this.timedOut = true;
+							Solver.this.kill();
+						}
+					};
+					this.t = new Timer();
+					this.t.schedule(task, this.tqbf.getTimeout() * 1000);
+					this.pluginStartedAt = new Date();
+					this.plugin.initialize(this.reducedInterpretation);
+					Slave.pluginThreadPool.execute(this.plugin);
+				}
+			} finally {
+				this.killLock.unlock();
 			}
-			this.killLock.unlock();
 
 			Boolean pluginResult = this.plugin.waitForResult();
 			this.pluginStoppedAt = new Date();

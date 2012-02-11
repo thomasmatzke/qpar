@@ -21,10 +21,10 @@ package qpar.master.heuristic;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import qpar.common.parser.SimpleNode;
-import qpar.master.Qbf;
+import qpar.common.dom.formula.Qbf;
+import qpar.common.parser.jjtree.SimpleNode;
 
-public class SimpleHeuristic extends Heuristic {
+public class SimpleHeuristic extends AbstractHeuristic {
 
 	LinkedHashSet<Integer> ret = new LinkedHashSet<Integer>();
 

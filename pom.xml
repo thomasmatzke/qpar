@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
@@ -9,6 +10,8 @@
 		<module>qpar-common</module>
 		<module>qpar-master</module>
 		<module>qpar-slave</module>
+		<module>qpar-client</module>
+		<module>qpar-integration-test</module>
 	</modules>
 	<dependencies>
 		<dependency>
@@ -43,6 +46,21 @@
 			<dependency>
 				<groupId>qpar-common</groupId>
 				<artifactId>qpar-common</artifactId>
+				<version>0.0.1-SNAPSHOT</version>
+			</dependency>
+			<dependency>
+				<groupId>qpar-slave</groupId>
+				<artifactId>qpar-slave</artifactId>
+				<version>0.0.1-SNAPSHOT</version>
+			</dependency>
+			<dependency>
+				<groupId>qpar-master</groupId>
+				<artifactId>qpar-master</artifactId>
+				<version>0.0.1-SNAPSHOT</version>
+			</dependency>
+			<dependency>
+				<groupId>qpar-integration-test</groupId>
+				<artifactId>qpar-integration-test</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
 			</dependency>
 		</dependencies>

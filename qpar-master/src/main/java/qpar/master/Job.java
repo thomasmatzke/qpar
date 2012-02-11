@@ -40,7 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import qpar.common.Configuration;
-import qpar.master.heuristic.Heuristic;
+import qpar.common.dom.formula.Qbf;
+import qpar.common.dom.heuristic.Heuristic;
 
 public class Job extends Observable implements Observer {
 	public enum State {
@@ -63,9 +64,6 @@ public class Job extends Observable implements Observer {
 	}
 
 	public static Map<String, Job> getJobs() {
-		if (jobs == null) {
-			jobs = new HashMap<String, Job>();
-		}
 		return jobs;
 	}
 
@@ -96,7 +94,7 @@ public class Job extends Observable implements Observer {
 		this.inputFileString = inputFile;
 		this.outputFileString = outputFile;
 		this.solverId = solverId;
-		this.setState(State.READY);
+
 		this.heuristic = h;
 		try {
 			this.formula = new Qbf(this.inputFileString);
@@ -133,6 +131,8 @@ public class Job extends Observable implements Observer {
 
 		// Dont need the tree anymore
 		this.formula = null;
+
+		this.setState(State.READY);
 
 		this.setupTime = new Date().getTime() - this.setupTime;
 	}
@@ -544,12 +544,16 @@ public class Job extends Observable implements Observer {
 	}
 
 	public void start() {
-		// new TimeoutTimer(this.timeout, this);
+		if (this.state != State.READY) {
+			LOGGER.warn(String.format("Can only start a Job in READY state, but state was ", this.state));
+			return;
+		}
+
 		this.setState(State.RUNNING);
 		LOGGER.info("Job started " + this.id + " ...\n" + "	Started at:  " + this.history.get(State.RUNNING) + "\n" + "	UsedCores: "
 				+ this.usedCores);
 
-		Distributor.getInstance().scheduleJob(this);
+		Master.scheduler.scheduleJob(this);
 	}
 
 	public void startBlocking() {

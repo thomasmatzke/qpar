@@ -5,7 +5,7 @@ package qpar.master;
 
 import java.util.ArrayList;
 
-import qpar.common.parser.Node;
+import qpar.common.parser.jjtree.Node;
 import qpar.master.heuristic.DependencyNode;
 
 /**

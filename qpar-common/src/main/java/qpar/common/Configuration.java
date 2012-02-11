@@ -36,6 +36,7 @@ public class Configuration {
 	public static final String MAIL_PW = "mailPass";
 	public static final String BENCHMARK_MODE = "benchmarkMode";
 	public static final String RESULT_CACHING = "resultCaching";
+	public static final String SCHEDULING_QUEUE_SIZE = "scheduling.queue_size";
 
 	private Properties prop = null;
 
@@ -49,7 +50,7 @@ public class Configuration {
 		} else if (type == String.class) {
 			return type.cast(this.prop.getProperty(key));
 		} else if (type == Integer.class) {
-			return type.cast(this.prop.getProperty(key));
+			return type.cast(Integer.parseInt(this.prop.getProperty(key)));
 		} else {
 			throw new IllegalArgumentException("Can only parse Strings, Booleans and Integers from configuration file");
 		}
@@ -87,6 +88,21 @@ public class Configuration {
 		}
 
 		return plugins;
+	}
+
+	public HashMap<String, String> getHeuristics() {
+		HashMap<String, String> heuristics = new HashMap<String, String>();
+
+		for (Entry<Object, Object> e : this.prop.entrySet()) {
+			String key = (String) e.getKey();
+			String value = (String) e.getValue();
+			if (key.startsWith("heuristic.")) {
+				String name = key.replaceAll("heuristic\\.", "");
+				heuristics.put(name, value);
+			}
+		}
+
+		return heuristics;
 	}
 
 	// private static boolean enableExceptionNotifications = false;

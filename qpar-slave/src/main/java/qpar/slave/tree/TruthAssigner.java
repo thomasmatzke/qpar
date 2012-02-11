@@ -25,8 +25,8 @@ import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import qpar.common.parser.Node;
-import qpar.common.parser.Node.NodeType;
+import qpar.common.parser.jjtree.Node;
+import qpar.common.parser.jjtree.Node.NodeType;
 
 /**
  * Takes a SimpleNode and assigns truth values to variables in the subtree

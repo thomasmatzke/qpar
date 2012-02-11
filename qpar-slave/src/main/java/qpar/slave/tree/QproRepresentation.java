@@ -22,8 +22,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import qpar.common.parser.Node;
-import qpar.common.parser.Node.NodeType;
+import qpar.common.parser.jjtree.Node;
+import qpar.common.parser.jjtree.Node.NodeType;
 
 public class QproRepresentation {
 

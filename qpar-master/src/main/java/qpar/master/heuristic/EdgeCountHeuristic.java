@@ -27,11 +27,11 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import qpar.common.parser.Node;
-import qpar.common.parser.SimpleNode;
-import qpar.master.Qbf;
+import qpar.common.dom.formula.Qbf;
+import qpar.common.parser.jjtree.Node;
+import qpar.common.parser.jjtree.SimpleNode;
 
-public class EdgeCountHeuristic extends Heuristic {
+public class EdgeCountHeuristic extends AbstractHeuristic {
 
 	@Override
 	public LinkedHashSet<Integer> sortGroup(final Set<Integer> group, final Qbf qbf) {

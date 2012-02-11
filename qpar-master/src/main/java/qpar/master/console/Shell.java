@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.Observable;
 import java.util.Observer;
@@ -37,13 +38,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import qpar.common.Configuration;
+import qpar.common.dom.heuristic.Heuristic;
 import qpar.common.rmi.SlaveRemote;
 import qpar.master.Evaluation;
 import qpar.master.Job;
 import qpar.master.Mailer;
 import qpar.master.Master;
 import qpar.master.SlaveRegistry;
-import qpar.master.heuristic.Heuristic;
 import qpar.master.heuristic.HeuristicFactory;
 
 public class Shell implements Runnable, Observer {
@@ -96,9 +97,6 @@ public class Shell implements Runnable, Observer {
 	private void parseLine(final String line) {
 		StringTokenizer token = new StringTokenizer(line);
 		switch (Command.toCommand(token.nextToken().toUpperCase())) {
-		case HTEST:
-			this.htest(token);
-			break;
 		case EVALUATE:
 			this.evaluate(token);
 			break;
@@ -129,12 +127,6 @@ public class Shell implements Runnable, Observer {
 		case KILLALLSLAVES:
 			this.killallslaves();
 			break;
-		case SHUTDOWNALLSLAVES:
-			this.shutdownallslaves();
-			break;
-		// case WAITFORSLAVE:
-		// waitforslave(token);
-		// break;
 		case HELP:
 			this.help();
 			break;
@@ -148,21 +140,6 @@ public class Shell implements Runnable, Observer {
 			assert (false);
 		}
 
-	}
-
-	private void htest(final StringTokenizer token) {
-		// try{
-		// String input_path = token.nextToken();
-		// String solverid = token.nextToken();
-		// int maxCores = Integer.parseInt(token.nextToken());
-		// long timeout = Long.parseLong(token.nextToken());
-		// //TODO
-		//
-		// } catch(NoSuchElementException e) {
-		// puts("Syntax: HTEST path_to_formula solverid max_cores timeout");
-		// } catch (RemoteException e) {
-		// logger.error("", e);
-		// }
 	}
 
 	private void evaluate(final StringTokenizer token) {
@@ -183,8 +160,8 @@ public class Shell implements Runnable, Observer {
 			return;
 		}
 
-		Evaluation eval = new Evaluation(new File(directory), cores_min, cores_max, solver, HeuristicFactory.getAvailableHeuristics(),
-				timeout);
+		Evaluation eval = new Evaluation(new File(directory), cores_min, cores_max, solver, new ArrayList<String>(
+				HeuristicFactory.getAvailableHeuristics()), timeout);
 		eval.evaluate();
 
 		String report = eval.getReport();
@@ -206,23 +183,6 @@ public class Shell implements Runnable, Observer {
 					Master.configuration.getProperty(Configuration.MAIL_PW, String.class), "QPar Evaluation Report", report);
 		}
 
-	}
-
-	/**
-	 * Syntax: SHUTDOWNALLSLAVES
-	 */
-	private void shutdownallslaves() {
-		for (SlaveRemote s : SlaveRegistry.getInstance().getSlaves().values()) {
-			try {
-				s.shutdown();
-			} catch (RemoteException e) {
-				LOGGER.error("RMI fail", e);
-			}
-		}
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-		}
 	}
 
 	/**
@@ -297,7 +257,7 @@ public class Shell implements Runnable, Observer {
 	}
 
 	private void help() {
-		this.puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFORSLAVE, KILLALLSLAVES, WAITFORRESULT, EMAIL, QUIT (Case insensitive)");
+		this.puts("Allowed comands are NEWJOB, STARTJOB, ABORTJOB, VIEWJOBS, VIEWSLAVES, KILLSLAVE, HELP, SOURCE, WAITFORSLAVE, KILLALLSLAVES, EMAIL, QUIT (Case insensitive)");
 	}
 
 	/**
@@ -391,8 +351,8 @@ public class Shell implements Runnable, Observer {
 
 		} catch (NoSuchElementException e) {
 			this.puts("Syntax: NEWJOB path_to_formula path_to_outputfile solverid heuristic max_cores timeout");
-		} catch (RemoteException e) {
-			LOGGER.error("", e);
+		} catch (Exception e) {
+			LOGGER.error("Could not instantiate heuristic class", e);
 		}
 	}
 

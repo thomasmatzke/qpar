@@ -1,0 +1,8 @@
+Job Id: 1
+State RUNNING at: Sat Feb 11 20:51:21 CET 2012
+State COMPLETE at: Sat Feb 11 20:51:24 CET 2012
+Total secs: 3
+In millis: 3256
+Solver: simple
+Heuristic: edgecount
+Result: Solvable

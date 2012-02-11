@@ -26,7 +26,6 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -47,10 +46,10 @@ import sun.misc.Signal;
  * @author thomasm
  * 
  */
+@SuppressWarnings("restriction")
 public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 	private static final long serialVersionUID = -7927545942720427850L;
 
-	public ArrayList<String> availableSolvers = new ArrayList<String>();
 	public ExecutorService globalThreadPool = Executors.newCachedThreadPool();
 
 	public static String hostname = null;
@@ -67,14 +66,17 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 
 	private PingTimer pingTimer;
 
-	public static Integer availableProcessors;
+	private static Integer availableProcessors = null;
+
+	public static ExecutorService pluginThreadPool;
+
+	public static ExecutorService solverThreadPool;
 
 	public Slave() throws UnknownHostException, IOException, InterruptedException {
 		BeaconListener bl = new BeaconListener();
 		new Slave(bl.getMasterAddress());
 	}
 
-	@SuppressWarnings("restriction")
 	public Slave(final String masterHost) throws IOException {
 		LOGGER.info("Starting Slave...");
 
@@ -84,6 +86,9 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 			LOGGER.error("The configuration loaded from the configuration file is inclomplete.");
 			throw new IllegalArgumentException("The configuration loaded from the configuration file is incomplete.");
 		}
+
+		pluginThreadPool = Executors.newFixedThreadPool(Slave.getAvailableProcessors());
+		solverThreadPool = Executors.newFixedThreadPool(Slave.getAvailableProcessors());
 
 		this.masterRmiString = "rmi://" + masterHost + ":1099/Master";
 
@@ -97,23 +102,12 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 		MySignalHandler handler = new MySignalHandler(this);
 		Signal.handle(new Signal("INT"), handler);
 		Signal.handle(new Signal("TERM"), handler);
-		// Signal.handle(new Signal("HUP"), handler);
-
-		LOGGER.info("Available Solvers are: " + this.availableSolvers);
 
 		this.connect();
 
 		this.pingTimer = new PingTimer(10, this);
 
-		Integer configProcessors = configuration.getProperty(Configuration.AVAILABLE_PROCESSORS, Integer.class);
-		Slave.availableProcessors = 0;
-		if (configProcessors == 0) {
-			Slave.availableProcessors = Runtime.getRuntime().availableProcessors();
-		} else {
-			Slave.availableProcessors = configProcessors;
-		}
-
-		BoundedExecutor bex = new BoundedExecutor(Solver.solverThreadPool, Slave.availableProcessors);
+		BoundedExecutor bex = new BoundedExecutor(Slave.solverThreadPool, Slave.availableProcessors);
 
 		while (this.run) {
 			TQbfRemote tqbf = null;
@@ -150,19 +144,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 						// rmi exports
 	}
 
-	// synchronized public static Slave instance() throws UnknownHostException {
-	// if(instance == null) {
-	// try {
-	// instance = new Slave();
-	// } catch (RemoteException e) {
-	// logger.error("", e);
-	// throw new RuntimeException();
-	// } catch (InterruptedException e) {}
-	// }
-	//
-	// return instance;
-	// }
-
 	public MasterRemote getMaster() {
 		return this.master;
 	}
@@ -185,27 +166,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 
 	}
 
-	public static void shutdownHost() {
-		String shutdownCommand = "";
-		String osName = System.getProperty("os.name");
-
-		if (osName.startsWith("Win")) {
-			shutdownCommand = "shutdown.exe -s -t 0";
-		} else if (osName.startsWith("Linux") || osName.startsWith("Mac")) {
-			shutdownCommand = "shutdown -h now";
-		} else {
-			LOGGER.error("Shutdown unsupported operating system ...");
-			System.exit(0);
-		}
-
-		try {
-			Runtime.getRuntime().exec(shutdownCommand);
-		} catch (IOException e) {
-			LOGGER.error("", e);
-		}
-		System.exit(0);
-	}
-
 	public static void usage() {
 		LOGGER.error("Usage: java main.java.Slave MASTERIP (ex. 192.168.1.10");
 		System.exit(-1);
@@ -219,14 +179,6 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 			threadToAbort.kill();
 		}
 	}
-
-	// @Override
-	// public void computeFormula(TQbfRemote tqbf) throws RemoteException {
-	// // this.tqbfs.add(tqbf);
-	// // assert(tqbfs.size() <= this.getCores());
-	// Solver solver = SolverFactory.getSolver(tqbf);
-	// Slave.globalThreadPool.execute(solver);
-	// }
 
 	public void connect() {
 		// if already connected clean up mess
@@ -263,18 +215,26 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 	}
 
 	@Override
-	public int getCores() throws RemoteException {
+	public Integer getCores() throws RemoteException {
+		return Slave.getAvailableProcessors();
+	}
+
+	synchronized static public Integer getAvailableProcessors() {
+		if (Slave.availableProcessors == null) {
+			Integer configProcessors = Slave.configuration.getProperty(Configuration.AVAILABLE_PROCESSORS, Integer.class);
+			Slave.availableProcessors = 0;
+			if (configProcessors == 0) {
+				Slave.availableProcessors = Runtime.getRuntime().availableProcessors();
+			} else {
+				Slave.availableProcessors = configProcessors;
+			}
+		}
 		return Slave.availableProcessors;
 	}
 
 	@Override
 	public String getHostName() throws RemoteException, UnknownHostException {
 		return hostname;
-	}
-
-	@Override
-	public ArrayList<String> getSolvers() throws RemoteException {
-		return this.availableSolvers;
 	}
 
 	@Override
@@ -302,23 +262,9 @@ public final class Slave extends UnicastRemoteObject implements SlaveRemote {
 	}
 
 	@Override
-	public void shutdown() throws RemoteException {
-		LOGGER.info("Shutting down host...");
-
-		Runnable r = new Runnable() {
-
-			@Override
-			public void run() {
-				Slave.shutdownHost();
-			}
-		};
-		this.globalThreadPool.execute(r);
-	}
-
-	@Override
 	public String toString() {
 		try {
-			return "Slave -- Hostname: " + this.getHostName() + ", Solvers: " + this.getSolvers() + ", Cores: " + this.getCores();
+			return "Slave -- Hostname: " + this.getHostName() + ", Cores: " + Slave.getAvailableProcessors();
 		} catch (RemoteException e) {
 			LOGGER.error("RMI fail", e);
 			return "";

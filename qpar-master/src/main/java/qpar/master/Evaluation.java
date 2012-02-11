@@ -31,8 +31,8 @@ import java.util.Observer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import qpar.common.dom.heuristic.Heuristic;
 import qpar.master.Job.State;
-import qpar.master.heuristic.Heuristic;
 import qpar.master.heuristic.HeuristicFactory;
 
 public class Evaluation implements Observer {
@@ -146,6 +146,8 @@ public class Evaluation implements Observer {
 						j.start();
 					} catch (RemoteException e) {
 						LOGGER.error("", e);
+					} catch (Exception e) {
+						LOGGER.error(String.format("Unable to instantiate Heuristic %s", this.heuristics.get(h)), e);
 					}
 				}
 			}
@@ -421,6 +423,7 @@ public class Evaluation implements Observer {
 	 * 
 	 * @see java.util.Observer#update(java.util.Observable, java.lang.Object)
 	 */
+	@Override
 	public void update(final Observable arg0, final Object arg1) {
 		this.notifyAll();
 		int running = 0;

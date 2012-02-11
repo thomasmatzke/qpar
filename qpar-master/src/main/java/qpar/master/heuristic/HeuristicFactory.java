@@ -18,41 +18,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package qpar.master.heuristic;
 
-import java.util.ArrayList;
+import java.util.Set;
+
+import qpar.common.dom.heuristic.Heuristic;
+import qpar.master.Master;
 
 public class HeuristicFactory {
 
-	private static ArrayList<String> heuristics;
-
-	public static ArrayList<String> getAvailableHeuristics() {
-		if (heuristics == null) {
-			heuristics = new ArrayList<String>();
-			heuristics.add("simple");
-			heuristics.add("rand");
-			heuristics.add("litcount");
-			heuristics.add("probnet");
-			heuristics.add("shallow");
-			heuristics.add("edgecount");
-			// heuristics.add("htest");
-		}
-		return heuristics;
+	public static Set<String> getAvailableHeuristics() {
+		return Master.configuration.getHeuristics().keySet();
 	}
 
-	public static Heuristic getHeuristic(String id) {
-		if (id.equals("simple"))
-			return new SimpleHeuristic();
-		if (id.equals("rand"))
-			return new RandHeuristic();
-		if (id.equals("litcount"))
-			return new LCHeuristic();
-		if (id.equals("probnet"))
-			return new SimpleProbNetHeuristic();
-		if (id.equals("shallow"))
-			return new ShallowHeuristic();
-		if (id.equals("edgecount"))
-			return new EdgeCountHeuristic();
-		if (id.equals("htest"))
-			return new HTestHeuristic();
-		return null;
+	public static Heuristic getHeuristic(final String id) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+		String className = Master.configuration.getHeuristics().get(id);
+
+		Class<?> clazz = Class.forName(className);
+
+		return (Heuristic) clazz.newInstance();
 	}
 }

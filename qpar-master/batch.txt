@@ -1,4 +1,4 @@
-newjob testing/counter_small/counter4_2-bin.qbf counter4_2-bin.qbf.txt simple edgecount 16 60
+newjob counter4_2-bin.qbf counter4_2-bin.qbf.txt simple edgecount 16 60
 startjob 1
 
 #newjob testing/counter_small/counter6_2-bin.qbf counter6_2-bin.qbf.txt qpro edgecount 16 60

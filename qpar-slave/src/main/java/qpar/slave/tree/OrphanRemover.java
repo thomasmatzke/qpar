@@ -20,7 +20,7 @@ package qpar.slave.tree;
 
 import java.util.HashSet;
 
-import qpar.common.parser.Node;
+import qpar.common.parser.jjtree.Node;
 
 public class OrphanRemover {
 

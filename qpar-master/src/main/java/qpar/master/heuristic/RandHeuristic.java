@@ -22,9 +22,9 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import qpar.common.Permuter;
-import qpar.master.Qbf;
+import qpar.common.dom.formula.Qbf;
 
-public class RandHeuristic extends Heuristic {
+public class RandHeuristic extends AbstractHeuristic {
 
 	@Override
 	public LinkedHashSet<Integer> sortGroup(Set<Integer> group, Qbf qbf) {

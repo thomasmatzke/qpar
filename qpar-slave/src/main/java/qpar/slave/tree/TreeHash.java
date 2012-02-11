@@ -23,7 +23,7 @@ import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import qpar.common.parser.Node;
+import qpar.common.parser.jjtree.Node;
 
 public class TreeHash {
 

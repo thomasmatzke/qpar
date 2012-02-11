@@ -23,10 +23,10 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
-import qpar.common.parser.Node;
-import qpar.master.Qbf;
+import qpar.common.dom.formula.Qbf;
+import qpar.common.parser.jjtree.Node;
 
-public class ShallowHeuristic extends Heuristic {
+public class ShallowHeuristic extends AbstractHeuristic {
 
 	@Override
 	public LinkedHashSet<Integer> sortGroup(final Set<Integer> group, final Qbf qbf) {
